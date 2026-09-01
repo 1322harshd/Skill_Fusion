@@ -1,0 +1,15 @@
+backend/.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+.env
+db.sqlite3
+
+staticfiles/
+media/
+
+.DS_Store
+.idea/
+.vscode/

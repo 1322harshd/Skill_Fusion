@@ -1,6 +1,9 @@
 backend/.venv/
+<<<<<<< HEAD
 node_modules/
 .DS_Store
+=======
+>>>>>>> f844bd3 (Add Django backend scaffold with authentication app)
 __pycache__/
 *.pyc
 *.pyo
@@ -12,6 +15,7 @@ db.sqlite3
 staticfiles/
 media/
 
+<<<<<<< HEAD
 .idea/
 .vscode/
 
@@ -23,3 +27,8 @@ build/
 
 test-results/
 playwright-report
+=======
+.DS_Store
+.idea/
+.vscode/
+>>>>>>> f844bd3 (Add Django backend scaffold with authentication app)

@@ -15,6 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+<<<<<<< HEAD
 from django.urls import include, path
 
 from authentication.urls import auth_urlpatterns, users_urlpatterns
@@ -25,4 +26,10 @@ urlpatterns = [
     path('api/auth/', include(auth_urlpatterns)),
     path('api/users/', include(users_urlpatterns)),
     path('api/growth-log/', include(growthlog_urlpatterns)),
+=======
+from django.urls import path
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+>>>>>>> f844bd3 (Add Django backend scaffold with authentication app)
 ]

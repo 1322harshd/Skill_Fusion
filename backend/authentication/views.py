@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import requests
 from django.conf import settings
 from rest_framework import status
@@ -335,3 +336,8 @@ class GoogleOAuthView(APIView):
 
         user = _get_or_create_oauth_user(email=email, full_name=profile.get("name", ""))
         return _auth_payload(user, status.HTTP_200_OK)
+=======
+from django.shortcuts import render
+
+# Create your views here.
+>>>>>>> f844bd3 (Add Django backend scaffold with authentication app)

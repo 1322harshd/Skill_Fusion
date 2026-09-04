@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="560" viewBox="0 0 1280 560">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1280" height="560" fill="#FFFFFF"/>
+
+    <!-- APP SHELL HEADER -->
+    <circle cx="56" cy="52" r="24" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.3"/>
+    <text x="56" y="60" text-anchor="middle" font-size="20" font-style="italic" font-weight="800" fill="#1F1F1F">s</text>
+    <rect x="320" y="30" width="640" height="46" rx="23" fill="#F4F4F4"/>
+    <rect x="330" y="34" width="100" height="38" rx="19" fill="#FFFFFF"/>
+    <rect x="343" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="365" y="58" font-size="13" fill="#1F1F1F">Dashboard</text>
+    <rect x="436" y="34" width="100" height="38" rx="19" fill="#FFFFFF"/>
+    <rect x="449" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="471" y="58" font-size="13" fill="#1F1F1F">Fuse</text>
+    <rect x="542" y="34" width="100" height="38" rx="19" fill="#FFFFFF"/>
+    <rect x="555" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="577" y="58" font-size="13" fill="#1F1F1F">Roadmaps</text>
+    <rect x="648" y="34" width="100" height="38" rx="19" fill="#FFFFFF"/>
+    <rect x="661" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="683" y="58" font-size="13" fill="#1F1F1F">Log</text>
+    <rect x="754" y="34" width="100" height="38" rx="19" fill="#1F1F1F"/>
+    <rect x="767" y="46" width="14" height="14" rx="4" fill="#FFFFFF"/>
+    <text x="789" y="58" font-size="13" font-weight="600" fill="#FFFFFF">Resume</text>
+    <rect x="770" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="792" y="58" font-size="13" fill="#1F1F1F">Connect</text>
+    <rect x="1112" y="30" width="128" height="46" rx="23" fill="#F4F4F4"/>
+    <circle cx="1138" cy="53" r="17" fill="#D9D9D9"/>
+    <text x="1164" y="58" font-size="13" font-weight="600" fill="#1F1F1F">Ada</text>
+
+    <!-- H1 -->
+    <text x="192" y="168" font-size="44" font-style="italic" font-weight="800" fill="#1F1F1F">Resume &amp; Cover Letter</text>
+
+    <!-- Input card -->
+    <rect x="192" y="200" width="896" height="290" rx="28" fill="#F7F7F7" stroke="#1F1F1F" stroke-width="1.2"/>
+    <text x="232" y="244" font-size="11" font-weight="700" letter-spacing="1.5" fill="#666666">PASTE A JOB LISTING</text>
+    <rect x="232" y="260" width="816" height="120" rx="16" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+    <text x="256" y="300" font-size="15" fill="#888888">Role: Product Designer (Design Engineering)</text>
+    <text x="256" y="324" font-size="15" fill="#888888">About: We're a Series B design tool looking for someone who can design</text>
+    <text x="256" y="348" font-size="15" fill="#888888">AND build. You'll own features from concept to shipped CSS…</text>
+    <text x="232" y="424" font-size="14" fill="#1F1F1F">Use sample listing</text>
+    <rect x="944" y="400" width="145" height="44" rx="22" fill="#1F1F1F"/>
+    <text x="1016" y="427" text-anchor="middle" font-size="14" font-weight="600" fill="#FFFFFF">Generate</text>
+  </g>
+</svg>

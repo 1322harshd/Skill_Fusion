@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="900" fill="#FFFFFF"/>
+
+    <!-- Section heading -->
+    <text x="100" y="80" font-size="11" fill="#999" letter-spacing="3">HOW IT WORKS</text>
+    <text x="100" y="130" font-size="48" font-style="italic" font-weight="800" fill="#1F1F1F">Two skills. One future.</text>
+
+    <!-- Horizontal line -->
+    <line x1="100" y1="200" x2="1340" y2="200" stroke="#DDD" stroke-width="1" stroke-dasharray="4"/>
+
+    <!-- Step 1 -->
+    <rect x="100" y="230" width="280" height="300" rx="16" fill="#FFF" stroke="#1F1F1F" stroke-width="1.5"/>
+    <text x="130" y="280" font-size="42" font-style="italic" font-weight="800" fill="#CCC">01</text>
+    <circle cx="130" cy="310" r="3" fill="#999"/>
+    <text x="130" y="345" font-size="18" font-style="italic" font-weight="700" fill="#1F1F1F">Pick two skills</text>
+    <text x="130" y="375" font-size="13" fill="#666">Anything works — design + code,</text>
+    <text x="130" y="393" font-size="13" fill="#666">writing + data, sales + AI.</text>
+
+    <!-- Step 2 -->
+    <rect x="420" y="230" width="280" height="300" rx="16" fill="#FFF" stroke="#1F1F1F" stroke-width="1.5"/>
+    <text x="450" y="280" font-size="42" font-style="italic" font-weight="800" fill="#CCC">02</text>
+    <circle cx="450" cy="310" r="3" fill="#999"/>
+    <text x="450" y="345" font-size="18" font-style="italic" font-weight="700" fill="#1F1F1F">AI finds the real overlap</text>
+    <text x="450" y="375" font-size="13" fill="#666">Our engine scans real job listings</text>
+    <text x="450" y="393" font-size="13" fill="#666">to find where your combo is valued.</text>
+
+    <!-- Step 3 -->
+    <rect x="740" y="230" width="280" height="300" rx="16" fill="#FFF" stroke="#1F1F1F" stroke-width="1.5"/>
+    <text x="770" y="280" font-size="42" font-style="italic" font-weight="800" fill="#CCC">03</text>
+    <circle cx="770" cy="310" r="3" fill="#999"/>
+    <text x="770" y="345" font-size="18" font-style="italic" font-weight="700" fill="#1F1F1F">Follow a 4–12 week roadmap</text>
+    <text x="770" y="375" font-size="13" fill="#666">Three real outcome paths. Pick a</text>
+    <text x="770" y="393" font-size="13" fill="#666">direction, check off milestones.</text>
+
+    <!-- Step 4 -->
+    <rect x="1060" y="230" width="280" height="300" rx="16" fill="#FFF" stroke="#1F1F1F" stroke-width="1.5"/>
+    <text x="1090" y="280" font-size="42" font-style="italic" font-weight="800" fill="#CCC">04</text>
+    <circle cx="1090" cy="310" r="3" fill="#999"/>
+    <text x="1090" y="345" font-size="18" font-style="italic" font-weight="700" fill="#1F1F1F">Earn a verified score</text>
+    <text x="1090" y="375" font-size="13" fill="#666">Your fusion gets a rarity score</text>
+    <text x="1090" y="393" font-size="13" fill="#666">grounded in job-market data.</text>
+
+    <text x="60" y="870" font-size="11" fill="#999">[LOFI] How It Works — four numbered step cards in a row</text>
+  </g>
+</svg>

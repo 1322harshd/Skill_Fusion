@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="900" fill="#FFFFFF"/>
+
+    <!-- Top nav -->
+    <rect width="1440" height="60" fill="#F8F8F8" stroke="#EEE" stroke-width="1"/>
+    <circle cx="40" cy="30" r="18" fill="#E5E5E5"/>
+    <text x="40" y="36" text-anchor="middle" font-size="14" font-style="italic" font-weight="800" fill="#666">s</text>
+    <text x="400" y="36" font-size="13" font-weight="600" fill="#1F1F1F">Resume</text>
+
+    <!-- Tab bar + actions -->
+    <rect x="80" y="100" width="180" height="36" rx="18" fill="#F0F0F0"/>
+    <rect x="82" y="102" width="88" height="32" rx="16" fill="#1F1F1F"/>
+    <text x="126" y="123" text-anchor="middle" font-size="12" font-weight="600" fill="#FFF">Resume</text>
+    <text x="210" y="123" text-anchor="middle" font-size="12" fill="#999">Cover letter</text>
+
+    <rect x="1120" y="100" width="120" height="36" rx="18" fill="#F8F8F8" stroke="#CCC" stroke-width="1"/>
+    <text x="1180" y="123" text-anchor="middle" font-size="12" fill="#555">Copy</text>
+    <rect x="1250" y="100" width="130" height="36" rx="18" fill="#1F1F1F"/>
+    <text x="1315" y="123" text-anchor="middle" font-size="12" font-weight="600" fill="#FFF">Download</text>
+
+    <!-- Resume paper -->
+    <rect x="80" y="160" width="1280" height="500" rx="16" fill="#FAFAFA" stroke="#DDD" stroke-width="1"/>
+    <text x="140" y="220" font-size="24" font-style="italic" font-weight="700" fill="#1F1F1F">Design Engineer — Alex Chen</text>
+
+    <text x="140" y="270" font-size="10" fill="#AAA" letter-spacing="2">SUMMARY</text>
+    <text x="140" y="295" font-size="13" fill="#555">Design engineer with 5+ years bridging design and code. Shipped production UI at two startups.</text>
+
+    <text x="140" y="340" font-size="10" fill="#AAA" letter-spacing="2">SKILLS</text>
+    <text x="140" y="365" font-size="13" fill="#555">Figma · React · TypeScript · CSS · Motion Design · Prototyping · Design Systems</text>
+
+    <text x="140" y="410" font-size="10" fill="#AAA" letter-spacing="2">EVIDENCE</text>
+    <text x="140" y="440" font-size="13" font-weight="600" fill="#1F1F1F">Built a Framer Motion component library</text>
+    <text x="140" y="460" font-size="12" fill="#888">Created 24 production-ready animation components used by 3 product teams.</text>
+    <text x="140" y="495" font-size="13" font-weight="600" fill="#1F1F1F">Shipped interactive prototype for client</text>
+    <text x="140" y="515" font-size="12" fill="#888">Delivered a working prototype in 2 weeks that secured $200K in funding.</text>
+    <text x="140" y="550" font-size="13" font-weight="600" fill="#1F1F1F">GitHub sync — 12 commits, 3 PRs merged</text>
+    <text x="140" y="570" font-size="12" fill="#888">Active contributor to open-source design system with 400+ stars.</text>
+
+    <!-- Evidence chips -->
+    <rect x="80" y="690" width="1280" height="80" rx="14" fill="#F8F8F8" stroke="#EEE" stroke-width="1"/>
+    <text x="120" y="720" font-size="11" fill="#999" letter-spacing="2">GROUNDED IN YOUR GROWTH LOG</text>
+    <rect x="120" y="740" width="200" height="24" rx="12" fill="#F0F0F0"/>
+    <text x="220" y="757" text-anchor="middle" font-size="11" fill="#555">Component library</text>
+    <rect x="340" y="740" width="180" height="24" rx="12" fill="#F0F0F0"/>
+    <text x="430" y="757" text-anchor="middle" font-size="11" fill="#555">Client prototype</text>
+    <rect x="540" y="740" width="200" height="24" rx="12" fill="#F0F0F0"/>
+    <text x="640" y="757" text-anchor="middle" font-size="11" fill="#555">GitHub contributions</text>
+
+    <text x="60" y="870" font-size="11" fill="#999">[LOFI] Resume Result — tab bar, resume paper (headline/summary/skills/evidence), evidence chips</text>
+  </g>
+</svg>

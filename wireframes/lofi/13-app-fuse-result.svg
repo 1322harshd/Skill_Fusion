@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="900" fill="#FFFFFF"/>
+
+    <!-- Top nav -->
+    <rect width="1440" height="60" fill="#F8F8F8" stroke="#EEE" stroke-width="1"/>
+    <circle cx="40" cy="30" r="18" fill="#E5E5E5"/>
+    <text x="40" y="36" text-anchor="middle" font-size="14" font-style="italic" font-weight="800" fill="#666">s</text>
+    <text x="320" y="36" font-size="13" font-weight="600" fill="#1F1F1F">Fuse</text>
+
+    <!-- Result header -->
+    <text x="80" y="120" font-size="11" fill="#999" letter-spacing="2">YOUR FUSION</text>
+    <text x="80" y="165" font-size="42" font-style="italic" font-weight="800" fill="#1F1F1F">Design × Code</text>
+    <text x="1300" y="140" text-anchor="end" font-size="56" font-style="italic" font-weight="800" fill="#1F1F1F">847</text>
+    <text x="1300" y="165" text-anchor="end" font-size="12" fill="#999">rare blend · high demand</text>
+
+    <!-- Brief lede -->
+    <text x="80" y="220" font-size="14" fill="#555">Design × Code is one of the rarest blends in the job market — only 2.4% of pairs</text>
+    <text x="80" y="240" font-size="14" fill="#555">show up in listings this way. You're looking at a serious competitive edge.</text>
+
+    <!-- Four info cards in 2x2 grid -->
+    <rect x="80" y="280" width="580" height="160" rx="14" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <text x="110" y="310" font-size="11" fill="#999" letter-spacing="2">COMPLEMENTARITY</text>
+    <text x="110" y="340" font-size="13" fill="#555">• Design thinking makes code more user-centered</text>
+    <text x="110" y="362" font-size="13" fill="#555">• Code fluency makes design more prototype-friendly</text>
+    <text x="110" y="384" font-size="13" fill="#555">• Both share rapid iteration as a core method</text>
+
+    <rect x="680" y="280" width="580" height="160" rx="14" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <text x="710" y="310" font-size="11" fill="#999" letter-spacing="2">WHERE IT SHOWS UP</text>
+    <text x="710" y="340" font-size="13" fill="#555">• Product design roles requiring shipping code</text>
+    <text x="710" y="362" font-size="13" fill="#555">• Design engineering positions at startups</text>
+    <text x="710" y="384" font-size="13" fill="#555">• Creative technologist and prototyper roles</text>
+
+    <rect x="80" y="460" width="580" height="120" rx="14" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <text x="110" y="490" font-size="11" fill="#999" letter-spacing="2">INDUSTRIES</text>
+    <rect x="110" y="510" width="80" height="28" rx="14" fill="#F0F0F0"/>
+    <text x="150" y="529" text-anchor="middle" font-size="12" fill="#555">SaaS</text>
+    <rect x="200" y="510" width="100" height="28" rx="14" fill="#F0F0F0"/>
+    <text x="250" y="529" text-anchor="middle" font-size="12" fill="#555">Startups</text>
+    <rect x="310" y="510" width="110" height="28" rx="14" fill="#F0F0F0"/>
+    <text x="365" y="529" text-anchor="middle" font-size="12" fill="#555">E-commerce</text>
+    <rect x="430" y="510" width="120" height="28" rx="14" fill="#F0F0F0"/>
+    <text x="490" y="529" text-anchor="middle" font-size="12" fill="#555">Agencies</text>
+
+    <rect x="680" y="460" width="580" height="120" rx="14" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <text x="710" y="490" font-size="11" fill="#999" letter-spacing="2">INSIGHTS</text>
+    <text x="710" y="518" font-size="13" fill="#555">• 37% higher pay than single-skill designers</text>
+    <text x="710" y="540" font-size="13" fill="#555">• Demand growing +4.1% year over year</text>
+
+    <!-- Action buttons -->
+    <rect x="400" y="620" width="220" height="44" rx="22" fill="#1F1F1F"/>
+    <text x="510" y="648" text-anchor="middle" font-size="13" font-weight="600" fill="#FFF">Choose a roadmap</text>
+    <rect x="650" y="620" width="200" height="44" rx="22" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="750" y="648" text-anchor="middle" font-size="13" fill="#555">See the score</text>
+    <text x="920" y="648" font-size="13" fill="#999">Fuse a new pair</text>
+
+    <text x="60" y="870" font-size="11" fill="#999">[LOFI] Fuse Result — score, brief lede, 4 info cards (complementarity, applications, industries, insights), action buttons</text>
+  </g>
+</svg>

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="500" viewBox="0 0 1440 500">
+  <g font-family="Helvetica, Arial, sans-serif" fill="none" stroke="#222" stroke-width="1.2">
+    <rect width="1440" height="500" fill="#fff"/>
+    <line x1="80" y1="40" x2="1360" y2="40" stroke="#ddd" stroke-width="1"/>
+    <!-- Logo -->
+    <circle cx="120" cy="90" r="20" stroke-width="1.5"/>
+    <text x="120" y="97" text-anchor="middle" font-size="18" font-style="italic" font-weight="800" fill="#222" stroke="none">s</text>
+    <text x="150" y="96" font-size="14" font-style="italic" font-weight="600" fill="#222" stroke="none">Skill Fusion AI</text>
+    <rect x="100" y="130" width="200" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <rect x="100" y="144" width="160" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <rect x="100" y="158" width="120" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <!-- Product column -->
+    <text x="400" y="80" font-size="11" font-weight="600" fill="#888" stroke="none">PRODUCT</text>
+    <text x="400" y="108" font-size="13" fill="#222" stroke="none">Try a Fusion</text>
+    <text x="400" y="132" font-size="13" fill="#222" stroke="none">How It Works</text>
+    <text x="400" y="156" font-size="13" fill="#222" stroke="none">Features</text>
+    <text x="400" y="180" font-size="13" fill="#222" stroke="none">Fusion Score</text>
+    <text x="400" y="204" font-size="13" fill="#222" stroke="none">Pricing</text>
+    <!-- Company column -->
+    <text x="640" y="80" font-size="11" font-weight="600" fill="#888" stroke="none">COMPANY</text>
+    <text x="640" y="108" font-size="13" fill="#222" stroke="none">Community</text>
+    <text x="640" y="132" font-size="13" fill="#222" stroke="none">FAQ</text>
+    <text x="640" y="156" font-size="13" fill="#222" stroke="none">Blog</text>
+    <text x="640" y="180" font-size="13" fill="#222" stroke="none">Careers</text>
+    <text x="640" y="204" font-size="13" fill="#222" stroke="none">Contact</text>
+    <!-- Legal column -->
+    <text x="880" y="80" font-size="11" font-weight="600" fill="#888" stroke="none">LEGAL</text>
+    <text x="880" y="108" font-size="13" fill="#222" stroke="none">Privacy</text>
+    <text x="880" y="132" font-size="13" fill="#222" stroke="none">Terms</text>
+    <text x="880" y="156" font-size="13" fill="#222" stroke="none">License</text>
+    <!-- Bottom bar -->
+    <line x1="80" y1="260" x2="1360" y2="260" stroke="#ddd" stroke-width="1"/>
+    <text x="80" y="290" font-size="11" fill="#aaa" stroke="none">2026 Skill Fusion AI. All rights reserved.</text>
+    <text x="1000" y="290" font-size="11" fill="#aaa" stroke="none">Made with React + Framer Motion</text>
+    <text x="40" y="460" font-size="11" fill="#999" stroke="none">[Footer] 4-column grid: logo+blurb, Product, Company, Legal</text>
+  </g>
+</svg>

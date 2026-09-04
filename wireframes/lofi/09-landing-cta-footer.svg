@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="900" fill="#FFFFFF"/>
+
+    <!-- Dark background area -->
+    <rect width="1440" height="700" fill="#2A2A2A" rx="0"/>
+
+    <!-- Headline -->
+    <text x="720" y="280" text-anchor="middle" font-size="52" font-style="italic" font-weight="800" fill="#FFF">Fuse what you know</text>
+    <text x="720" y="345" text-anchor="middle" font-size="52" font-style="italic" font-weight="800" fill="#FFF">into what you'll become</text>
+
+    <!-- Subtitle -->
+    <text x="720" y="400" text-anchor="middle" font-size="15" fill="#AAA">Start free, no credit card. Your first fusion is live in under five minutes.</text>
+
+    <!-- CTA button -->
+    <rect x="570" y="440" width="220" height="50" rx="25" fill="#FFF"/>
+    <text x="680" y="472" text-anchor="middle" font-size="14" font-weight="600" fill="#1F1F1F">Start Your Fusion</text>
+
+    <!-- Trust line -->
+    <text x="720" y="530" text-anchor="middle" font-size="11" fill="#888">Backed by Adzuna · GitHub · Ollama · PostgreSQL · Open Source</text>
+
+    <!-- Footer area -->
+    <rect y="700" width="1440" height="200" fill="#FFF"/>
+    <line x1="100" y1="700" x2="1340" y2="700" stroke="#EEE" stroke-width="1"/>
+
+    <!-- Footer logo -->
+    <circle cx="130" cy="750" r="20" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="130" y="757" text-anchor="middle" font-size="16" font-style="italic" font-weight="800" fill="#666">s</text>
+    <text x="160" y="757" font-size="14" font-style="italic" font-weight="600" fill="#1F1F1F">Skill Fusion AI</text>
+    <text x="110" y="795" font-size="11" fill="#999">Fuse two skills into a rare career.</text>
+
+    <!-- Footer columns -->
+    <text x="440" y="730" font-size="11" fill="#999" letter-spacing="2">PRODUCT</text>
+    <text x="440" y="755" font-size="13" fill="#666">Try a Fusion</text>
+    <text x="440" y="780" font-size="13" fill="#666">How It Works</text>
+    <text x="440" y="805" font-size="13" fill="#666">Features</text>
+    <text x="440" y="830" font-size="13" fill="#666">Pricing</text>
+
+    <text x="640" y="730" font-size="11" fill="#999" letter-spacing="2">COMPANY</text>
+    <text x="640" y="755" font-size="13" fill="#666">Community</text>
+    <text x="640" y="780" font-size="13" fill="#666">FAQ</text>
+    <text x="640" y="805" font-size="13" fill="#666">Blog</text>
+    <text x="640" y="830" font-size="13" fill="#666">Contact</text>
+
+    <text x="840" y="730" font-size="11" fill="#999" letter-spacing="2">LEGAL</text>
+    <text x="840" y="755" font-size="13" fill="#666">Privacy</text>
+    <text x="840" y="780" font-size="13" fill="#666">Terms</text>
+    <text x="840" y="805" font-size="13" fill="#666">License</text>
+
+    <text x="110" y="870" font-size="11" fill="#BBB">© 2026 Skill Fusion AI. All rights reserved.</text>
+
+    <text x="60" y="870" font-size="11" fill="#999">[LOFI] CTA + Footer — dark CTA section, footer with columns</text>
+  </g>
+</svg>

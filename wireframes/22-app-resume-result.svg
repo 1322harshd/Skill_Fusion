@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="860" viewBox="0 0 1280 860">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1280" height="860" fill="#FFFFFF"/>
+
+    <!-- APP SHELL HEADER -->
+    <circle cx="56" cy="52" r="24" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.3"/>
+    <text x="56" y="60" text-anchor="middle" font-size="20" font-style="italic" font-weight="800" fill="#1F1F1F">s</text>
+    <rect x="320" y="30" width="640" height="46" rx="23" fill="#F4F4F4"/>
+    <rect x="330" y="34" width="100" height="38" rx="19" fill="#FFFFFF"/>
+    <rect x="343" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="365" y="58" font-size="13" fill="#1F1F1F">Dashboard</text>
+    <rect x="436" y="34" width="100" height="38" rx="19" fill="#FFFFFF"/>
+    <rect x="449" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="471" y="58" font-size="13" fill="#1F1F1F">Fuse</text>
+    <rect x="542" y="34" width="100" height="38" rx="19" fill="#FFFFFF"/>
+    <rect x="555" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="577" y="58" font-size="13" fill="#1F1F1F">Roadmaps</text>
+    <rect x="648" y="34" width="100" height="38" rx="19" fill="#FFFFFF"/>
+    <rect x="661" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="683" y="58" font-size="13" fill="#1F1F1F">Log</text>
+    <rect x="754" y="34" width="100" height="38" rx="19" fill="#1F1F1F"/>
+    <rect x="767" y="46" width="14" height="14" rx="4" fill="#FFFFFF"/>
+    <text x="789" y="58" font-size="13" font-weight="600" fill="#FFFFFF">Resume</text>
+    <rect x="770" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="792" y="58" font-size="13" fill="#1F1F1F">Connect</text>
+    <rect x="1112" y="30" width="128" height="46" rx="23" fill="#F4F4F4"/>
+    <circle cx="1138" cy="53" r="17" fill="#D9D9D9"/>
+    <text x="1164" y="58" font-size="13" font-weight="600" fill="#1F1F1F">Ada</text>
+
+    <!-- Toolbar -->
+    <rect x="192" y="130" width="236" height="42" rx="21" fill="#F1F1F1"/>
+    <rect x="200" y="137" width="104" height="28" rx="14" fill="#1F1F1F"/><text x="252" y="156" text-anchor="middle" font-size="13" font-weight="600" fill="#FFFFFF">Resume</text>
+    <text x="330" y="156" text-anchor="middle" font-size="13" fill="#1F1F1F">Cover letter</text>
+    <rect x="908" y="130" width="86" height="42" rx="21" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+    <text x="951" y="155" text-anchor="middle" font-size="13" font-weight="600" fill="#1F1F1F">Copy</text>
+    <rect x="1002" y="130" width="104" height="42" rx="21" fill="#1F1F1F"/>
+    <text x="1054" y="155" text-anchor="middle" font-size="13" font-weight="600" fill="#FFFFFF">⬇ Download</text>
+
+    <!-- Paper card -->
+    <rect x="192" y="196" width="896" height="430" rx="14" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="2"/>
+    <text x="240" y="252" font-size="28" font-style="italic" font-weight="800" fill="#1F1F1F">Ada Chen — AI × Design Product Designer</text>
+
+    <text x="240" y="308" font-size="11" font-weight="700" letter-spacing="1.5" fill="#666666">SUMMARY</text>
+    <text x="240" y="330" font-size="13" fill="#333333">Product designer who ships. I design interfaces and build working AI-assisted prototypes,</text>
+    <text x="240" y="348" font-size="13" fill="#333333">owning features from concept to shipped CSS — exactly what this design-tool role asks for.</text>
+
+    <text x="240" y="396" font-size="11" font-weight="700" letter-spacing="1.5" fill="#666666">SKILLS</text>
+    <text x="240" y="420" font-size="13" fill="#333333">Interaction Design · Prototyping · Design Systems · AI Tooling · CSS/React · Motion</text>
+
+    <text x="240" y="466" font-size="11" font-weight="700" letter-spacing="1.5" fill="#666666">EVIDENCE</text>
+    <text x="240" y="492" font-size="13" fill="#333333">Explained week 2 — First artifact (Today)</text>
+    <text x="240" y="510" font-size="12" fill="#666666">Described the AI-assisted prototype mechanics in detail.</text>
+    <text x="240" y="536" font-size="13" fill="#333333">Milestone — Product + pitch deck (Yesterday)</text>
+    <text x="240" y="554" font-size="12" fill="#666666">Shipped interactive prototype and investor deck to an incubator.</text>
+
+    <!-- Grounded in Growth Log -->
+    <rect x="192" y="650" width="896" height="110" rx="20" fill="#F7F7F7" stroke="#1F1F1F" stroke-width="1.2"/>
+    <text x="228" y="682" font-size="11" font-weight="700" letter-spacing="1.5" fill="#666666">GROUNDED IN YOUR GROWTH LOG</text>
+    <g>
+      <rect x="228" y="700" width="250" height="28" rx="14" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/><text x="353" y="718" text-anchor="middle" font-size="11" fill="#1F1F1F">Explained week 2 — First artifact</text>
+      <rect x="490" y="700" width="230" height="28" rx="14" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/><text x="605" y="718" text-anchor="middle" font-size="11" fill="#1F1F1F">Milestone — Product + pitch deck</text>
+    </g>
+    <text x="228" y="742" font-size="12" fill="#888888">[Resume — done] Same panel switched to a cover-letter tab</text>
+  </g>
+</svg>

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="900" fill="#FFFFFF"/>
+
+    <!-- Top nav -->
+    <rect width="1440" height="60" fill="#F8F8F8" stroke="#EEE" stroke-width="1"/>
+    <circle cx="40" cy="30" r="18" fill="#E5E5E5"/>
+    <text x="40" y="36" text-anchor="middle" font-size="14" font-style="italic" font-weight="800" fill="#666">s</text>
+    <text x="400" y="36" font-size="13" font-weight="600" fill="#1F1F1F">Connect</text>
+
+    <!-- Title -->
+    <text x="720" y="120" text-anchor="middle" font-size="42" font-style="italic" font-weight="800" fill="#1F1F1F">Connect</text>
+
+    <!-- Room tabs -->
+    <rect x="80" y="150" width="140" height="36" rx="18" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="150" y="173" text-anchor="middle" font-size="13" fill="#555">Open room</text>
+    <rect x="240" y="150" width="150" height="36" rx="18" fill="#1F1F1F"/>
+    <text x="315" y="173" text-anchor="middle" font-size="13" font-weight="600" fill="#FFF">Private room</text>
+
+    <!-- Private room header -->
+    <rect x="380" y="220" width="680" height="40" rx="20" fill="#F0F0F0"/>
+    <text x="720" y="246" text-anchor="middle" font-size="12" fill="#555">Private room · one-on-one</text>
+    <text x="720" y="280" text-anchor="middle" font-size="13" fill="#999">Sparse by design. One conversation, no audience.</text>
+
+    <!-- Peer card -->
+    <rect x="380" y="320" width="680" height="80" rx="16" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <circle cx="430" cy="360" r="22" fill="#E5E5E5"/>
+    <text x="430" y="367" text-anchor="middle" font-size="12" font-weight="600" fill="#666">DR</text>
+    <text x="470" y="355" font-size="16" font-style="italic" font-weight="600" fill="#1F1F1F">daniel.r</text>
+    <text x="470" y="375" font-size="11" fill="#999">Design × Code</text>
+
+    <!-- Exchange panel -->
+    <rect x="380" y="420" width="680" height="200" rx="18" fill="#F8F8F8" stroke="#EEE" stroke-width="1"/>
+    <circle cx="430" cy="465" r="18" fill="#E5E5E5"/>
+    <text x="430" y="472" text-anchor="middle" font-size="10" font-weight="600" fill="#666">DR</text>
+    <text x="460" y="465" font-size="14" font-style="italic" font-weight="600" fill="#1F1F1F">daniel.r</text>
+    <text x="460" y="482" font-size="11" fill="#999">Design × Code · skill exchange</text>
+    <line x1="420" y1="505" x2="1020" y2="505" stroke="#EEE" stroke-width="1"/>
+    <text x="420" y="535" font-size="13" fill="#888">Trade notes with daniel: you bring your Design edge,</text>
+    <text x="420" y="555" font-size="13" fill="#888">they bring their Code edge. Both sides confirm.</text>
+    <rect x="420" y="575" width="180" height="36" rx="18" fill="#1F1F1F"/>
+    <text x="510" y="598" text-anchor="middle" font-size="13" font-weight="600" fill="#FFF">Propose exchange</text>
+
+    <text x="60" y="870" font-size="11" fill="#999">[LOFI] Connect Private Room — peer card, exchange panel with propose button</text>
+  </g>
+</svg>

@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="760" viewBox="0 0 1440 760">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="760" fill="#FFFFFF"/>
+
+    <!-- Section heading -->
+    <text x="80" y="170" font-size="60" font-style="italic" font-weight="800" fill="#1F1F1F">Learning</text>
+    <text x="80" y="235" font-size="60" font-style="italic" font-weight="800" fill="#1F1F1F">reimagined</text>
+
+    <!-- 3 capability cards -->
+    <!-- Card 1 -->
+    <rect x="80" y="300" width="405" height="380" rx="24" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+    <rect x="108" y="328" width="44" height="44" rx="12" fill="#E7E7E7"/>
+    <g class="tags">
+      <rect x="252" y="334" width="112" height="24" rx="12" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/>
+      <text x="308" y="350" text-anchor="middle" font-size="10.5" fill="#1F1F1F">Real Overlap</text>
+      <rect x="372" y="334" width="100" height="24" rx="12" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/>
+      <text x="422" y="350" text-anchor="middle" font-size="10.5" fill="#1F1F1F">Job-Data Grounded</text>
+      <rect x="272" y="366" width="106" height="24" rx="12" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/>
+      <text x="325" y="382" text-anchor="middle" font-size="10.5" fill="#1F1F1F">Any Domain</text>
+      <rect x="386" y="366" width="100" height="24" rx="12" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/>
+      <text x="436" y="382" text-anchor="middle" font-size="10.5" fill="#1F1F1F">No Guesswork</text>
+    </g>
+    <text x="108" y="596" font-size="30" font-style="italic" font-weight="800" fill="#1F1F1F">Fusion Engine</text>
+    <text x="108" y="624" font-size="13" fill="#333333">Our AI finds the real overlap between any two skills — grounded in actual job-market data, not a generic course mashup.</text>
+    <text x="108" y="648" font-size="13" fill="#333333">market data, not a generic course mashup.</text>
+
+    <!-- Card 2 -->
+    <rect x="517" y="300" width="405" height="380" rx="24" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+    <rect x="545" y="328" width="44" height="44" rx="12" fill="#E7E7E7"/>
+    <g class="tags">
+      <rect x="676" y="334" width="120" height="24" rx="12" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/>
+      <text x="736" y="350" text-anchor="middle" font-size="10.5" fill="#1F1F1F">3 Outcome Paths</text>
+      <rect x="804" y="334" width="100" height="24" rx="12" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/>
+      <text x="854" y="350" text-anchor="middle" font-size="10.5" fill="#1F1F1F">4–12 Weeks</text>
+      <rect x="700" y="366" width="106" height="24" rx="12" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/>
+      <text x="753" y="382" text-anchor="middle" font-size="10.5" fill="#1F1F1F">Real Projects</text>
+      <rect x="814" y="366" width="90" height="24" rx="12" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/>
+      <text x="859" y="382" text-anchor="middle" font-size="10.5" fill="#1F1F1F">Not Just Courses</text>
+    </g>
+    <text x="545" y="596" font-size="30" font-style="italic" font-weight="800" fill="#1F1F1F">Living Roadmap</text>
+    <text x="545" y="624" font-size="13" fill="#333333">Three real-world outcome paths, not one generic plan. Pick the</text>
+    <text x="545" y="648" font-size="13" fill="#333333">direction, follow a 4–12 week roadmap, finish with a real project.</text>
+
+    <!-- Card 3 -->
+    <rect x="954" y="300" width="405" height="380" rx="24" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+    <rect x="982" y="328" width="44" height="44" rx="12" fill="#E7E7E7"/>
+    <g class="tags">
+      <rect x="1144" y="334" width="112" height="24" rx="12" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/>
+      <text x="1200" y="350" text-anchor="middle" font-size="10.5" fill="#1F1F1F">Verified Badges</text>
+      <rect x="1264" y="334" width="100" height="24" rx="12" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/>
+      <text x="1314" y="350" text-anchor="middle" font-size="10.5" fill="#1F1F1F">GitHub Synced</text>
+      <rect x="1144" y="366" width="106" height="24" rx="12" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/>
+      <text x="1197" y="382" text-anchor="middle" font-size="10.5" fill="#1F1F1F">Dual-Tagged</text>
+      <rect x="1258" y="366" width="100" height="24" rx="12" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/>
+      <text x="1308" y="382" text-anchor="middle" font-size="10.5" fill="#1F1F1F">Portfolio-Ready</text>
+    </g>
+    <text x="982" y="596" font-size="30" font-style="italic" font-weight="800" fill="#1F1F1F">Verified Growth</text>
+    <text x="982" y="624" font-size="13" fill="#333333">Every achievement tagged by skill and soft skill, synced from</text>
+    <text x="982" y="648" font-size="13" fill="#333333">GitHub where it's real, and verifiable — not just self-reported.</text>
+
+    <text x="80" y="724" font-size="12" fill="#888888">[Capabilities] Background video + 3 glass cards</text>
+  </g>
+</svg>

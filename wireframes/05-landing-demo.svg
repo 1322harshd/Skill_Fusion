@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="900" fill="#FFFFFF"/>
+
+    <!-- Section heading -->
+    <text x="80" y="90" font-size="13" font-weight="700" letter-spacing="2" fill="#666666">TRY IT</text>
+    <text x="80" y="150" font-size="52" font-style="italic" font-weight="800" fill="#1F1F1F">Fuse your own skills</text>
+
+    <!-- Demo card -->
+    <rect x="160" y="200" width="1120" height="640" rx="28" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+
+    <!-- Skill chips group 1 -->
+    <text x="220" y="260" font-size="11" font-weight="700" letter-spacing="1.5" fill="#666666">SKILL ONE</text>
+    <g>
+      <rect x="220" y="278" width="84" height="34" rx="17" fill="#1F1F1F"/><text x="262" y="299" text-anchor="middle" font-size="13" fill="#FFFFFF">Design</text>
+      <rect x="312" y="278" width="66" height="34" rx="17" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/><text x="345" y="299" text-anchor="middle" font-size="13" fill="#1F1F1F">Code</text>
+      <rect x="386" y="278" width="68" height="34" rx="17" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/><text x="420" y="299" text-anchor="middle" font-size="13" fill="#1F1F1F">Data</text>
+      <rect x="462" y="278" width="82" height="34" rx="17" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/><text x="503" y="299" text-anchor="middle" font-size="13" fill="#1F1F1F">Writing</text>
+      <rect x="552" y="278" width="96" height="34" rx="17" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/><text x="600" y="299" text-anchor="middle" font-size="13" fill="#1F1F1F">Marketing</text>
+      <rect x="656" y="278" width="64" height="34" rx="17" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/><text x="688" y="299" text-anchor="middle" font-size="13" fill="#1F1F1F">Sales</text>
+      <rect x="728" y="278" width="44" height="34" rx="17" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/><text x="750" y="299" text-anchor="middle" font-size="13" fill="#1F1F1F">AI</text>
+      <rect x="780" y="278" width="92" height="34" rx="17" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/><text x="826" y="299" text-anchor="middle" font-size="13" fill="#1F1F1F">Illustration</text>
+      <rect x="880" y="278" width="78" height="34" rx="17" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/><text x="919" y="299" text-anchor="middle" font-size="13" fill="#1F1F1F">Product</text>
+    </g>
+
+    <!-- Skill chips group 2 -->
+    <text x="220" y="370" font-size="11" font-weight="700" letter-spacing="1.5" fill="#666666">SKILL TWO</text>
+    <g>
+      <rect x="220" y="388" width="84" height="34" rx="17" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/><text x="262" y="409" text-anchor="middle" font-size="13" fill="#1F1F1F">Design</text>
+      <rect x="312" y="388" width="66" height="34" rx="17" fill="#1F1F1F"/><text x="345" y="409" text-anchor="middle" font-size="13" fill="#FFFFFF">Code</text>
+      <rect x="386" y="388" width="68" height="34" rx="17" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/><text x="420" y="409" text-anchor="middle" font-size="13" fill="#1F1F1F">Data</text>
+      <rect x="462" y="388" width="82" height="34" rx="17" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/><text x="503" y="409" text-anchor="middle" font-size="13" fill="#1F1F1F">Writing</text>
+      <rect x="552" y="388" width="96" height="34" rx="17" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/><text x="600" y="409" text-anchor="middle" font-size="13" fill="#1F1F1F">Marketing</text>
+      <rect x="656" y="388" width="64" height="34" rx="17" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/><text x="688" y="409" text-anchor="middle" font-size="13" fill="#1F1F1F">Sales</text>
+      <rect x="728" y="388" width="44" height="34" rx="17" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/><text x="750" y="409" text-anchor="middle" font-size="13" fill="#1F1F1F">AI</text>
+      <rect x="780" y="388" width="92" height="34" rx="17" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/><text x="826" y="409" text-anchor="middle" font-size="13" fill="#1F1F1F">Illustration</text>
+      <rect x="880" y="388" width="78" height="34" rx="17" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/><text x="919" y="409" text-anchor="middle" font-size="13" fill="#1F1F1F">Product</text>
+    </g>
+
+    <!-- Fuse button -->
+    <rect x="640" y="458" width="180" height="44" rx="22" fill="#1F1F1F"/>
+    <text x="730" y="485" text-anchor="middle" font-size="14" font-weight="600" fill="#FFFFFF">Fuse Design × Code</text>
+
+    <!-- Divider -->
+    <line x1="220" y1="540" x2="1220" y2="540" stroke="#CCCCCC" stroke-width="1"/>
+
+    <!-- Result header -->
+    <text x="220" y="586" font-size="11" font-weight="700" letter-spacing="1.5" fill="#666666">YOUR FUSION</text>
+    <text x="220" y="622" font-size="34" font-style="italic" font-weight="800" fill="#1F1F1F">Design <tspan fill="#999999">×</tspan> Code</text>
+    <text x="1220" y="618" text-anchor="end" font-size="52" font-style="italic" font-weight="800" fill="#1F1F1F">3.8%</text>
+    <text x="1220" y="644" text-anchor="end" font-size="13" fill="#444444">rarer than the average pair</text>
+
+    <!-- 4 step rows -->
+    <g>
+      <rect x="220" y="676" width="1000" height="56" rx="16" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/>
+      <text x="252" y="711" font-size="20" font-style="italic" font-weight="800" fill="#B9B9B9">01</text>
+      <text x="292" y="706" font-size="17" font-style="italic" font-weight="700" fill="#1F1F1F">Foundations</text>
+      <text x="292" y="724" font-size="12" fill="#666666">Get fluent in Code applied to Design.</text>
+      <text x="1220" y="711" text-anchor="end" font-size="13" fill="#666666">4 days</text>
+
+      <rect x="220" y="742" width="1000" height="56" rx="16" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/>
+      <text x="252" y="777" font-size="20" font-style="italic" font-weight="800" fill="#B9B9B9">02</text>
+      <text x="292" y="772" font-size="17" font-style="italic" font-weight="700" fill="#1F1F1F">First artifact</text>
+      <text x="292" y="790" font-size="12" fill="#666666">Build a real Design artifact powered by Code.</text>
+      <text x="1220" y="777" text-anchor="end" font-size="13" fill="#666666">1 week</text>
+
+      <rect x="220" y="808" width="1000" height="56" rx="16" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/>
+      <text x="252" y="843" font-size="20" font-style="italic" font-weight="800" fill="#B9B9B9">03</text>
+      <text x="292" y="838" font-size="17" font-style="italic" font-weight="700" fill="#1F1F1F">The project</text>
+      <text x="292" y="856" font-size="12" fill="#666666">Ship the flagship Design + Code portfolio piece.</text>
+      <text x="1220" y="843" text-anchor="end" font-size="13" fill="#666666">2 weeks</text>
+    </g>
+
+    <text x="80" y="880" font-size="12" fill="#888888">[Demo] Interactive fuse — sample output, live data on signup</text>
+  </g>
+</svg>

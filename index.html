@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skill Fusion AI — Fuse What You Know Into What You'll Become</title>
+  <meta name="description" content="Combine any two skills and our AI builds your personalized roadmap, a real project, and a data-backed score of how rare your combination actually is." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='16' fill='%23000'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-style='italic' font-size='20' fill='%23fff' text-anchor='middle'%3Es%3C/text%3E%3C/svg%3E" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            heading: ["Instrument Serif", "serif"],
+            body: ["Barlow", "sans-serif"],
+          },
+          borderRadius: {
+            // "interactive = pill" rule: `rounded` (and any bare radius)
+            // resolves to a full pill. Use explicit rounded-2xl for cards
+            // and token values (--radius-*) for anything else.
+            DEFAULT: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Barlow:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    :root {
+      /* Category colors are sourced from fusion.js CATEGORY_COLORS at
+         runtime (setProperty) — keep them in sync here only as fallback. */
+      --color-tech: #3fb6c6;
+      --color-creative: #d96c92;
+      --color-business: #cda62f;
+      --color-science: #52a970;
+      --color-comm: #7d84ce;
+      --color-status-active: #4fb98a;
+      --color-status-typing: #cda62f;
+      --color-status-idle: rgba(255, 255, 255, 0.5);
+      --color-status-away: rgba(255, 255, 255, 0.15);
+      --color-paper: #f2efe8;
+      --shadow-paper: 0 24px 80px rgba(0, 0, 0, 0.5);
+      --node-done: #ffffff;
+      --node-active: #ffffff;
+      --node-idle: rgba(255, 255, 255, 0.22);
+      --node-ring: rgba(255, 255, 255, 0.14);
+      --node-glow: rgba(255, 255, 255, 0.5);
+      --cell-on: rgba(255, 255, 255, 0.55);
+      --cell-off: rgba(255, 255, 255, 0.08);
+      --radius-sm: 0.375rem;
+      --radius-md: 0.75rem;
+      --radius-lg: 1rem;
+      --radius-pill: 9999px;
+      --glass-surface: rgba(255, 255, 255, 0.01);
+      --glass-strong: rgba(255, 255, 255, 0.04);
+      --border-subtle: rgba(255, 255, 255, 0.1);
+    }
+
+    .liquid-glass {
+      background: var(--glass-surface);
+      background-blend-mode: luminosity;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border: none;
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    .liquid-glass::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1.4px;
+      background: linear-gradient(180deg,
+        rgba(255, 255, 255, 0.45) 0%,
+        rgba(255, 255, 255, 0.15) 20%,
+        rgba(255, 255, 255, 0) 40%,
+        rgba(255, 255, 255, 0) 60%,
+        rgba(255, 255, 255, 0.15) 80%,
+        rgba(255, 255, 255, 0.45) 100%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+    .liquid-glass-strong {
+      background: rgba(255, 255, 255, 0.01);
+      background-blend-mode: luminosity;
+      backdrop-filter: blur(50px);
+      -webkit-backdrop-filter: blur(50px);
+      border: none;
+      box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+    .liquid-glass-strong::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1.4px;
+      background: linear-gradient(180deg,
+        rgba(255, 255, 255, 0.5) 0%,
+        rgba(255, 255, 255, 0.2) 20%,
+        rgba(255, 255, 255, 0) 40%,
+        rgba(255, 255, 255, 0) 60%,
+        rgba(255, 255, 255, 0.2) 80%,
+        rgba(255, 255, 255, 0.5) 100%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+    body {
+      margin: 0;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+
+    :focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.75);
+      outline-offset: 2px;
+      border-radius: 9999px;
+    }
+
+    .tappable {
+      transition: transform 160ms ease-out;
+    }
+    .tappable:active {
+      transform: scale(0.97);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
+
+    @media (prefers-reduced-transparency: reduce) {
+      .liquid-glass {
+        background: rgba(255, 255, 255, 0.06);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+      }
+      .liquid-glass-strong {
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+      }
+      :root {
+        --cell-off: rgba(255, 255, 255, 0.12);
+        --node-idle: rgba(255, 255, 255, 0.35);
+      }
+    }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js"
+    integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L"
+    crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"
+    integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm"
+    crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"
+    integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y"
+    crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/framer-motion@11.11.17/dist/framer-motion.js"></script>
+</head>
+
+<body class="bg-black text-white">
+  <div id="root"></div>
+
+  <script type="text/babel" src="src/videos.js"></script>
+  <script type="text/babel" src="src/app/motion.js"></script>
+  <script type="text/babel" src="src/icons.js"></script>
+  <script type="text/babel" src="src/FadingVideo.js"></script>
+  <script type="text/babel" src="src/BlurText.js"></script>
+  <script type="text/babel" src="src/Reveal.js"></script>
+  <script type="text/babel" src="src/SectionHeading.js"></script>
+
+  <script type="text/babel" src="src/landing/Navbar.js"></script>
+  <script type="text/babel" src="src/landing/Hero.js"></script>
+  <script type="text/babel" src="src/landing/Capabilities.js"></script>
+  <script type="text/babel" src="src/landing/HowItWorks.js"></script>
+  <script type="text/babel" src="src/landing/Score.js"></script>
+  <script type="text/babel" src="src/landing/Demo.js"></script>
+  <script type="text/babel" src="src/landing/Community.js"></script>
+  <script type="text/babel" src="src/landing/Pricing.js"></script>
+  <script type="text/babel" src="src/landing/FAQ.js"></script>
+  <script type="text/babel" src="src/landing/CTA.js"></script>
+  <script type="text/babel" src="src/landing/Footer.js"></script>
+
+  <script type="text/babel" src="src/app/router.js"></script>
+  <script type="text/babel" src="src/app/fusion.js"></script>
+  <script type="text/babel" src="src/app/skillpicker.js"></script>
+  <script type="text/babel" src="src/app/ambient.js"></script>
+  <script type="text/babel" src="src/app/store.js"></script>
+  <script type="text/babel" src="src/app/system.js"></script>
+  <script src="src/app/appearance.js"></script>
+  <script type="text/babel" src="src/app/AppShell.js"></script>
+  <script type="text/babel" src="src/app/AiSteps.js"></script>
+  <script type="text/babel" src="src/app/ExplainPanel.js"></script>
+  <script type="text/babel" src="src/app/Onboarding.js?v=6"></script>
+  <script type="text/babel" src="src/app/Fuse.js"></script>
+  <script type="text/babel" src="src/app/Roadmaps.js?v=10"></script>
+  <script type="text/babel" src="src/app/RoadmapDetail.js"></script>
+  <script type="text/babel" src="src/app/Project.js"></script>
+  <script type="text/babel" src="src/app/ScoreScreen.js"></script>
+  <script type="text/babel" src="src/app/GrowthLog.js"></script>
+  <script type="text/babel" src="src/app/Resume.js"></script>
+  <script type="text/babel" src="src/app/Posts.js"></script>
+  <script type="text/babel" src="src/app/Connect.js"></script>
+  <script type="text/babel" src="src/app/Dashboard.js"></script>
+  <script type="text/babel" src="src/App.js"></script>
+</body>
+</html>

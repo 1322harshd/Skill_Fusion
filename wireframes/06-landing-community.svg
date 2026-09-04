@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="660" viewBox="0 0 1440 660">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="660" fill="#FFFFFF"/>
+
+    <!-- Section heading -->
+    <text x="80" y="120" font-size="52" font-style="italic" font-weight="800" fill="#1F1F1F">Built by people fusing now</text>
+
+    <!-- Badges -->
+    <g>
+      <rect x="80" y="170" width="120" height="28" rx="14" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/><text x="140" y="188" text-anchor="middle" font-size="12" fill="#1F1F1F">GitHub Synced</text>
+      <rect x="212" y="170" width="106" height="28" rx="14" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/><text x="265" y="188" text-anchor="middle" font-size="12" fill="#1F1F1F">Dual-Tagged</text>
+      <rect x="330" y="170" width="126" height="28" rx="14" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/><text x="393" y="188" text-anchor="middle" font-size="12" fill="#1F1F1F">Portfolio-Ready</text>
+      <rect x="468" y="170" width="122" height="28" rx="14" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/><text x="529" y="188" text-anchor="middle" font-size="12" fill="#1F1F1F">Verified Badges</text>
+    </g>
+
+    <!-- Quote card 1 -->
+    <rect x="80" y="250" width="405" height="330" rx="24" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+    <text x="108" y="306" font-size="14" fill="#333333">"I fused Marketing with Python. Six weeks later I</text>
+    <text x="108" y="326" font-size="14" fill="#333333">shipped a market-analysis tool that got me three</text>
+    <text x="108" y="346" font-size="14" fill="#333333">interviews."</text>
+    <circle cx="116" cy="416" r="20" fill="#E7E7E7"/>
+    <text x="116" y="422" text-anchor="middle" font-size="13" font-style="italic" font-weight="700" fill="#1F1F1F">AO</text>
+    <text x="152" y="412" font-size="14" font-weight="600" fill="#1F1F1F">Amara Osei</text>
+    <text x="152" y="432" font-size="12" fill="#666666">Marketing × Python</text>
+
+    <!-- Quote card 2 -->
+    <rect x="517" y="250" width="405" height="330" rx="24" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+    <text x="545" y="306" font-size="14" fill="#333333">"The roadmap didn't feel like a course. It felt like</text>
+    <text x="545" y="326" font-size="14" fill="#333333">a plan a senior would actually give you."</text>
+    <circle cx="553" cy="416" r="20" fill="#E7E7E7"/>
+    <text x="553" y="422" text-anchor="middle" font-size="13" font-style="italic" font-weight="700" fill="#1F1F1F">DR</text>
+    <text x="589" y="412" font-size="14" font-weight="600" fill="#1F1F1F">Daniel Reyes</text>
+    <text x="589" y="432" font-size="12" fill="#666666">Design × Code</text>
+
+    <!-- Quote card 3 -->
+    <rect x="954" y="250" width="405" height="330" rx="24" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+    <text x="982" y="306" font-size="14" fill="#333333">"Seeing my rarity score gave me real confidence.</text>
+    <text x="982" y="326" font-size="14" fill="#333333">3.1% of pairs are this rare — I lean into it now."</text>
+    <circle cx="990" cy="416" r="20" fill="#E7E7E7"/>
+    <text x="990" y="422" text-anchor="middle" font-size="13" font-style="italic" font-weight="700" fill="#1F1F1F">PN</text>
+    <text x="1026" y="412" font-size="14" font-weight="600" fill="#1F1F1F">Priya Nair</text>
+    <text x="1026" y="432" font-size="12" fill="#666666">Data × Writing</text>
+
+    <text x="80" y="630" font-size="12" fill="#888888">[Community] 3 testimonial cards</text>
+  </g>
+</svg>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="800" viewBox="0 0 1440 800">
+  <g font-family="Helvetica, Arial, sans-serif" fill="none" stroke="#222" stroke-width="1.2">
+    <rect width="1440" height="800" fill="#fff"/>
+    <text x="720" y="280" text-anchor="middle" font-size="48" font-style="italic" font-weight="800" fill="#222" stroke="none">Fuse what you know into</text>
+    <text x="720" y="340" text-anchor="middle" font-size="48" font-style="italic" font-weight="800" fill="#222" stroke="none">what you'll become</text>
+    <rect x="560" y="380" width="320" height="6" rx="3" fill="#ccc" stroke="none"/>
+    <rect x="600" y="396" width="240" height="6" rx="3" fill="#ccc" stroke="none"/>
+    <rect x="560" y="440" width="320" height="50" rx="25" fill="#222" stroke="none"/>
+    <text x="720" y="471" text-anchor="middle" font-size="15" font-weight="600" fill="#fff" stroke="none">Start Your Fusion</text>
+    <text x="720" y="520" text-anchor="middle" font-size="12" fill="#888" stroke="none">Backed by Adzuna, GitHub, Ollama, PostgreSQL, Open Source</text>
+    <text x="40" y="760" font-size="11" fill="#999" stroke="none">[CTA] Big centered headline + CTA button + trust line</text>
+  </g>
+</svg>

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif" fill="none" stroke="#222" stroke-width="1.2">
+    <rect width="1440" height="900" fill="#fff"/>
+    <!-- Step dots -->
+    <circle cx="680" cy="80" r="16" fill="#222" stroke="none"/>
+    <text x="680" y="85" text-anchor="middle" font-size="12" font-weight="600" fill="#fff" stroke="none">1</text>
+    <line x1="700" y1="80" x2="730" y2="80" stroke="#222" stroke-width="1.5"/>
+    <circle cx="746" cy="80" r="16" fill="#222" stroke="none"/>
+    <text x="746" y="85" text-anchor="middle" font-size="12" font-weight="600" fill="#fff" stroke="none">2</text>
+    <line x1="766" y1="80" x2="796" y2="80" stroke="#222" stroke-width="1.5"/>
+    <circle cx="812" cy="80" r="16" fill="#222" stroke="none"/>
+    <text x="812" y="85" text-anchor="middle" font-size="12" font-weight="600" fill="#fff" stroke="none">3</text>
+
+    <!-- Heading -->
+    <text x="720" y="180" text-anchor="middle" font-size="36" font-style="italic" font-weight="800" fill="#222" stroke="none">Your first fusion</text>
+    <text x="720" y="215" text-anchor="middle" font-size="14" fill="#888" stroke="none">Pick two skills. We'll build the roadmap, the project, and your score from them.</text>
+
+    <!-- Skill picker 1 -->
+    <text x="520" y="280" font-size="11" font-weight="600" fill="#888" stroke="none">SKILL ONE</text>
+    <rect x="520" y="295" width="400" height="48" rx="12" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="540" y="325" font-size="14" fill="#aaa" stroke="none">Pick a skill from any domain</text>
+    <!-- Orb -->
+    <circle cx="720" cy="390" r="28" fill="#f0f0f0" stroke="#bbb"/>
+    <text x="720" y="398" text-anchor="middle" font-size="20" font-weight="600" fill="#222" stroke="none">x</text>
+    <!-- Skill picker 2 -->
+    <text x="520" y="440" font-size="11" font-weight="600" fill="#888" stroke="none">SKILL TWO</text>
+    <rect x="520" y="455" width="400" height="48" rx="12" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="540" y="485" font-size="14" fill="#aaa" stroke="none">Pick another skill from any domain</text>
+
+    <!-- Begin button -->
+    <rect x="520" y="560" width="400" height="50" rx="25" fill="#e0e0e0" stroke="#aaa"/>
+    <text x="720" y="591" text-anchor="middle" font-size="15" font-weight="600" fill="#222" stroke="none">Begin my fusion</text>
+
+    <text x="40" y="860" font-size="11" fill="#999" stroke="none">[Onboarding Step 3] Step dots + two skill pickers + orb + begin button</text>
+  </g>
+</svg>

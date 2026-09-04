@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="800" viewBox="0 0 1440 800">
+  <g font-family="Helvetica, Arial, sans-serif" fill="none" stroke="#222" stroke-width="1.2">
+    <rect width="1440" height="800" fill="#fff"/>
+    <!-- Modal: Log something -->
+    <rect x="400" y="100" width="640" height="520" rx="24" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="440" y="150" font-size="20" font-style="italic" font-weight="700" fill="#222" stroke="none">Log something</text>
+    <text x="440" y="175" font-size="12" fill="#888" stroke="none">Add evidence to your growth ledger.</text>
+    <!-- Fusion selector -->
+    <text x="440" y="210" font-size="11" font-weight="600" fill="#888" stroke="none">FUSION</text>
+    <rect x="440" y="225" width="100" height="28" rx="14" fill="#222" stroke="none"/>
+    <text x="490" y="244" text-anchor="middle" font-size="11" font-weight="600" fill="#fff" stroke="none">Design x Code</text>
+    <!-- Skills -->
+    <text x="440" y="280" font-size="11" font-weight="600" fill="#888" stroke="none">TECHNICAL SKILLS</text>
+    <rect x="440" y="295" width="560" height="44" rx="12" fill="#fff" stroke="#ddd"/>
+    <text x="460" y="322" font-size="13" fill="#aaa" stroke="none">Pick any skills from any domain</text>
+    <!-- Competencies -->
+    <text x="440" y="370" font-size="11" font-weight="600" fill="#888" stroke="none">EMPLOYABILITY COMPETENCIES</text>
+    <rect x="440" y="385" width="90" height="28" rx="14" fill="#f0f0f0" stroke="#ccc"/>
+    <text x="485" y="404" text-anchor="middle" font-size="11" fill="#222" stroke="none">Leadership</text>
+    <rect x="540" y="385" width="80" height="28" rx="14" fill="#f0f0f0" stroke="#ccc"/>
+    <text x="580" y="404" text-anchor="middle" font-size="11" fill="#222" stroke="none">Communication</text>
+    <rect x="630" y="385" width="70" height="28" rx="14" fill="#222" stroke="none"/>
+    <text x="665" y="404" text-anchor="middle" font-size="11" fill="#fff" stroke="none">Problem Solving</text>
+    <!-- Textarea -->
+    <rect x="440" y="430" width="560" height="80" rx="12" fill="#fff" stroke="#ddd"/>
+    <text x="460" y="455" font-size="13" fill="#aaa" stroke="none">What did you do?</text>
+    <!-- Button -->
+    <rect x="440" y="530" width="560" height="44" rx="22" fill="#e0e0e0" stroke="#aaa"/>
+    <text x="720" y="557" text-anchor="middle" font-size="14" font-weight="600" fill="#222" stroke="none">Log it</text>
+    <text x="40" y="760" font-size="11" fill="#999" stroke="none">[Growth Log Modal] Log entry form with fusion picker + skills + competencies + textarea</text>
+  </g>
+</svg>

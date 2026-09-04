@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif" fill="none" stroke="#222" stroke-width="1.2">
+    <rect width="1440" height="900" fill="#fff"/>
+    <!-- Step dots -->
+    <circle cx="680" cy="80" r="16" fill="#222" stroke="none"/>
+    <text x="680" y="85" text-anchor="middle" font-size="12" font-weight="600" fill="#fff" stroke="none">1</text>
+    <line x1="700" y1="80" x2="730" y2="80" stroke="#ddd" stroke-width="1.5"/>
+    <circle cx="746" cy="80" r="16" fill="#f0f0f0" stroke="#ccc"/>
+    <text x="746" y="85" text-anchor="middle" font-size="12" fill="#aaa" stroke="none">2</text>
+    <line x1="766" y1="80" x2="796" y2="80" stroke="#ddd" stroke-width="1.5"/>
+    <circle cx="812" cy="80" r="16" fill="#f0f0f0" stroke="#ccc"/>
+    <text x="812" y="85" text-anchor="middle" font-size="12" fill="#aaa" stroke="none">3</text>
+
+    <!-- Heading -->
+    <text x="720" y="180" text-anchor="middle" font-size="36" font-style="italic" font-weight="800" fill="#222" stroke="none">What describes you?</text>
+    <text x="720" y="215" text-anchor="middle" font-size="14" fill="#888" stroke="none">Pick every one that fits - we use this to shape your path.</text>
+
+    <!-- Persona buttons -->
+    <rect x="400" y="260" width="640" height="60" rx="16" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="440" y="296" font-size="15" font-weight="500" fill="#222" stroke="none">Self Learner</text>
+    <rect x="400" y="340" width="640" height="60" rx="16" fill="#222" stroke="none"/>
+    <text x="440" y="376" font-size="15" font-weight="500" fill="#fff" stroke="none">Career Changer</text>
+    <text x="980" y="376" font-size="16" fill="#fff" stroke="none">+</text>
+    <rect x="400" y="420" width="640" height="60" rx="16" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="440" y="456" font-size="15" font-weight="500" fill="#222" stroke="none">Professional Expanding Expertise</text>
+
+    <!-- Continue button -->
+    <rect x="560" y="540" width="320" height="50" rx="25" fill="#222" stroke="none"/>
+    <text x="720" y="571" text-anchor="middle" font-size="15" font-weight="600" fill="#fff" stroke="none">Continue</text>
+
+    <text x="40" y="860" font-size="11" fill="#999" stroke="none">[Onboarding Step 1] Step dots + persona selection list</text>
+  </g>
+</svg>

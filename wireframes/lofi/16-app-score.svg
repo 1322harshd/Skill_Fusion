@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="900" fill="#FFFFFF"/>
+
+    <!-- Top nav -->
+    <rect width="1440" height="60" fill="#F8F8F8" stroke="#EEE" stroke-width="1"/>
+    <circle cx="40" cy="30" r="18" fill="#E5E5E5"/>
+    <text x="40" y="36" text-anchor="middle" font-size="14" font-style="italic" font-weight="800" fill="#666">s</text>
+    <text x="400" y="36" font-size="13" font-weight="600" fill="#1F1F1F">Score</text>
+
+    <!-- Header -->
+    <rect x="80" y="100" width="160" height="30" rx="15" fill="#E5E5E5"/>
+    <text x="160" y="120" text-anchor="middle" font-size="12" font-weight="600" fill="#555">Design × Code</text>
+    <text x="80" y="170" font-size="36" font-style="italic" font-weight="800" fill="#1F1F1F">Fusion Score</text>
+
+    <!-- Fusion selector pills -->
+    <rect x="80" y="195" width="140" height="28" rx="14" fill="#1F1F1F"/>
+    <text x="150" y="214" text-anchor="middle" font-size="11" font-weight="600" fill="#FFF">Design × Code</text>
+    <rect x="240" y="195" width="140" height="28" rx="14" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="310" y="214" text-anchor="middle" font-size="11" fill="#555">Data × Writing</text>
+
+    <!-- Gauge circle -->
+    <circle cx="250" cy="360" r="100" fill="#F0F0F0"/>
+    <circle cx="250" cy="360" r="80" fill="#FFF"/>
+    <text x="250" y="365" text-anchor="middle" font-size="48" font-style="italic" font-weight="800" fill="#1F1F1F">847</text>
+    <text x="250" y="395" text-anchor="middle" font-size="11" fill="#999" letter-spacing="2">SCORE</text>
+    <text x="250" y="480" text-anchor="middle" font-size="11" fill="#999">weights: rarity 45% · demand 55%</text>
+
+    <!-- Signal bars -->
+    <text x="500" y="280" font-size="14" font-weight="600" fill="#1F1F1F">Rarity signal</text>
+    <text x="1300" y="280" text-anchor="end" font-size="16" font-style="italic" fill="#666">Very Rare</text>
+    <rect x="500" y="295" width="800" height="6" rx="3" fill="#F0F0F0"/>
+    <rect x="500" y="295" width="720" height="6" rx="3" fill="#1F1F1F"/>
+    <text x="500" y="325" font-size="13" fill="#888">Only 2.4% of skill pairs show up in listings this way.</text>
+
+    <text x="500" y="380" font-size="14" font-weight="600" fill="#1F1F1F">Demand signal</text>
+    <text x="1300" y="380" text-anchor="end" font-size="16" font-style="italic" fill="#666">High Demand</text>
+    <rect x="500" y="395" width="800" height="6" rx="3" fill="#F0F0F0"/>
+    <rect x="500" y="395" width="640" height="6" rx="3" fill="#1F1F1F"/>
+    <text x="500" y="425" font-size="13" fill="#888">Listings with this combo pay 37% more than single-skill roles.</text>
+
+    <line x1="500" y1="460" x2="1300" y2="460" stroke="#EEE" stroke-width="1"/>
+    <text x="500" y="490" font-size="14" fill="#555">Your Design × Code blend is in the top 3% of all combinations we've analyzed.</text>
+
+    <!-- Next step card -->
+    <rect x="80" y="530" width="1280" height="100" rx="18" fill="#F8F8F8" stroke="#EEE" stroke-width="1"/>
+    <text x="120" y="565" font-size="11" fill="#999" letter-spacing="2">NATURAL NEXT STEP</text>
+    <text x="120" y="600" font-size="20" font-style="italic" font-weight="600" fill="#1F1F1F">Add Motion Design to lift your score to 892</text>
+    <rect x="1200" y="570" width="120" height="36" rx="18" fill="#1F1F1F"/>
+    <text x="1260" y="594" text-anchor="middle" font-size="13" font-weight="600" fill="#FFF">Add Motion</text>
+
+    <!-- Score history -->
+    <text x="80" y="680" font-size="11" fill="#999" letter-spacing="2">SCORE HISTORY</text>
+    <rect x="80" y="700" width="1280" height="80" rx="14" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <!-- Sparkline placeholder -->
+    <polyline points="100,760 180,750 260,745 340,740 420,735 500,730 580,725 660,720 740,715 820,712 900,710 980,708 1060,706 1140,705 1220,704 1300,703" fill="none" stroke="#CCC" stroke-width="2"/>
+    <text x="100" y="780" font-size="11" fill="#CCC">6 weeks ago</text>
+    <text x="1300" y="780" text-anchor="end" font-size="11" fill="#CCC">today</text>
+
+    <text x="60" y="870" font-size="11" fill="#999">[LOFI] Score Screen — gauge, rarity/demand signal bars, next step card, score history sparkline</text>
+  </g>
+</svg>

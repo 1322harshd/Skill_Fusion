@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="900" fill="#FFFFFF"/>
+
+    <!-- Top nav -->
+    <rect width="1440" height="60" fill="#F8F8F8" stroke="#EEE" stroke-width="1"/>
+    <circle cx="40" cy="30" r="18" fill="#E5E5E5"/>
+    <text x="40" y="36" text-anchor="middle" font-size="14" font-style="italic" font-weight="800" fill="#666">s</text>
+    <text x="400" y="36" font-size="13" font-weight="600" fill="#1F1F1F">Roadmaps</text>
+
+    <!-- Title -->
+    <text x="80" y="120" font-size="42" font-style="italic" font-weight="800" fill="#1F1F1F">Pick your outcome</text>
+
+    <!-- Fusion selector pills -->
+    <rect x="80" y="150" width="140" height="32" rx="16" fill="#1F1F1F"/>
+    <text x="150" y="171" text-anchor="middle" font-size="12" font-weight="600" fill="#FFF">Design × Code</text>
+    <rect x="240" y="150" width="140" height="32" rx="16" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="310" y="171" text-anchor="middle" font-size="12" fill="#555">Data × Writing</text>
+
+    <!-- Three roadmap path cards -->
+    <!-- Path 1 -->
+    <rect x="80" y="220" width="390" height="340" rx="18" fill="#FFF" stroke="#1F1F1F" stroke-width="1.5"/>
+    <text x="110" y="260" font-size="18" font-style="italic" fill="#CCC">01</text>
+    <rect x="320" y="245" width="60" height="24" rx="12" fill="#E5E5E5"/>
+    <text x="350" y="262" text-anchor="middle" font-size="11" font-weight="600" fill="#555">10 wks</text>
+    <text x="110" y="320" font-size="22" font-style="italic" font-weight="700" fill="#1F1F1F">The Design Engineer's Blueprint</text>
+    <text x="110" y="355" font-size="13" fill="#888">Master the overlap of design and code — ship production-ready UI components.</text>
+    <line x1="110" y1="440" x2="440" y2="440" stroke="#EEE" stroke-width="1"/>
+    <rect x="110" y="465" width="340" height="40" rx="20" fill="#1F1F1F"/>
+    <text x="280" y="490" text-anchor="middle" font-size="13" font-weight="600" fill="#FFF">Choose this path</text>
+
+    <!-- Path 2 -->
+    <rect x="500" y="220" width="390" height="340" rx="18" fill="#FFF" stroke="#1F1F1F" stroke-width="1.5"/>
+    <text x="530" y="260" font-size="18" font-style="italic" fill="#CCC">02</text>
+    <rect x="740" y="245" width="60" height="24" rx="12" fill="#E5E5E5"/>
+    <text x="770" y="262" text-anchor="middle" font-size="11" font-weight="600" fill="#555">8 wks</text>
+    <text x="530" y="320" font-size="22" font-style="italic" font-weight="700" fill="#1F1F1F">Creative Technologist Path</text>
+    <text x="530" y="355" font-size="13" fill="#888">Build interactive prototypes and creative tools that blend design craft with code.</text>
+    <line x1="530" y1="440" x2="860" y2="440" stroke="#EEE" stroke-width="1"/>
+    <rect x="530" y="465" width="340" height="40" rx="20" fill="#1F1F1F"/>
+    <text x="700" y="490" text-anchor="middle" font-size="13" font-weight="600" fill="#FFF">Choose this path</text>
+
+    <!-- Path 3 -->
+    <rect x="920" y="220" width="390" height="340" rx="18" fill="#FFF" stroke="#1F1F1F" stroke-width="1.5"/>
+    <text x="950" y="260" font-size="18" font-style="italic" fill="#CCC">03</text>
+    <rect x="1160" y="245" width="60" height="24" rx="12" fill="#E5E5E5"/>
+    <text x="1190" y="262" text-anchor="middle" font-size="11" font-weight="600" fill="#555">6 wks</text>
+    <text x="950" y="320" font-size="22" font-style="italic" font-weight="700" fill="#1F1F1F">Ship a Portfolio Product</text>
+    <text x="950" y="355" font-size="13" fill="#888">Design and build a real product that showcases both your skills in one artifact.</text>
+    <line x1="950" y1="440" x2="1280" y2="440" stroke="#EEE" stroke-width="1"/>
+    <rect x="950" y="465" width="340" height="40" rx="20" fill="#1F1F1F"/>
+    <text x="1120" y="490" text-anchor="middle" font-size="13" font-weight="600" fill="#FFF">Choose this path</text>
+
+    <!-- Regenerate -->
+    <text x="720" y="620" text-anchor="middle" font-size="13" fill="#999">None of these fit?</text>
+    <rect x="580" y="640" width="280" height="40" rx="20" fill="#F8F8F8" stroke="#CCC" stroke-width="1"/>
+    <text x="720" y="665" text-anchor="middle" font-size="13" fill="#555">Show me different options</text>
+
+    <text x="60" y="870" font-size="11" fill="#999">[LOFI] Roadmaps — fusion selector pills, 3 path cards with title/description/duration/CTA</text>
+  </g>
+</svg>

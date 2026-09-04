@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="900" fill="#FFFFFF"/>
+
+    <!-- Top nav -->
+    <rect width="1440" height="60" fill="#F8F8F8" stroke="#EEE" stroke-width="1"/>
+    <circle cx="40" cy="30" r="18" fill="#E5E5E5"/>
+    <text x="40" y="36" text-anchor="middle" font-size="14" font-style="italic" font-weight="800" fill="#666">s</text>
+    <text x="400" y="36" font-size="13" font-weight="600" fill="#1F1F1F">Roadmaps</text>
+
+    <!-- Header -->
+    <rect x="80" y="100" width="160" height="30" rx="15" fill="#E5E5E5"/>
+    <text x="160" y="120" text-anchor="middle" font-size="12" font-weight="600" fill="#555">Design × Code</text>
+    <text x="80" y="170" font-size="36" font-style="italic" font-weight="800" fill="#1F1F1F">The Design Engineer's Blueprint</text>
+    <text x="80" y="200" font-size="14" fill="#888">Week 6 of 10 · on track</text>
+
+    <!-- Progress bar -->
+    <rect x="80" y="215" width="1280" height="6" rx="3" fill="#F0F0F0"/>
+    <rect x="80" y="215" width="768" height="6" rx="3" fill="#1F1F1F"/>
+
+    <!-- Timeline / week cards -->
+    <!-- Week 1 - done -->
+    <rect x="80" y="260" width="1280" height="70" rx="14" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <circle cx="105" cy="295" r="6" fill="#CCC"/>
+    <text x="130" y="295" font-size="16" font-style="italic" fill="#CCC">W1</text>
+    <text x="170" y="295" font-size="15" fill="#AAA">Foundations</text>
+    <rect x="1260" y="280" width="70" height="24" rx="12" fill="#1F1F1F"/>
+    <text x="1295" y="297" text-anchor="middle" font-size="11" font-weight="600" fill="#FFF">Done</text>
+
+    <!-- Week 2 - done -->
+    <rect x="80" y="345" width="1280" height="70" rx="14" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <circle cx="105" cy="380" r="6" fill="#CCC"/>
+    <text x="130" y="380" font-size="16" font-style="italic" fill="#CCC">W2</text>
+    <text x="170" y="380" font-size="15" fill="#AAA">First Prototypes</text>
+    <rect x="1260" y="365" width="70" height="24" rx="12" fill="#1F1F1F"/>
+    <text x="1295" y="382" text-anchor="middle" font-size="11" font-weight="600" fill="#FFF">Done</text>
+
+    <!-- Week 3 - done -->
+    <rect x="80" y="430" width="1280" height="70" rx="14" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <circle cx="105" cy="465" r="6" fill="#CCC"/>
+    <text x="130" y="465" font-size="16" font-style="italic" fill="#CCC">W3</text>
+    <text x="170" y="465" font-size="15" fill="#AAA">Component Systems</text>
+    <rect x="1260" y="450" width="70" height="24" rx="12" fill="#1F1F1F"/>
+    <text x="1295" y="467" text-anchor="middle" font-size="11" font-weight="600" fill="#FFF">Done</text>
+
+    <!-- Week 4 - done -->
+    <rect x="80" y="515" width="1280" height="70" rx="14" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <circle cx="105" cy="550" r="6" fill="#CCC"/>
+    <text x="130" y="550" font-size="16" font-style="italic" fill="#CCC">W4</text>
+    <text x="170" y="550" font-size="15" fill="#AAA">Interaction Patterns</text>
+    <rect x="1260" y="535" width="70" height="24" rx="12" fill="#1F1F1F"/>
+    <text x="1295" y="552" text-anchor="middle" font-size="11" font-weight="600" fill="#FFF">Done</text>
+
+    <!-- Week 5 - done -->
+    <rect x="80" y="600" width="1280" height="70" rx="14" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <circle cx="105" cy="635" r="6" fill="#CCC"/>
+    <text x="130" y="635" font-size="16" font-style="italic" fill="#CCC">W5</text>
+    <text x="170" y="635" font-size="15" fill="#AAA">Design Tokens</text>
+    <rect x="1260" y="620" width="70" height="24" rx="12" fill="#1F1F1F"/>
+    <text x="1295" y="637" text-anchor="middle" font-size="11" font-weight="600" fill="#FFF">Done</text>
+
+    <!-- Week 6 - current -->
+    <rect x="80" y="685" width="1280" height="90" rx="14" fill="#FFF" stroke="#1F1F1F" stroke-width="2"/>
+    <circle cx="105" cy="720" r="6" fill="#1F1F1F"/>
+    <text x="130" y="720" font-size="16" font-style="italic" font-weight="600" fill="#1F1F1F">W6</text>
+    <text x="170" y="720" font-size="15" font-weight="600" fill="#1F1F1F">Motion & Prototyping</text>
+    <rect x="1260" y="700" width="80" height="24" rx="12" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="1300" y="717" text-anchor="middle" font-size="11" font-weight="600" fill="#555">Current</text>
+
+    <!-- Task checkboxes -->
+    <rect x="170" y="745" width="16" height="16" rx="3" fill="#FFF" stroke="#CCC" stroke-width="1"/>
+    <text x="200" y="758" font-size="13" fill="#555">Build a Framer Motion prototype</text>
+    <rect x="500" y="745" width="16" height="16" rx="3" fill="#1F1F1F"/>
+    <text x="530" y="758" font-size="13" fill="#AAA" text-decoration="line-through">Connect animation state to code</text>
+
+    <text x="60" y="870" font-size="11" fill="#999">[LOFI] Roadmap Detail — header, progress bar, week timeline (5 done, 1 current with tasks)</text>
+  </g>
+</svg>

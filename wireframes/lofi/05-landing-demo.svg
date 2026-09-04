@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="900" fill="#FFFFFF"/>
+
+    <!-- Section heading -->
+    <text x="100" y="80" font-size="11" fill="#999" letter-spacing="3">TRY IT</text>
+    <text x="100" y="130" font-size="48" font-style="italic" font-weight="800" fill="#1F1F1F">Fuse your own skills</text>
+
+    <!-- Demo container -->
+    <rect x="100" y="180" width="1240" height="520" rx="20" fill="#FFF" stroke="#1F1F1F" stroke-width="1.5"/>
+
+    <!-- Skill one -->
+    <text x="140" y="230" font-size="11" fill="#999" letter-spacing="2">SKILL ONE</text>
+    <rect x="140" y="250" width="80" height="36" rx="18" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="180" y="273" text-anchor="middle" font-size="13" fill="#555">Design</text>
+    <rect x="240" y="250" width="70" height="36" rx="18" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="275" y="273" text-anchor="middle" font-size="13" fill="#555">Code</text>
+    <rect x="330" y="250" width="70" height="36" rx="18" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="365" y="273" text-anchor="middle" font-size="13" fill="#555">Data</text>
+    <rect x="420" y="250" width="80" height="36" rx="18" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="460" y="273" text-anchor="middle" font-size="13" fill="#555">Writing</text>
+    <rect x="520" y="250" width="90" height="36" rx="18" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="565" y="273" text-anchor="middle" font-size="13" fill="#555">Marketing</text>
+
+    <!-- Skill two -->
+    <text x="700" y="230" font-size="11" fill="#999" letter-spacing="2">SKILL TWO</text>
+    <rect x="700" y="250" width="80" height="36" rx="18" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="740" y="273" text-anchor="middle" font-size="13" fill="#555">Design</text>
+    <rect x="800" y="250" width="70" height="36" rx="18" fill="#1F1F1F"/>
+    <text x="835" y="273" text-anchor="middle" font-size="13" font-weight="600" fill="#FFF">Code</text>
+    <rect x="890" y="250" width="70" height="36" rx="18" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="925" y="273" text-anchor="middle" font-size="13" fill="#555">Data</text>
+    <rect x="980" y="250" width="70" height="36" rx="18" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="1015" y="273" text-anchor="middle" font-size="13" fill="#555">AI</text>
+
+    <!-- Fuse button -->
+    <rect x="570" y="330" width="300" height="48" rx="24" fill="#1F1F1F"/>
+    <text x="720" y="360" text-anchor="middle" font-size="14" font-weight="600" fill="#FFF">Fuse Design × Code</text>
+
+    <!-- Result area -->
+    <line x1="140" y1="410" x2="1300" y2="410" stroke="#EEE" stroke-width="1"/>
+    <text x="140" y="445" font-size="11" fill="#999" letter-spacing="2">YOUR FUSION</text>
+    <text x="140" y="480" font-size="32" font-style="italic" font-weight="700" fill="#1F1F1F">Design × Code</text>
+    <text x="1200" y="465" font-size="48" font-style="italic" font-weight="800" fill="#1F1F1F">73.2%</text>
+    <text x="1200" y="490" font-size="12" fill="#888">rarer than the average pair</text>
+
+    <!-- Roadmap steps -->
+    <rect x="140" y="520" width="1200" height="50" rx="12" fill="#F8F8F8" stroke="#EEE" stroke-width="1"/>
+    <text x="170" y="550" font-size="16" font-style="italic" fill="#CCC">01</text>
+    <text x="220" y="550" font-size="14" fill="#555">Foundations — Get fluent in Code applied to Design.</text>
+    <text x="1280" y="550" text-anchor="end" font-size="12" fill="#999">4 days</text>
+
+    <rect x="140" y="580" width="1200" height="50" rx="12" fill="#F8F8F8" stroke="#EEE" stroke-width="1"/>
+    <text x="170" y="610" font-size="16" font-style="italic" fill="#CCC">02</text>
+    <text x="220" y="610" font-size="14" fill="#555">First artifact — Build a real Design artifact powered by Code.</text>
+    <text x="1280" y="610" text-anchor="end" font-size="12" fill="#999">1 week</text>
+
+    <rect x="140" y="640" width="1200" height="50" rx="12" fill="#F8F8F8" stroke="#EEE" stroke-width="1"/>
+    <text x="170" y="670" font-size="16" font-style="italic" fill="#CCC">03</text>
+    <text x="220" y="670" font-size="14" fill="#555">The project — Ship the flagship Design + Code portfolio piece.</text>
+    <text x="1280" y="670" text-anchor="end" font-size="12" fill="#999">2 weeks</text>
+
+    <text x="720" y="730" text-anchor="middle" font-size="11" fill="#BBB">Sample output — your real roadmap and score are built live from job-market data when you sign up.</text>
+
+    <text x="60" y="870" font-size="11" fill="#999">[LOFI] Demo — skill chip selectors, fuse button, result with rarity %, 3 roadmap steps</text>
+  </g>
+</svg>

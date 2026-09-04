@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="900" fill="#FFFFFF"/>
+
+    <!-- Top nav -->
+    <rect width="1440" height="60" fill="#F8F8F8" stroke="#EEE" stroke-width="1"/>
+    <circle cx="40" cy="30" r="18" fill="#E5E5E5"/>
+    <text x="40" y="36" text-anchor="middle" font-size="14" font-style="italic" font-weight="800" fill="#666">s</text>
+    <text x="400" y="36" font-size="13" font-weight="600" fill="#1F1F1F">Resume</text>
+
+    <!-- Title -->
+    <text x="80" y="120" font-size="42" font-style="italic" font-weight="800" fill="#1F1F1F">Resume & Cover Letter</text>
+
+    <!-- Input card -->
+    <rect x="80" y="170" width="1280" height="300" rx="20" fill="#F8F8F8" stroke="#1F1F1F" stroke-width="1.5"/>
+    <text x="120" y="210" font-size="11" fill="#999" letter-spacing="2">PASTE A JOB LISTING</text>
+    <rect x="120" y="230" width="1200" height="140" rx="12" fill="#FFF" stroke="#DDD" stroke-width="1"/>
+    <text x="140" y="260" font-size="13" fill="#CCC">Role: Product Designer (Design Engineering)</text>
+    <text x="140" y="280" font-size="13" fill="#CCC">About: We're a Series B design tool looking for</text>
+    <text x="140" y="300" font-size="13" fill="#CCC">someone who can design AND build...</text>
+
+    <text x="120" y="420" font-size="13" fill="#999">Use sample listing</text>
+    <rect x="1180" y="400" width="160" height="40" rx="20" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="1260" y="425" text-anchor="middle" font-size="13" fill="#999">Generate</text>
+
+    <text x="60" y="870" font-size="11" fill="#999">[LOFI] Resume Input — textarea for job listing, sample listing link, generate button</text>
+  </g>
+</svg>

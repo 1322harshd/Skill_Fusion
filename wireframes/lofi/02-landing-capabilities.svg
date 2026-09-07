@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="900" fill="#FFFFFF"/>
+
+    <!-- Section heading -->
+    <text x="100" y="80" font-size="48" font-style="italic" font-weight="800" fill="#1F1F1F">Learning</text>
+    <text x="100" y="135" font-size="48" font-style="italic" font-weight="800" fill="#1F1F1F">reimagined</text>
+
+    <!-- Three feature cards -->
+    <!-- Card 1 -->
+    <rect x="100" y="200" width="380" height="320" rx="16" fill="#FFF" stroke="#1F1F1F" stroke-width="1.5"/>
+    <rect x="130" y="230" width="40" height="40" rx="10" fill="#E5E5E5"/>
+    <line x1="140" y1="240" x2="160" y2="260" stroke="#999" stroke-width="2"/>
+    <line x1="160" y1="240" x2="140" y2="260" stroke="#999" stroke-width="2"/>
+    <!-- Tags -->
+    <rect x="280" y="230" width="60" height="22" rx="11" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <rect x="350" y="230" width="80" height="22" rx="11" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <rect x="440" y="230" width="50" height="22" rx="11" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="130" y="470" font-size="26" font-style="italic" font-weight="700" fill="#1F1F1F">Fusion Engine</text>
+    <text x="130" y="498" font-size="13" fill="#666">Our AI finds the real overlap between any two</text>
+    <text x="130" y="514" font-size="13" fill="#666">skills — grounded in actual job-market data.</text>
+
+    <!-- Card 2 -->
+    <rect x="530" y="200" width="380" height="320" rx="16" fill="#FFF" stroke="#1F1F1F" stroke-width="1.5"/>
+    <rect x="560" y="230" width="40" height="40" rx="10" fill="#E5E5E5"/>
+    <line x1="570" y1="240" x2="590" y2="260" stroke="#999" stroke-width="2"/>
+    <line x1="590" y1="240" x2="570" y2="260" stroke="#999" stroke-width="2"/>
+    <rect x="710" y="230" width="50" height="22" rx="11" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <rect x="770" y="230" width="60" height="22" rx="11" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <rect x="840" y="230" width="50" height="22" rx="11" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="560" y="470" font-size="26" font-style="italic" font-weight="700" fill="#1F1F1F">Living Roadmap</text>
+    <text x="560" y="498" font-size="13" fill="#666">Three real-world outcome paths. Pick the</text>
+    <text x="560" y="514" font-size="13" fill="#666">direction, follow a 4–12 week roadmap.</text>
+
+    <!-- Card 3 -->
+    <rect x="960" y="200" width="380" height="320" rx="16" fill="#FFF" stroke="#1F1F1F" stroke-width="1.5"/>
+    <rect x="990" y="230" width="40" height="40" rx="10" fill="#E5E5E5"/>
+    <line x1="1000" y1="240" x2="1020" y2="260" stroke="#999" stroke-width="2"/>
+    <line x1="1020" y1="240" x2="1000" y2="260" stroke="#999" stroke-width="2"/>
+    <rect x="1140" y="230" width="60" height="22" rx="11" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <rect x="1210" y="230" width="70" height="22" rx="11" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <rect x="1290" y="230" width="50" height="22" rx="11" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="990" y="470" font-size="26" font-style="italic" font-weight="700" fill="#1F1F1F">Verified Growth</text>
+    <text x="990" y="498" font-size="13" fill="#666">Every achievement tagged by skill, synced from</text>
+    <text x="990" y="514" font-size="13" fill="#666">GitHub where it's real, and verifiable.</text>
+
+    <text x="60" y="870" font-size="11" fill="#999">[LOFI] Capabilities — three feature cards with icon, tags, title, description</text>
+  </g>
+</svg>

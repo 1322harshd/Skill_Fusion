@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif" fill="none" stroke="#222" stroke-width="1.2">
+    <rect width="1440" height="900" fill="#fff"/>
+
+    <!-- Section heading -->
+    <text x="80" y="100" font-size="38" font-style="italic" font-weight="800" fill="#222" stroke="none">Start free, fuse deeper</text>
+
+    <!-- 3 pricing cards -->
+    <!-- Free -->
+    <rect x="80" y="160" width="400" height="440" rx="24" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="120" y="210" font-size="24" font-style="italic" font-weight="700" fill="#222" stroke="none">Free</text>
+    <text x="120" y="260" font-size="48" font-style="italic" font-weight="800" fill="#222" stroke="none">$0</text>
+    <text x="240" y="260" font-size="13" fill="#888" stroke="none">forever</text>
+    <text x="120" y="290" font-size="13" fill="#666" stroke="none">For the curious.</text>
+    <line x1="120" y1="310" x2="440" y2="310" stroke="#ddd" stroke-width="1"/>
+    <text x="120" y="340" font-size="13" fill="#222" stroke="none">✓ 2 fusions</text>
+    <text x="120" y="366" font-size="13" fill="#222" stroke="none">✓ 1 active roadmap</text>
+    <text x="120" y="392" font-size="13" fill="#222" stroke="none">✓ Community access</text>
+    <text x="120" y="418" font-size="13" fill="#222" stroke="none">✓ Fusion score basics</text>
+    <rect x="120" y="460" width="320" height="44" rx="22" fill="#e0e0e0" stroke="#aaa"/>
+    <text x="280" y="487" text-anchor="middle" font-size="14" font-weight="600" fill="#222" stroke="none">Start Free</text>
+
+    <!-- Fusion Pro (featured) -->
+    <rect x="520" y="160" width="400" height="440" rx="24" fill="#222" stroke="none"/>
+    <rect x="640" y="146" width="160" height="26" rx="13" fill="#fff" stroke="none"/>
+    <text x="720" y="164" text-anchor="middle" font-size="11" font-weight="600" fill="#222" stroke="none">Most popular</text>
+    <text x="560" y="210" font-size="24" font-style="italic" font-weight="700" fill="#fff" stroke="none">Fusion Pro</text>
+    <text x="560" y="260" font-size="48" font-style="italic" font-weight="800" fill="#fff" stroke="none">$9</text>
+    <text x="680" y="260" font-size="13" fill="#aaa" stroke="none">/month</text>
+    <text x="560" y="290" font-size="13" fill="#ccc" stroke="none">For the serious builder.</text>
+    <line x1="560" y1="310" x2="880" y2="310" stroke="#444" stroke-width="1"/>
+    <text x="560" y="340" font-size="13" fill="#ddd" stroke="none">✓ Unlimited fusions</text>
+    <text x="560" y="366" font-size="13" fill="#ddd" stroke="none">✓ All 3 outcome paths</text>
+    <text x="560" y="392" font-size="13" fill="#ddd" stroke="none">✓ Verified growth badges</text>
+    <text x="560" y="418" font-size="13" fill="#ddd" stroke="none">✓ GitHub auto-posts</text>
+    <text x="560" y="444" font-size="13" fill="#ddd" stroke="none">✓ Score history &amp; trends</text>
+    <rect x="560" y="470" width="320" height="44" rx="22" fill="#fff" stroke="none"/>
+    <text x="720" y="497" text-anchor="middle" font-size="14" font-weight="600" fill="#222" stroke="none">Start 14-Day Trial</text>
+
+    <!-- Teams -->
+    <rect x="960" y="160" width="400" height="440" rx="24" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="1000" y="210" font-size="24" font-style="italic" font-weight="700" fill="#222" stroke="none">Teams</text>
+    <text x="1000" y="260" font-size="48" font-style="italic" font-weight="800" fill="#222" stroke="none">$24</text>
+    <text x="1110" y="260" font-size="13" fill="#888" stroke="none">/seat /month</text>
+    <text x="1000" y="290" font-size="13" fill="#666" stroke="none">For squads and orgs.</text>
+    <line x1="1000" y1="310" x2="1320" y2="310" stroke="#ddd" stroke-width="1"/>
+    <text x="1000" y="340" font-size="13" fill="#222" stroke="none">✓ Everything in Pro</text>
+    <text x="1000" y="366" font-size="13" fill="#222" stroke="none">✓ Shared fusions</text>
+    <text x="1000" y="392" font-size="13" fill="#222" stroke="none">✓ Admin dashboard</text>
+    <text x="1000" y="418" font-size="13" fill="#222" stroke="none">✓ Priority roadmap builds</text>
+    <rect x="1000" y="460" width="320" height="44" rx="22" fill="#e0e0e0" stroke="#aaa"/>
+    <text x="1160" y="487" text-anchor="middle" font-size="14" font-weight="600" fill="#222" stroke="none">Contact Sales</text>
+
+    <text x="460" y="660" font-size="11" fill="#aaa" stroke="none">All prices in USD, billed monthly. Cancel anytime.</text>
+
+    <text x="40" y="860" font-size="11" fill="#999" stroke="none">[Pricing] 3-tier cards: Free / Pro (featured dark) / Teams</text>
+  </g>
+</svg>

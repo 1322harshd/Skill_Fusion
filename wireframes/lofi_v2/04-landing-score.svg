@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif" fill="none" stroke="#222" stroke-width="1.2">
+    <rect width="1440" height="900" fill="#fff"/>
+    <text x="80" y="100" font-size="38" font-style="italic" font-weight="800" fill="#222" stroke="none">How rare is your combination?</text>
+    <text x="80" y="260" font-size="96" font-style="italic" font-weight="800" fill="#222" stroke="none">2.4%</text>
+    <rect x="80" y="290" width="300" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="80" y="306" width="240" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="80" y="340" width="400" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="80" y="356" width="360" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <text x="820" y="160" font-size="11" fill="#888" stroke="none">More common</text>
+    <text x="1260" y="160" font-size="11" fill="#888" stroke="none">Rarer</text>
+    <rect x="820" y="180" width="520" height="4" rx="2" fill="#e0e0e0" stroke="none"/>
+    <rect x="820" y="180" width="500" height="4" rx="2" fill="#222" stroke="none"/>
+    <circle cx="1320" cy="182" r="6" fill="#222" stroke="none"/>
+    <rect x="820" y="230" width="160" height="60" rx="12" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="840" y="258" font-size="18" font-style="italic" font-weight="700" fill="#222" stroke="none">12,000+</text>
+    <text x="840" y="278" font-size="10" fill="#888" stroke="none">Listings scanned</text>
+    <rect x="1000" y="230" width="160" height="60" rx="12" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="1020" y="258" font-size="18" font-style="italic" font-weight="700" fill="#222" stroke="none">37%</text>
+    <text x="1020" y="278" font-size="10" fill="#888" stroke="none">Pay delta</text>
+    <rect x="1180" y="230" width="160" height="60" rx="12" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="1200" y="258" font-size="18" font-style="italic" font-weight="700" fill="#222" stroke="none">+4.1%/yr</text>
+    <text x="1200" y="278" font-size="10" fill="#888" stroke="none">Demand growth</text>
+    <text x="40" y="860" font-size="11" fill="#999" stroke="none">[Score] Big rarity % + progress bar + 3 stat meta cards</text>
+  </g>
+</svg>

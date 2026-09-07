@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="880" viewBox="0 0 1280 880">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1280" height="880" fill="#FFFFFF"/>
+
+    <!-- APP SHELL HEADER -->
+    <circle cx="56" cy="52" r="24" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.3"/>
+    <text x="56" y="60" text-anchor="middle" font-size="20" font-style="italic" font-weight="800" fill="#1F1F1F">s</text>
+    <rect x="320" y="30" width="640" height="46" rx="23" fill="#F4F4F4"/>
+    <rect x="330" y="34" width="100" height="38" rx="19" fill="#FFFFFF"/>
+    <rect x="343" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="365" y="58" font-size="13" fill="#1F1F1F">Dashboard</text>
+    <rect x="436" y="34" width="100" height="38" rx="19" fill="#FFFFFF"/>
+    <rect x="449" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="471" y="58" font-size="13" fill="#1F1F1F">Fuse</text>
+    <rect x="542" y="34" width="100" height="38" rx="19" fill="#1F1F1F"/>
+    <rect x="555" y="46" width="14" height="14" rx="4" fill="#FFFFFF"/>
+    <text x="577" y="58" font-size="13" font-weight="600" fill="#FFFFFF">Roadmaps</text>
+    <rect x="558" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="580" y="58" font-size="13" fill="#1F1F1F">Log</text>
+    <rect x="664" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="686" y="58" font-size="13" fill="#1F1F1F">Resume</text>
+    <rect x="770" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="792" y="58" font-size="13" fill="#1F1F1F">Connect</text>
+    <rect x="1112" y="30" width="128" height="46" rx="23" fill="#F4F4F4"/>
+    <circle cx="1138" cy="53" r="17" fill="#D9D9D9"/>
+    <text x="1164" y="58" font-size="13" font-weight="600" fill="#1F1F1F">Ada</text>
+
+    <!-- Header block -->
+    <rect x="256" y="150" width="78" height="30" rx="15" fill="#1F1F1F"/><text x="295" y="170" text-anchor="middle" font-size="13" fill="#FFFFFF">Design</text>
+    <text x="344" y="170" text-anchor="middle" font-size="15" fill="#999999">×</text>
+    <rect x="362" y="150" width="44" height="30" rx="15" fill="#1F1F1F"/><text x="384" y="170" text-anchor="middle" font-size="13" fill="#FFFFFF">AI</text>
+    <text x="256" y="220" font-size="34" font-style="italic" font-weight="800" fill="#1F1F1F">AI Design Engineer</text>
+    <text x="256" y="252" font-size="14" fill="#666666">Week 3 of 8 · on track</text>
+    <rect x="256" y="272" width="768" height="8" rx="4" fill="#E3E3E3"/>
+    <rect x="256" y="272" width="290" height="8" rx="4" fill="#1F1F1F"/>
+
+    <!-- Timeline rail -->
+    <line x1="297" y1="340" x2="297" y2="800" stroke="#CCCCCC" stroke-width="1.4"/>
+
+    <!-- W1 done -->
+    <circle cx="297" cy="370" r="6" fill="#1F1F1F"/>
+    <rect x="320" y="340" width="704" height="110" rx="18" fill="#F7F7F7" stroke="#1F1F1F" stroke-width="1.2"/>
+    <text x="348" y="374" font-size="14" font-style="italic" font-weight="800" fill="#B9B9B9">W1</text>
+    <text x="348" y="398" font-size="18" font-style="italic" font-weight="800" fill="#1F1F1F">Overlap foundations</text>
+    <rect x="890" y="352" width="104" height="26" rx="13" fill="#1F1F1F"/><text x="942" y="369" text-anchor="middle" font-size="11" fill="#FFFFFF">✓ Done</text>
+    <circle cx="356" cy="420" r="3" fill="#1F1F1F"/><text x="368" y="424" font-size="13" fill="#444444">Map where design and AI genuinely overlap</text>
+    <circle cx="356" cy="438" r="3" fill="#1F1F1F"/><text x="368" y="442" font-size="13" fill="#444444">Set up your working AI toolchain</text>
+
+    <!-- W2 current -->
+    <circle cx="297" cy="512" r="7" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="2.5"/>
+    <rect x="320" y="470" width="704" height="260" rx="18" fill="#F7F7F7" stroke="#1F1F1F" stroke-width="1.6"/>
+    <text x="348" y="504" font-size="14" font-style="italic" font-weight="800" fill="#1F1F1F">W2</text>
+    <text x="348" y="528" font-size="18" font-style="italic" font-weight="800" fill="#1F1F1F">First artifact — prototype</text>
+    <text x="936" y="504" font-size="11" font-weight="600" fill="#1F1F1F">● Current</text>
+    <circle cx="356" cy="550" r="3" fill="#1F1F1F"/><text x="368" y="554" font-size="13" fill="#444444">Design a working AI-assisted UI prototype</text>
+    <circle cx="356" cy="568" r="3" fill="#1F1F1F"/><text x="368" y="572" font-size="13" fill="#444444">Collect real user feedback on it</text>
+    <line x1="348" y1="592" x2="996" y2="592" stroke="#DDDDDD" stroke-width="1"/>
+    <!-- tasks -->
+    <rect x="352" y="608" width="18" height="18" rx="5" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.4"/><text x="382" y="622" font-size="13" fill="#444444">Sketch 3 interaction directions</text>
+    <rect x="352" y="638" width="18" height="18" rx="5" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.4"/><text x="382" y="652" font-size="13" fill="#444444">Build the hi-fi prototype in Figma</text>
+    <rect x="352" y="668" width="18" height="18" rx="5" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.4"/><text x="382" y="682" font-size="13" fill="#444444">Wire one AI call into the prototype</text>
+    <rect x="352" y="706" width="168" height="36" rx="18" fill="#1F1F1F"/>
+    <text x="436" y="729" text-anchor="middle" font-size="13" font-weight="600" fill="#FFFFFF">Mark week complete</text>
+
+    <!-- W3 upcoming -->
+    <circle cx="297" cy="752" r="6" fill="#D8D8D8"/>
+    <rect x="320" y="718" width="704" height="110" rx="18" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+    <text x="348" y="752" font-size="14" font-style="italic" font-weight="800" fill="#B9B9B9">W3</text>
+    <text x="348" y="776" font-size="18" font-style="italic" font-weight="800" fill="#1F1F1F">Tooling fluency</text>
+    <rect x="936" y="730" width="104" height="26" rx="13" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1"/><text x="988" y="747" text-anchor="middle" font-size="11" fill="#666666">Upcoming</text>
+    <circle cx="356" cy="800" r="3" fill="#1F1F1F"/><text x="368" y="804" font-size="13" fill="#444444">Automate parts of your pipeline</text>
+
+    <text x="128" y="854" font-size="12" fill="#888888">[Roadmap detail] Explaining a week opens a text panel &amp; logs evidence · completion banner when all weeks done</text>
+  </g>
+</svg>

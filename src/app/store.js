@@ -205,8 +205,11 @@ function buildSeed() {
   // live app now starts blank as requested.
   return {
     user: {
+      userId: null,
       name: "",
       handle: "",
+      email: "",
+      isEmailVerified: false,
       personaTypes: [],
       baseline: null,
       githubUrl: "",

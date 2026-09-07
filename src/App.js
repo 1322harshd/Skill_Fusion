@@ -52,6 +52,8 @@ function Landing() {
 
 const ROUTES = [
   { pattern: "/onboarding", render: () => <window.Onboarding /> },
+  { pattern: "/verify-email", render: () => <window.VerifyEmail /> },
+  { pattern: "/reset-password", render: () => <window.ResetPassword /> },
   { pattern: "/fuse", render: () => <window.Fuse /> },
   { pattern: "/roadmaps", render: () => <window.Roadmaps /> },
   { pattern: "/roadmaps/:id", render: (p) => <window.RoadmapDetail id={p.id} /> },
@@ -80,6 +82,28 @@ function App() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [route]);
+
+  useEffect(() => {
+    window.Api.bootstrap().then((user) => {
+      if (!user) return;
+      window.Store.updateUser({
+        userId: user.userId,
+        name: user.fullName,
+        handle: (user.email || "").split("@")[0].toLowerCase(),
+        email: user.email,
+        isEmailVerified: user.isEmailVerified,
+        personaTypes: user.personaTypes || [],
+        baseline: user.baseline || null,
+        skills: user.skills || [],
+        githubUrl: user.githubUrl || "",
+      });
+      const cur = window.Router.current();
+      const onboarded = !!(user.personaTypes && user.personaTypes.length && user.baseline && user.baseline.method);
+      if (onboarded && (cur === "/" || cur === "/onboarding")) {
+        window.Router.go("/dashboard");
+      }
+    });
+  }, []);
 
   const content = isLanding ? (
     <Landing />

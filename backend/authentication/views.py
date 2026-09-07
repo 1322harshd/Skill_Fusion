@@ -173,6 +173,17 @@ class VerifyEmailView(APIView):
         return Response(status=status.HTTP_200_OK)
 
 
+class ResendVerificationEmailView(APIView):
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "resend-verification"
+
+    def post(self, request):
+        if request.user.isEmailVerified:
+            return Response({"detail": "Email is already verified."}, status=status.HTTP_400_BAD_REQUEST)
+        send_verification_email(request.user)
+        return Response(status=status.HTTP_200_OK)
+
+
 class GithubOAuthView(APIView):
     permission_classes = [AllowAny]
 

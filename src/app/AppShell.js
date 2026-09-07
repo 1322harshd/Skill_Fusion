@@ -308,8 +308,9 @@ function AppearancePanel() {
 
 function ProfileSheet({ open, onClose, user }) {
   const [activeTab] = React.useState("appearance");
-  function logout(){
+  async function logout(){
     try { localStorage.removeItem("skillfusion_appearance_v1"); } catch(e){}
+    try { await window.Api.logout(); } catch(e){}
     window.Toast.show("Logged out", "success");
     setTimeout(()=> { window.Router.go("/"); onClose(); window.location.reload(); }, 600);
   }
@@ -359,10 +360,45 @@ function ProfileSheet({ open, onClose, user }) {
   );
 }
 
+function VerifyEmailBanner({ email }) {
+  const [sending, setSending] = React.useState(false);
+  const [sent, setSent] = React.useState(false);
+
+  async function resend() {
+    setSending(true);
+    try {
+      await window.Api.resendVerification();
+      setSent(true);
+      window.Toast.show("Verification email sent", "success");
+    } catch (e) {
+      window.Toast.show(e.message || "Couldn't send that — try again shortly", "error");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="liquid-glass mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl px-5 py-3.5">
+      <p className="font-body text-sm text-white/80">
+        Verify {email ? <span className="text-white">{email}</span> : "your email"} to unlock everything.
+      </p>
+      <button
+        type="button"
+        onClick={resend}
+        disabled={sending || sent}
+        className="shrink-0 rounded-full bg-white px-4 py-1.5 font-body text-xs font-medium text-black disabled:opacity-50"
+      >
+        {sent ? "Email sent" : sending ? "Sending…" : "Resend email"}
+      </button>
+    </div>
+  );
+}
+
 function AppShell({ route, children }) {
   const s = window.Store.useStore();
   const user = s.user;
   const [profileOpen, setProfileOpen] = React.useState(false);
+  const needsVerification = !!user?.email && user?.isEmailVerified === false;
 
   return (
     <div className="relative min-h-screen text-white">
@@ -407,7 +443,10 @@ function AppShell({ route, children }) {
         </button>
       </header>
 
-      <main className="px-6 pb-28 pt-24 md:px-12 md:pb-20 lg:px-16">{children}</main>
+      <main className="px-6 pb-28 pt-24 md:px-12 md:pb-20 lg:px-16">
+        {needsVerification && <VerifyEmailBanner email={user.email} />}
+        {children}
+      </main>
 
       <nav
         className="liquid-glass-strong fixed bottom-4 left-4 right-4 z-50 flex items-center justify-around rounded-full px-2 py-2 md:hidden"

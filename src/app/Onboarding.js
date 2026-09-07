@@ -39,6 +39,7 @@ function Onboarding() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
 
   const isSignup = authMode === "signup";
 
@@ -52,37 +53,87 @@ function Onboarding() {
   }
 
   const stepValid =
-    step === 1 ? !validateAuth() : step === 2 ? personas.length > 0 : baseline !== null;
+    step === 1 ? !validateAuth() && !authLoading : step === 2 ? personas.length > 0 : baseline !== null;
 
   function togglePersona(p) {
     setPersonas((xs) => (xs.includes(p) ? xs.filter((x) => x !== p) : [...xs, p]));
   }
 
-  function handleAuthNext() {
+  function applyAuthedUser(user) {
+    Store.updateUser({
+      userId: user.userId,
+      name: user.fullName,
+      handle: (user.email || "").split("@")[0].toLowerCase(),
+      email: user.email,
+      isEmailVerified: user.isEmailVerified,
+      personaTypes: user.personaTypes || [],
+      baseline: user.baseline || null,
+      skills: user.skills || [],
+      githubUrl: user.githubUrl || "",
+    });
+  }
+
+  async function handleAuthNext() {
     const err = validateAuth();
     if (err) { setAuthError(err); window.Toast.show(err, "error"); return; }
     setAuthError("");
-    const handle = email.trim().split("@")[0].toLowerCase();
-    const displayName = isSignup ? name.trim() : (Store.getSnapshot().user?.name || handle);
-    // persist user
-    Store.updateUser({
-      name: isSignup ? name.trim() : displayName || handle,
-      handle,
-      email: email.trim(),
-    });
-    window.Toast.show(isSignup ? "Account created" : "Welcome back", "success");
-    setStep(2);
+    setAuthLoading(true);
+    try {
+      const payload = isSignup
+        ? await window.Api.register({ name: name.trim(), email: email.trim(), password })
+        : await window.Api.login({ email: email.trim(), password });
+      const user = payload.user;
+      applyAuthedUser(user);
+      window.Toast.show(
+        isSignup ? "Account created — check your email to verify" : "Welcome back",
+        "success"
+      );
+      const hasBaseline = !!(user.baseline && user.baseline.method);
+      const hasPersonas = !!(user.personaTypes && user.personaTypes.length);
+      if (hasPersonas && hasBaseline) {
+        window.Router.go("/dashboard");
+        return;
+      }
+      if (hasPersonas) {
+        setPersonas(user.personaTypes);
+        setBaseline(user.baseline.method);
+        setStep(3);
+        return;
+      }
+      setStep(2);
+    } catch (e) {
+      const msg = e.message || "Something went wrong";
+      setAuthError(msg);
+      window.Toast.show(msg, "error");
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
+  async function handleForgotPassword() {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      window.Toast.show("Enter your email above first", "error");
+      return;
+    }
+    try {
+      await window.Api.forgotPassword(email.trim());
+    } catch (e) {
+      // Falls through to the same message below regardless of outcome.
+    }
+    window.Toast.show("If that email exists, we've sent a reset link", "success");
   }
 
   function handlePersonaNext() {
     if (personas.length === 0) return;
     Store.updateUser({ personaTypes: personas });
     setStep(3);
+    window.Api.updateMe({ personaTypes: personas }).catch(() => {});
   }
 
   function handleFinish() {
     if (!baseline) return;
     Store.updateUser({ baseline });
+    window.Api.updateMe({ baseline: { method: baseline } }).catch(() => {});
     window.Router.go("/dashboard");
   }
 
@@ -155,6 +206,13 @@ function Onboarding() {
                       {isSignup ? "Log in" : "Sign up"}
                     </button>
                   </div>
+                  {!isSignup && (
+                    <div className="flex items-center justify-center pt-0.5">
+                      <button type="button" onClick={handleForgotPassword} className="font-body text-xs font-light text-white/50 hover:text-white hover:underline">
+                        Forgot password?
+                      </button>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -260,10 +318,10 @@ function Onboarding() {
               " flex items-center gap-2 rounded-full px-7 py-3.5 font-body text-sm font-medium disabled:cursor-not-allowed"
             }
           >
-            {step === 3 ? "Go to dashboard" : "Continue"}
+            {step === 1 && authLoading ? (isSignup ? "Creating account…" : "Signing in…") : step === 3 ? "Go to dashboard" : "Continue"}
             <Icons.ArrowUpRight className="h-4 w-4" />
           </motion.button>
-          {!stepValid && (
+          {!stepValid && !authLoading && (
             <p className="font-body text-xs font-light text-white/50">
               {step === 1 ? "Fill in all fields to continue" : step === 2 ? "Select at least one option to continue" : "Choose how we learn your skills"}
             </p>

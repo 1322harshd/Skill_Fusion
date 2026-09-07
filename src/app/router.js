@@ -1,13 +1,22 @@
 window.Router = (function () {
   const listeners = new Set();
 
+  function raw() {
+    return window.location.hash.replace(/^#/, "");
+  }
+
   function parse() {
-    const raw = window.location.hash.replace(/^#/, "");
-    return raw === "" ? "/" : raw;
+    const path = raw().split("?")[0];
+    return path === "" ? "/" : path;
   }
 
   function current() {
     return parse();
+  }
+
+  function query() {
+    const qIndex = raw().indexOf("?");
+    return new URLSearchParams(qIndex >= 0 ? raw().slice(qIndex + 1) : "");
   }
 
   function subscribe(fn) {
@@ -40,7 +49,7 @@ window.Router = (function () {
 
   window.addEventListener("hashchange", () => listeners.forEach((fn) => fn()));
 
-  return { current, subscribe, navigate, go, match };
+  return { current, subscribe, navigate, go, match, query };
 })();
 
 function useRoute() {

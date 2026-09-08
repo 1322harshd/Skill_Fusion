@@ -84,6 +84,7 @@ function Onboarding() {
         : await window.Api.login({ email: email.trim(), password });
       const user = payload.user;
       applyAuthedUser(user);
+      Store.loadGrowthLog().catch(() => {});
       window.Toast.show(
         isSignup ? "Account created — check your email to verify" : "Welcome back",
         "success"

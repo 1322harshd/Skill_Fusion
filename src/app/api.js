@@ -124,6 +124,33 @@ window.Api = (function () {
     return request("/auth/resend-verification", { method: "POST" });
   }
 
+  function listGrowthLogEntries() {
+    return request("/growth-log/entries");
+  }
+
+  function createGrowthLogEntry(payload) {
+    return request("/growth-log/entries", { method: "POST", body: payload });
+  }
+
+  function deleteGrowthLogEntry(entryId) {
+    return request("/growth-log/entries/" + encodeURIComponent(entryId), { method: "DELETE" });
+  }
+
+  function verifyCredential(entryId, verificationUrl, issuer) {
+    return request("/growth-log/entries/" + encodeURIComponent(entryId) + "/verify-credential", {
+      method: "POST",
+      body: { verificationUrl, issuer: issuer || "" },
+    });
+  }
+
+  function githubImport() {
+    return request("/growth-log/github-import", { method: "POST" });
+  }
+
+  function growthLogStats() {
+    return request("/growth-log/stats");
+  }
+
   async function bootstrap() {
     const ok = await refresh();
     if (!ok) return null;
@@ -149,5 +176,11 @@ window.Api = (function () {
     verifyEmail,
     resendVerification,
     bootstrap,
+    listGrowthLogEntries,
+    createGrowthLogEntry,
+    deleteGrowthLogEntry,
+    verifyCredential,
+    githubImport,
+    growthLogStats,
   };
 })();

@@ -102,6 +102,7 @@ function App() {
       if (onboarded && (cur === "/" || cur === "/onboarding")) {
         window.Router.go("/dashboard");
       }
+      window.Store.loadGrowthLog().catch(() => {});
     });
   }, []);
 

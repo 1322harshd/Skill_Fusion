@@ -164,6 +164,26 @@ function logTag(label, kind) {
   return { label, kind, color: kind === "skill" ? F.colorOf(label) : null };
 }
 
+function fromBackendEntry(e) {
+  const skillTags = (e.skillTags || []).map((label) => logTag(label, "skill"));
+  const competencyTags = (e.competencyTags || []).map((label) => logTag(label, "competency"));
+  const pending = e.credential && e.credential.verificationStatus === "pending";
+  const source = pending ? "pending" : e.verified ? "verified" : "self-reported";
+  return {
+    id: e.entryId,
+    fusionId: null,
+    title: e.title,
+    description: e.description,
+    date: new Date(e.loggedAt).toLocaleDateString(),
+    tags: [...skillTags, ...competencyTags],
+    source,
+    verification: e.credential
+      ? { link: e.credential.verificationUrl, verified: e.credential.verificationStatus === "verified" }
+      : null,
+    github: e.source === "github",
+  };
+}
+
 function draftFor(entry, tone, salt = 0) {
   const t = tone || "Warm";
   const openers = {
@@ -277,16 +297,30 @@ window.Store = (function () {
     set({ fusions: state.fusions.map((x) => (x.id === fusionId ? next : x)) });
   }
 
-  function addLog(entry) {
-    set({ logEntries: [{ ...entry, id: "l" + Date.now() }, ...state.logEntries] });
+  async function loadGrowthLog() {
+    const entries = await window.Api.listGrowthLogEntries();
+    set({ logEntries: entries.map(fromBackendEntry) });
   }
 
-  function verifyEntry(id, link) {
-    set({
-      logEntries: state.logEntries.map((e) =>
-        e.id === id ? { ...e, source: "verified", verification: { link, verified: true } } : e
-      ),
+  async function addLog(entry) {
+    const skillTags = (entry.tags || []).filter((t) => t.kind === "skill").map((t) => t.label);
+    const competencyTags = (entry.tags || []).filter((t) => t.kind === "competency").map((t) => t.label);
+    const created = await window.Api.createGrowthLogEntry({
+      title: entry.title,
+      description: entry.description || "",
+      skillTags,
+      competencyTags,
     });
+    const mapped = fromBackendEntry(created);
+    set({ logEntries: [mapped, ...state.logEntries] });
+    return mapped;
+  }
+
+  async function verifyEntry(id, link) {
+    const updated = await window.Api.verifyCredential(id, link);
+    const mapped = fromBackendEntry(updated);
+    set({ logEntries: state.logEntries.map((e) => (e.id === id ? mapped : e)) });
+    return mapped;
   }
 
   function addPost(post) {
@@ -309,21 +343,11 @@ window.Store = (function () {
     return post.id;
   }
 
-  function syncGithub() {
-    const f = state.fusions[0];
-    const entry = {
-      id: "l" + Date.now(),
-      fusionId: f ? f.id : null,
-      title: "Synced from GitHub",
-      description: "Commits and contributions pulled in from your public activity.",
-      date: "Today",
-      tags: [logTag("GitHub", "skill"), logTag("Collaboration", "competency")],
-      source: "verified",
-      verification: { link: state.user.githubUrl || "https://github.com", verified: true },
-      github: true,
-    };
-    set({ logEntries: [entry, ...state.logEntries] });
-    return entry;
+  async function syncGithub() {
+    const res = await window.Api.githubImport();
+    const mapped = (res.entries || []).map(fromBackendEntry);
+    if (mapped.length) set({ logEntries: [...mapped, ...state.logEntries] });
+    return mapped;
   }
 
   function buildResume(listing) {
@@ -522,6 +546,7 @@ window.Store = (function () {
     finalizeExchange,
     reportPeer,
     syncGithub,
+    loadGrowthLog,
     buildResume,
     SKILL_TAGS,
     COMPETENCIES,

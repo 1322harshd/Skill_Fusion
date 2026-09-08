@@ -1,4 +1,4 @@
-const { useState } = React;
+const { useState, useEffect } = React;
 const { motion, AnimatePresence } = window.Motion;
 const { Icons } = window;
 const F = window.Fusion;
@@ -56,8 +56,15 @@ function GrowthLog() {
   const [verifyTarget, setVerifyTarget] = useState(null);
   const [link, setLink] = useState("");
   const [desc, setDesc] = useState("");
-  const [fusionId, setFusionId] = useState(s.fusions[0]?.id || null);
   const [sel, setSel] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [githubUrlInput, setGithubUrlInput] = useState(s.user.githubUrl || "");
+
+  useEffect(() => {
+    Store.loadGrowthLog().catch(() => {});
+  }, []);
 
   const entries = s.logEntries.filter((e) => (filter === "all" ? true : e.source === filter));
   const stats = [
@@ -70,34 +77,63 @@ function GrowthLog() {
     setSel((xs) => (xs.some((x) => x.label === t.label) ? xs.filter((x) => x.label !== t.label) : [...xs, t]));
   }
 
-  function saveEntry() {
+  async function saveEntry() {
     const first = sel[0];
-    Store.addLog({
-      fusionId,
-      title: first ? `Logged — ${first.label}` : "Logged a note",
-      description: desc,
-      date: "Today",
-      tags: sel,
-      source: "self-reported",
-    });
-    setDesc("");
-    setSel([]);
-    setAddOpen(false);
-    window.Toast.show("Logged to your Growth Log", "success");
+    setSaving(true);
+    try {
+      await Store.addLog({
+        title: first ? `Logged — ${first.label}` : "Logged a note",
+        description: desc,
+        tags: sel,
+      });
+      setDesc("");
+      setSel([]);
+      setAddOpen(false);
+      window.Toast.show("Logged to your Growth Log", "success");
+    } catch (e) {
+      window.Toast.show(e.message || "Couldn't save that entry", "error");
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function verify() {
+  async function verify() {
     if (!verifyTarget || !link.trim()) return;
-    Store.verifyEntry(verifyTarget.id, link.trim());
-    setVerifyTarget(null);
-    setLink("");
-    window.Toast.show("Evidence verified", "success");
+    setVerifying(true);
+    try {
+      const updated = await Store.verifyEntry(verifyTarget.id, link.trim());
+      setVerifyTarget(null);
+      setLink("");
+      window.Toast.show(
+        updated.source === "verified" ? "Evidence verified" : "Couldn't verify that link against your name",
+        updated.source === "verified" ? "success" : "error"
+      );
+    } catch (e) {
+      window.Toast.show(e.message || "Couldn't verify that link", "error");
+    } finally {
+      setVerifying(false);
+    }
   }
 
-  function sync() {
-    Store.syncGithub();
-    setSyncOpen(false);
-    window.Toast.show("GitHub activity synced as verified", "success");
+  async function sync() {
+    setSyncing(true);
+    try {
+      const url = githubUrlInput.trim();
+      if (url && url !== s.user.githubUrl) {
+        await window.Api.updateMe({ githubUrl: url });
+        Store.updateUser({ githubUrl: url });
+      }
+      const imported = await Store.syncGithub();
+      setSyncOpen(false);
+      window.Toast.show(
+        imported.length ? `Synced ${imported.length} repos as verified` : "No new repos to sync",
+        "success"
+      );
+    } catch (e) {
+      window.Toast.show(e.message || "Couldn't sync GitHub", "error");
+    } finally {
+      setSyncing(false);
+    }
   }
 
   return (
@@ -201,7 +237,7 @@ function GrowthLog() {
 
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
                     <div className="flex items-center gap-4">
-                      {e.source === "pending" && (
+                      {(e.source === "pending" || e.source === "self-reported") && (
                         <button
                           type="button"
                           onClick={() => {
@@ -238,27 +274,6 @@ function GrowthLog() {
       <window.Modal open={addOpen} onClose={() => setAddOpen(false)}>
         <h3 className="font-heading text-2xl italic text-white">Log something</h3>
         <p className="mt-1 font-body text-xs font-light text-white/60">Add evidence to your growth ledger.</p>
-
-        {s.fusions.length > 1 && (
-          <div className="mt-4">
-            <p className="mb-2 font-body text-[11px] uppercase tracking-[0.18em] text-white/50">Fusion</p>
-            <div className="flex flex-wrap gap-2">
-              {s.fusions.map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => setFusionId(f.id)}
-                  className={
-                    (f.id === fusionId ? "bg-white text-black" : "liquid-glass text-white/85") +
-                    " rounded-full px-3 py-1.5 font-body text-xs font-medium transition-colors"
-                  }
-                >
-                  {f.a} × {f.b}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         <div className="mt-4">
           <p className="mb-2 font-body text-[11px] uppercase tracking-[0.18em] text-white/50">Technical skills</p>
@@ -315,13 +330,13 @@ function GrowthLog() {
         <button
           type="button"
           onClick={saveEntry}
-          disabled={!desc.trim()}
+          disabled={!desc.trim() || saving}
           className={
-            (desc.trim() ? "bg-white text-black" : "liquid-glass text-white/30") +
+            (desc.trim() && !saving ? "bg-white text-black" : "liquid-glass text-white/30") +
             " mt-4 flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 font-body text-sm font-medium"
           }
         >
-          Log it
+          {saving ? "Logging…" : "Log it"}
           <Icons.ArrowUpRight className="h-4 w-4" />
         </button>
       </window.Modal>
@@ -329,7 +344,8 @@ function GrowthLog() {
       <window.Modal open={!!verifyTarget} onClose={() => setVerifyTarget(null)}>
         <h3 className="font-heading text-2xl italic text-white">Verify this evidence</h3>
         <p className="mt-1 font-body text-xs font-light text-white/60">
-          Paste a link that proves it — a GitHub commit, a live artifact, a published piece.
+          Paste a public link that proves it — a credential page, a GitHub commit, a live artifact. We
+          check that it resolves and names you.
         </p>
         <input
           value={link}
@@ -340,29 +356,41 @@ function GrowthLog() {
         <button
           type="button"
           onClick={verify}
-          disabled={!link.trim()}
+          disabled={!link.trim() || verifying}
           className={
-            (link.trim() ? "bg-white text-black" : "liquid-glass text-white/30") +
+            (link.trim() && !verifying ? "bg-white text-black" : "liquid-glass text-white/30") +
             " mt-4 flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 font-body text-sm font-medium"
           }
         >
           <Icons.CheckCircle className="h-4 w-4" />
-          Mark verified
+          {verifying ? "Checking…" : "Verify"}
         </button>
       </window.Modal>
 
       <window.Modal open={syncOpen} onClose={() => setSyncOpen(false)}>
         <h3 className="font-heading text-2xl italic text-white">Sync GitHub</h3>
         <p className="mt-1 font-body text-xs font-light text-white/60">
-          We'll pull your public contributions in as verified evidence — with a contribution graph attached.
+          We'll pull your public repos in as verified evidence.
         </p>
+        {!s.user.githubUrl && (
+          <input
+            value={githubUrlInput}
+            onChange={(e) => setGithubUrlInput(e.target.value)}
+            placeholder="https://github.com/yourhandle"
+            className="mt-4 w-full rounded-xl bg-black/40 px-4 py-3 font-body text-sm text-white outline-none ring-1 ring-white/15 focus:ring-white/40"
+          />
+        )}
         <button
           type="button"
           onClick={sync}
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-3 font-body text-sm font-medium text-black"
+          disabled={syncing || (!s.user.githubUrl && !githubUrlInput.trim())}
+          className={
+            (!syncing && (s.user.githubUrl || githubUrlInput.trim()) ? "bg-white text-black" : "liquid-glass text-white/30") +
+            " mt-5 flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 font-body text-sm font-medium"
+          }
         >
           <Icons.Refresh className="h-4 w-4" />
-          Sync now
+          {syncing ? "Syncing…" : "Sync now"}
         </button>
       </window.Modal>
     </div>

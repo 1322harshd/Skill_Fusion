@@ -18,9 +18,11 @@ from django.contrib import admin
 from django.urls import include, path
 
 from authentication.urls import auth_urlpatterns, users_urlpatterns
+from growthlog.urls import growthlog_urlpatterns
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include(auth_urlpatterns)),
     path('api/users/', include(users_urlpatterns)),
+    path('api/growth-log/', include(growthlog_urlpatterns)),
 ]

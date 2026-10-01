@@ -1,5 +1,4 @@
 const { motion } = window.Motion;
-const { Navbar } = window;
 const { FadingVideo } = window;
 const { BlurText } = window;
 const { Icons } = window;
@@ -16,8 +15,6 @@ function Hero() {
       />
 
       <div className="relative z-10 flex min-h-dvh flex-col">
-        <Navbar />
-
         <div className="flex flex-1 flex-col items-center justify-center px-4 pt-24 text-center">
           <motion.div {...enter(0.4)}>
             <div className="liquid-glass flex items-center rounded-full py-1 pl-1">
@@ -50,7 +47,7 @@ function Hero() {
               Start Your Fusion
               <Icons.ArrowUpRight className="h-5 w-5" />
             </a>
-            <a href="#how-it-works" className="flex items-center gap-2 font-body text-sm text-white">
+            <a href="#/how-it-works" className="flex items-center gap-2 font-body text-sm text-white">
               <Icons.Play className="h-4 w-4" />
               See How It Works
             </a>

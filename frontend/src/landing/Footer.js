@@ -3,7 +3,7 @@ const Footer = () => (
     <div className="px-8 md:px-16 lg:px-20">
       <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
         <div className="md:col-span-1">
-          <a href="#top" className="flex items-center gap-3" aria-label="Skill Fusion AI home">
+          <a href="#/top" className="flex items-center gap-3" aria-label="Skill Fusion AI home">
             <span className="liquid-glass flex h-10 w-10 items-center justify-center rounded-full font-heading text-xl italic text-white">
               s
             </span>
@@ -17,29 +17,29 @@ const Footer = () => (
         <FooterCol
           title="Product"
           links={[
-            ["Try a Fusion", "#demo"],
-            ["How It Works", "#how-it-works"],
-            ["Features", "#capabilities"],
-            ["Fusion Score", "#score"],
-            ["Pricing", "#pricing"],
+            ["Try a Fusion", "#/demo"],
+            ["How It Works", "#/how-it-works"],
+            ["Features", "#/capabilities"],
+            ["Fusion Score", "#/score"],
+            ["Pricing", "#/pricing"],
           ]}
         />
         <FooterCol
           title="Company"
           links={[
-            ["Community", "#community"],
-            ["FAQ", "#faq"],
-            ["Blog", "#top"],
-            ["Careers", "#top"],
-            ["Contact", "#top"],
+            ["Community", "#/community"],
+            ["FAQ", "#/faq"],
+            ["Blog", "#/top"],
+            ["Careers", "#/top"],
+            ["Contact", "#/top"],
           ]}
         />
         <FooterCol
           title="Legal"
           links={[
-            ["Privacy", "#top"],
-            ["Terms", "#top"],
-            ["License", "#top"],
+            ["Privacy", "#/top"],
+            ["Terms", "#/top"],
+            ["License", "#/top"],
           ]}
         />
       </div>

@@ -435,7 +435,16 @@ function AppShell({ route, children }) {
           })}
         </nav>
 
-        <button type="button" onClick={()=> setProfileOpen(true)} aria-label="Open profile" className="liquid-glass flex items-center gap-2 rounded-full py-1 pl-1 pr-3 hover:bg-white/10 transition-colors">
+        <button
+          type="button"
+          onClick={user?.userId ? () => setProfileOpen(true) : undefined}
+          disabled={!user?.userId}
+          aria-label={user?.userId ? "Open profile" : "Guest"}
+          className={
+            "liquid-glass flex items-center gap-2 rounded-full py-1 pl-1 pr-3 transition-colors" +
+            (user?.userId ? " hover:bg-white/10" : " cursor-default opacity-60")
+          }
+        >
           <Avatar handle={user?.handle} name={user?.name} size="sm" />
           <span className="hidden font-body text-xs font-medium text-white sm:inline">
             {user?.name || "Guest"}

@@ -147,6 +147,10 @@ window.Api = (function () {
     return request("/growth-log/github-import", { method: "POST" });
   }
 
+  function githubContributions() {
+    return request("/growth-log/github-contributions");
+  }
+
   function growthLogStats() {
     return request("/growth-log/stats");
   }
@@ -181,6 +185,7 @@ window.Api = (function () {
     deleteGrowthLogEntry,
     verifyCredential,
     githubImport,
+    githubContributions,
     growthLogStats,
   };
 })();

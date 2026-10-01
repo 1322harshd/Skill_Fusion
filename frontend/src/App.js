@@ -10,6 +10,7 @@ const { AnimatePresence, motion, MotionConfig } = window.Motion;
 const { useRoute } = window;
 const { AppShell, ScreenPlaceholder } = window;
 
+const { Navbar } = window;
 const { Hero } = window;
 const { Capabilities } = window;
 const { HowItWorks } = window;
@@ -26,6 +27,7 @@ const LANDING = new Set([
   "/top",
   "/capabilities",
   "/how-it-works",
+  "/score",
   "/community",
   "/pricing",
   "/demo",
@@ -36,6 +38,7 @@ const LANDING = new Set([
 function Landing() {
   return (
     <main className="bg-black text-white">
+      <Navbar />
       <Hero />
       <Capabilities />
       <HowItWorks />
@@ -80,8 +83,15 @@ function App() {
   const isLanding = LANDING.has(route);
 
   useEffect(() => {
+    if (isLanding && route !== "/" && route !== "/top") {
+      const el = document.getElementById(route.slice(1));
+      if (el) {
+        el.scrollIntoView({ block: "start" });
+        return;
+      }
+    }
     window.scrollTo(0, 0);
-  }, [route]);
+  }, [route, isLanding]);
 
   useEffect(() => {
     window.Api.bootstrap().then((user) => {

@@ -237,6 +237,7 @@ function buildSeed() {
     },
     fusions: [],
     logEntries: [],
+    githubContributions: null,
     posts: [],
     peers: [],
     presence: [],
@@ -347,7 +348,15 @@ window.Store = (function () {
     const res = await window.Api.githubImport();
     const mapped = (res.entries || []).map(fromBackendEntry);
     if (mapped.length) set({ logEntries: [...mapped, ...state.logEntries] });
+    loadGithubContributions().catch(() => {});
     return mapped;
+  }
+
+  async function loadGithubContributions() {
+    if (!state.user.githubUrl) return null;
+    const res = await window.Api.githubContributions();
+    set({ githubContributions: res.weeks || [] });
+    return res.weeks;
   }
 
   function buildResume(listing) {
@@ -547,6 +556,7 @@ window.Store = (function () {
     reportPeer,
     syncGithub,
     loadGrowthLog,
+    loadGithubContributions,
     buildResume,
     SKILL_TAGS,
     COMPETENCIES,

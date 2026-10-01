@@ -81,7 +81,7 @@ function Pricing() {
                   ))}
                 </ul>
                 <a
-                  href="#demo"
+                  href="#/demo"
                   className={
                     (t.featured
                       ? "bg-black text-white hover:opacity-90"

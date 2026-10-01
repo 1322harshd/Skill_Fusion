@@ -7,7 +7,7 @@ from .models import GrowthLogEntry
 MAX_REPOS = 10
 
 
-def _extract_username(github_url: str) -> str:
+def extract_github_username(github_url: str) -> str:
     match = re.search(r"github\.com/([^/?#]+)", github_url or "")
     return match.group(1) if match else ""
 
@@ -15,7 +15,7 @@ def _extract_username(github_url: str) -> str:
 def import_github_entries(user) -> list[GrowthLogEntry]:
     """Pull the learner's public repository activity from the GitHub API
     and log any not already imported (FR-6.2)."""
-    username = _extract_username(user.githubUrl)
+    username = extract_github_username(user.githubUrl)
     if not username:
         return []
 

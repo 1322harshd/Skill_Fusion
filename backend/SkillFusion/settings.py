@@ -126,6 +126,10 @@ GITHUB_OAUTH_CLIENT_SECRET = config('GITHUB_OAUTH_CLIENT_SECRET', default='')
 GOOGLE_OAUTH_CLIENT_ID = config('GOOGLE_OAUTH_CLIENT_ID', default='')
 GOOGLE_OAUTH_CLIENT_SECRET = config('GOOGLE_OAUTH_CLIENT_SECRET', default='')
 
+# Server-owned PAT used to read public contribution data via GitHub's GraphQL API.
+# Needs no scopes beyond the default (public data only) — https://github.com/settings/tokens
+GITHUB_API_TOKEN = config('GITHUB_API_TOKEN', default='')
+
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases

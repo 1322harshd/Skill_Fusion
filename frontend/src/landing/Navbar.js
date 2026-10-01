@@ -3,11 +3,11 @@ const { motion, AnimatePresence } = window.Motion;
 const { Icons } = window;
 
 const NAV_LINKS = [
-  ["Home", "#top"],
-  ["How It Works", "#how-it-works"],
-  ["Features", "#capabilities"],
-  ["Community", "#community"],
-  ["Pricing", "#pricing"],
+  ["Home", "#/top"],
+  ["How It Works", "#/how-it-works"],
+  ["Features", "#/capabilities"],
+  ["Community", "#/community"],
+  ["Pricing", "#/pricing"],
 ];
 
 function MenuIcon({ open }) {
@@ -40,7 +40,7 @@ function Navbar() {
   return (
     <header className="fixed left-0 right-0 top-4 z-50 flex items-center justify-between px-8 lg:px-16">
       <a
-        href="#top"
+        href="#/top"
         onClick={() => setOpen(false)}
         className="liquid-glass flex h-12 w-12 items-center justify-center rounded-full"
         aria-label="Skill Fusion AI home"

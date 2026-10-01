@@ -31,19 +31,44 @@ function LogSourceBadge({ entry }) {
   );
 }
 
-function GithubGraph({ seedStr }) {
-  const seed = F.hash(seedStr || "");
-  const cells = [];
-  for (let i = 0; i < 98; i++) cells.push(((seed >> (i % 31)) + i * 7) % 5 === 0);
+const CONTRIBUTION_LEVELS = [
+  "rgba(255,255,255,0.08)",
+  "rgba(255,255,255,0.25)",
+  "rgba(255,255,255,0.45)",
+  "rgba(255,255,255,0.65)",
+  "rgba(255,255,255,0.9)",
+];
+
+function levelFor(count) {
+  if (count <= 0) return 0;
+  if (count <= 2) return 1;
+  if (count <= 4) return 2;
+  if (count <= 6) return 3;
+  return 4;
+}
+
+function GithubGraph({ weeks }) {
+  if (!weeks) {
+    return <p className="font-body text-xs font-light text-white/40">Loading GitHub activity…</p>;
+  }
+  if (!weeks.length) {
+    return <p className="font-body text-xs font-light text-white/40">No GitHub activity found yet.</p>;
+  }
   return (
-    <div className="grid w-fit gap-[3px]" style={{ gridTemplateColumns: "repeat(14, 8px)" }}>
-      {cells.map((on, i) => (
-        <span
-          key={i}
-          className="h-2 w-2 rounded-[2px]"
-          style={{ background: on ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.08)" }}
-        />
-      ))}
+    <div
+      className="grid w-fit gap-[3px]"
+      style={{ gridTemplateRows: "repeat(7, 8px)", gridAutoFlow: "column", gridAutoColumns: "8px" }}
+    >
+      {weeks.map((week, wi) =>
+        week.map((day, di) => (
+          <span
+            key={wi + "-" + di}
+            title={`${day.date}: ${day.count} contribution${day.count === 1 ? "" : "s"}`}
+            className="h-2 w-2 rounded-[2px]"
+            style={{ background: CONTRIBUTION_LEVELS[levelFor(day.count)] }}
+          />
+        ))
+      )}
     </div>
   );
 }
@@ -64,6 +89,7 @@ function GrowthLog() {
 
   useEffect(() => {
     Store.loadGrowthLog().catch(() => {});
+    Store.loadGithubContributions().catch(() => {});
   }, []);
 
   const entries = s.logEntries.filter((e) => (filter === "all" ? true : e.source === filter));
@@ -231,7 +257,7 @@ function GrowthLog() {
 
                   {e.github && (
                     <div className="mt-4 border-t border-white/10 pt-4">
-                      <GithubGraph seedStr={e.id} />
+                      <GithubGraph weeks={s.githubContributions} />
                     </div>
                   )}
 

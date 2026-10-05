@@ -6,6 +6,10 @@ from .models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
+    # Whether a working OAuth token backs githubUrl — never expose the token itself,
+    # just whether private-repo sync is actually usable vs. a stale pre-OAuth URL.
+    githubConnected = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = [
@@ -18,8 +22,12 @@ class UserSerializer(serializers.ModelSerializer):
             "baseline",
             "skills",
             "githubUrl",
+            "githubConnected",
         ]
-        read_only_fields = ["userId", "email", "role", "isEmailVerified"]
+        read_only_fields = ["userId", "email", "role", "isEmailVerified", "githubUrl", "githubConnected"]
+
+    def get_githubConnected(self, obj):
+        return bool(obj.githubAccessToken)
 
 
 class RegisterSerializer(serializers.ModelSerializer):

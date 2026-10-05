@@ -13,16 +13,19 @@ def extract_github_username(github_url: str) -> str:
 
 
 def import_github_entries(user) -> list[GrowthLogEntry]:
-    """Pull the learner's public repository activity from the GitHub API
-    and log any not already imported (FR-6.2)."""
-    username = extract_github_username(user.githubUrl)
-    if not username:
+    """Pull the learner's repository activity (public and private) from the
+    GitHub API using their own connected OAuth token, and log any not already
+    imported (FR-6.2). Requires the user to have connected GitHub via OAuth."""
+    if not user.githubAccessToken:
         return []
 
     response = requests.get(
-        f"https://api.github.com/users/{username}/repos",
-        params={"sort": "updated", "per_page": MAX_REPOS},
-        headers={"Accept": "application/vnd.github+json"},
+        "https://api.github.com/user/repos",
+        params={"sort": "updated", "per_page": MAX_REPOS, "affiliation": "owner", "visibility": "all"},
+        headers={
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"token {user.githubAccessToken}",
+        },
         timeout=10,
     )
     if response.status_code != 200:
@@ -50,6 +53,7 @@ def import_github_entries(user) -> list[GrowthLogEntry]:
             skillTags=[repo["language"]] if repo.get("language") else [],
             competencyTags=[],
             verified=True,
+            isPrivate=bool(repo.get("private")),
         )
         created.append(entry)
 

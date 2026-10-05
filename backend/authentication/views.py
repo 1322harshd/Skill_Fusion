@@ -32,6 +32,31 @@ def _auth_payload(user, status_code):
     return response
 
 
+def _exchange_github_code(code):
+    """Exchange an OAuth code for an access token and the authorizing user's
+    GitHub profile. Returns (None, None) if the exchange fails."""
+    token_res = requests.post(
+        "https://github.com/login/oauth/access_token",
+        headers={"Accept": "application/json"},
+        data={
+            "client_id": settings.GITHUB_OAUTH_CLIENT_ID,
+            "client_secret": settings.GITHUB_OAUTH_CLIENT_SECRET,
+            "code": code,
+        },
+        timeout=10,
+    )
+    access_token = token_res.json().get("access_token")
+    if not access_token:
+        return None, None
+
+    profile = requests.get(
+        "https://api.github.com/user",
+        headers={"Authorization": f"Bearer {access_token}"},
+        timeout=10,
+    ).json()
+    return access_token, profile
+
+
 def _get_or_create_oauth_user(email, full_name, github_url=""):
     user, created = User.objects.get_or_create(
         email=email,
@@ -198,25 +223,9 @@ class GithubOAuthView(APIView):
         if not code:
             return Response({"detail": "code is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        token_res = requests.post(
-            "https://github.com/login/oauth/access_token",
-            headers={"Accept": "application/json"},
-            data={
-                "client_id": settings.GITHUB_OAUTH_CLIENT_ID,
-                "client_secret": settings.GITHUB_OAUTH_CLIENT_SECRET,
-                "code": code,
-            },
-            timeout=10,
-        )
-        access_token = token_res.json().get("access_token")
+        access_token, profile = _exchange_github_code(code)
         if not access_token:
             return Response({"detail": "Could not authenticate with GitHub."}, status=status.HTTP_400_BAD_REQUEST)
-
-        profile = requests.get(
-            "https://api.github.com/user",
-            headers={"Authorization": f"Bearer {access_token}"},
-            timeout=10,
-        ).json()
 
         email = profile.get("email")
         if not email:
@@ -240,6 +249,45 @@ class GithubOAuthView(APIView):
             github_url=profile.get("html_url", ""),
         )
         return _auth_payload(user, status.HTTP_200_OK)
+
+
+class GithubOAuthConfigView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return Response({"clientId": settings.GITHUB_OAUTH_CLIENT_ID})
+
+
+class GithubConnectView(APIView):
+    """Attaches a verified GitHub profile to the logged-in user, replacing
+    the free-text githubUrl field a user could previously type anything into."""
+
+    def post(self, request):
+        if not settings.GITHUB_OAUTH_CLIENT_ID or not settings.GITHUB_OAUTH_CLIENT_SECRET:
+            return Response(
+                {"detail": "GitHub OAuth is not configured on the server yet."},
+                status=status.HTTP_501_NOT_IMPLEMENTED,
+            )
+
+        code = request.data.get("code")
+        if not code:
+            return Response({"detail": "code is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        access_token, profile = _exchange_github_code(code)
+        if not access_token:
+            return Response({"detail": "Could not authenticate with GitHub."}, status=status.HTTP_400_BAD_REQUEST)
+
+        login = profile.get("login")
+        if not login:
+            return Response(
+                {"detail": "Could not read a username from that GitHub account."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        request.user.githubUrl = profile.get("html_url") or f"https://github.com/{login}"
+        request.user.githubAccessToken = access_token
+        request.user.save(update_fields=["githubUrl", "githubAccessToken"])
+        return Response({"user": UserSerializer(request.user).data})
 
 
 class GoogleOAuthView(APIView):

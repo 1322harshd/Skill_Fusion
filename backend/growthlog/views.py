@@ -60,9 +60,9 @@ class VerifyCredentialView(APIView):
 
 class GithubImportView(APIView):
     def post(self, request):
-        if not request.user.githubUrl:
+        if not request.user.githubAccessToken:
             return Response(
-                {"detail": "Connect a GitHub URL to your profile first."},
+                {"detail": "Connect your GitHub account first."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         created = import_github_entries(request.user)

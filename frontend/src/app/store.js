@@ -175,12 +175,14 @@ function fromBackendEntry(e) {
     title: e.title,
     description: e.description,
     date: new Date(e.loggedAt).toLocaleDateString(),
+    loggedAt: e.loggedAt,
     tags: [...skillTags, ...competencyTags],
     source,
     verification: e.credential
       ? { link: e.credential.verificationUrl, verified: e.credential.verificationStatus === "verified" }
       : null,
     github: e.source === "github",
+    isPrivate: !!e.isPrivate,
   };
 }
 
@@ -233,6 +235,7 @@ function buildSeed() {
       personaTypes: [],
       baseline: null,
       githubUrl: "",
+      githubConnected: false,
       skills: [],
     },
     fusions: [],

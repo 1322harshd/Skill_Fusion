@@ -38,6 +38,9 @@ class User(AbstractUser):
     baseline = models.JSONField(default=dict, blank=True)
     skills = models.JSONField(default=list, blank=True)
     githubUrl = models.URLField(blank=True, default="")
+    # OAuth access token for the connected GitHub account (repo scope), used to list
+    # private repos on the user's behalf. Never exposed via the API — stored server-side only.
+    githubAccessToken = models.CharField(max_length=255, blank=True, default="")
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["fullName"]

@@ -58,18 +58,29 @@ window.Api = (function () {
     return data;
   }
 
-  async function refresh() {
-    try {
-      const data = await request("/auth/refresh", { method: "POST", auth: false, retry: false });
-      if (data && data.accessToken) {
-        setAccessToken(data.accessToken);
-        return true;
+  let refreshPromise = null;
+
+  // The refresh token rotates (and the old one is blacklisted) on every use, so
+  // concurrent callers must share one in-flight request instead of each firing
+  // their own — otherwise all but the first race against an already-spent cookie.
+  function refresh() {
+    if (refreshPromise) return refreshPromise;
+    refreshPromise = (async () => {
+      try {
+        const data = await request("/auth/refresh", { method: "POST", auth: false, retry: false });
+        if (data && data.accessToken) {
+          setAccessToken(data.accessToken);
+          return true;
+        }
+      } catch (e) {
+        // No valid refresh cookie — treat as signed out.
       }
-    } catch (e) {
-      // No valid refresh cookie — treat as signed out.
-    }
-    setAccessToken(null);
-    return false;
+      setAccessToken(null);
+      return false;
+    })();
+    return refreshPromise.finally(() => {
+      refreshPromise = null;
+    });
   }
 
   function register({ name, email, password }) {
@@ -151,6 +162,14 @@ window.Api = (function () {
     return request("/growth-log/github-contributions");
   }
 
+  function githubOAuthConfig() {
+    return request("/auth/oauth/github/config", { auth: false });
+  }
+
+  function githubConnect(code) {
+    return request("/auth/oauth/github/connect", { method: "POST", body: { code } });
+  }
+
   function growthLogStats() {
     return request("/growth-log/stats");
   }
@@ -186,6 +205,8 @@ window.Api = (function () {
     verifyCredential,
     githubImport,
     githubContributions,
+    githubOAuthConfig,
+    githubConnect,
     growthLogStats,
   };
 })();

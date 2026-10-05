@@ -47,12 +47,38 @@ function levelFor(count) {
   return 4;
 }
 
-function GithubGraph({ weeks }) {
-  if (!weeks) {
-    return <p className="font-body text-xs font-light text-white/40">Loading GitHub activity…</p>;
+const ACTIVITY_WEEKS = 14;
+
+function buildEmptyWeeks(weeksCount = ACTIVITY_WEEKS) {
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  const days = [];
+  for (let i = weeksCount * 7 - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setUTCDate(d.getUTCDate() - i);
+    days.push({ date: d.toISOString().slice(0, 10), count: 0 });
   }
-  if (!weeks.length) {
-    return <p className="font-body text-xs font-light text-white/40">No GitHub activity found yet.</p>;
+  const weeks = [];
+  for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
+  return weeks;
+}
+
+function buildCombinedWeeks(baseWeeks, entries) {
+  if (!baseWeeks) return null;
+  const manualCounts = {};
+  for (const e of entries) {
+    if (e.github || !e.loggedAt) continue;
+    const day = e.loggedAt.slice(0, 10);
+    manualCounts[day] = (manualCounts[day] || 0) + 1;
+  }
+  return baseWeeks.map((week) =>
+    week.map((d) => ({ date: d.date, count: d.count + (manualCounts[d.date] || 0) }))
+  );
+}
+
+function ActivityGraph({ weeks }) {
+  if (!weeks) {
+    return <p className="font-body text-xs font-light text-white/40">Loading activity…</p>;
   }
   return (
     <div
@@ -85,7 +111,7 @@ function GrowthLog() {
   const [saving, setSaving] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [syncing, setSyncing] = useState(false);
-  const [githubUrlInput, setGithubUrlInput] = useState(s.user.githubUrl || "");
+  const [connecting, setConnecting] = useState(false);
 
   useEffect(() => {
     Store.loadGrowthLog().catch(() => {});
@@ -98,6 +124,8 @@ function GrowthLog() {
     { label: "Verified", value: s.logEntries.filter((e) => e.source === "verified").length },
     { label: "Pending verification", value: s.logEntries.filter((e) => e.source === "pending").length },
   ];
+  const baseWeeks = s.user.githubUrl ? s.githubContributions : buildEmptyWeeks();
+  const activityWeeks = buildCombinedWeeks(baseWeeks, s.logEntries);
 
   function toggleTag(t) {
     setSel((xs) => (xs.some((x) => x.label === t.label) ? xs.filter((x) => x.label !== t.label) : [...xs, t]));
@@ -144,11 +172,6 @@ function GrowthLog() {
   async function sync() {
     setSyncing(true);
     try {
-      const url = githubUrlInput.trim();
-      if (url && url !== s.user.githubUrl) {
-        await window.Api.updateMe({ githubUrl: url });
-        Store.updateUser({ githubUrl: url });
-      }
       const imported = await Store.syncGithub();
       setSyncOpen(false);
       window.Toast.show(
@@ -159,6 +182,27 @@ function GrowthLog() {
       window.Toast.show(e.message || "Couldn't sync GitHub", "error");
     } finally {
       setSyncing(false);
+    }
+  }
+
+  async function connectGithub() {
+    setConnecting(true);
+    try {
+      const { clientId } = await window.Api.githubOAuthConfig();
+      if (!clientId) {
+        window.Toast.show("GitHub OAuth isn't configured on the server yet.", "error");
+        return;
+      }
+      const state = (crypto.randomUUID && crypto.randomUUID()) || String(Math.random()).slice(2);
+      sessionStorage.setItem("gh_oauth_state", state);
+      const redirectUri = window.location.origin + "/";
+      const authorizeUrl =
+        "https://github.com/login/oauth/authorize?" +
+        new URLSearchParams({ client_id: clientId, redirect_uri: redirectUri, scope: "repo", state });
+      window.location.href = authorizeUrl;
+    } catch (e) {
+      window.Toast.show(e.message || "Couldn't start GitHub connect", "error");
+      setConnecting(false);
     }
   }
 
@@ -205,6 +249,15 @@ function GrowthLog() {
         ))}
       </div>
 
+      <motion.div {...enter(0.15)} className="liquid-glass mt-6 rounded-[1.25rem] p-6">
+        <p className="font-body text-xs font-light text-white/50">
+          {s.user.githubUrl ? "GitHub commits + logged entries" : "Logged entries — connect GitHub to add commits"}
+        </p>
+        <div className="mt-3 overflow-x-auto">
+          <ActivityGraph weeks={activityWeeks} />
+        </div>
+      </motion.div>
+
       <div className="mt-8 flex flex-wrap gap-2">
         {FILTERS.map(([key, label]) => (
           <button
@@ -246,19 +299,21 @@ function GrowthLog() {
                       <h3 className="mt-2 font-heading text-xl italic leading-snug text-white">{e.title}</h3>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-2">
-                      <LogSourceBadge entry={e} />
+                      <div className="flex items-center gap-2">
+                        {e.isPrivate && (
+                          <span className="liquid-glass flex items-center gap-1 rounded-full px-3 py-1 font-body text-[11px] font-medium text-white/70">
+                            <Icons.Lock className="h-3 w-3" />
+                            Private
+                          </span>
+                        )}
+                        <LogSourceBadge entry={e} />
+                      </div>
                       <span className="font-body text-xs font-light text-white/40">{e.date}</span>
                     </div>
                   </div>
 
                   {e.description && (
                     <p className="mt-2 font-body text-sm font-light leading-relaxed text-white/60">{e.description}</p>
-                  )}
-
-                  {e.github && (
-                    <div className="mt-4 border-t border-white/10 pt-4">
-                      <GithubGraph weeks={s.githubContributions} />
-                    </div>
                   )}
 
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
@@ -396,28 +451,38 @@ function GrowthLog() {
       <window.Modal open={syncOpen} onClose={() => setSyncOpen(false)}>
         <h3 className="font-heading text-2xl italic text-white">Sync GitHub</h3>
         <p className="mt-1 font-body text-xs font-light text-white/60">
-          We'll pull your public repos in as verified evidence.
+          We'll pull your repos in as verified evidence, including private ones — GitHub will ask you to
+          approve read access to your repositories.
         </p>
-        {!s.user.githubUrl && (
-          <input
-            value={githubUrlInput}
-            onChange={(e) => setGithubUrlInput(e.target.value)}
-            placeholder="https://github.com/yourhandle"
-            className="mt-4 w-full rounded-xl bg-black/40 px-4 py-3 font-body text-sm text-white outline-none ring-1 ring-white/15 focus:ring-white/40"
-          />
+        {!s.user.githubConnected ? (
+          <button
+            type="button"
+            onClick={connectGithub}
+            disabled={connecting}
+            className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-3 font-body text-sm font-medium text-black disabled:opacity-60"
+          >
+            <Icons.ArrowUpRight className="h-4 w-4" />
+            {connecting ? "Redirecting…" : "Connect GitHub"}
+          </button>
+        ) : (
+          <>
+            <p className="mt-4 font-body text-xs text-white/50">
+              Connected as <span className="text-white/80">{s.user.githubUrl}</span>
+            </p>
+            <button
+              type="button"
+              onClick={sync}
+              disabled={syncing}
+              className={
+                (!syncing ? "bg-white text-black" : "liquid-glass text-white/30") +
+                " mt-5 flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 font-body text-sm font-medium"
+              }
+            >
+              <Icons.Refresh className="h-4 w-4" />
+              {syncing ? "Syncing…" : "Sync now"}
+            </button>
+          </>
         )}
-        <button
-          type="button"
-          onClick={sync}
-          disabled={syncing || (!s.user.githubUrl && !githubUrlInput.trim())}
-          className={
-            (!syncing && (s.user.githubUrl || githubUrlInput.trim()) ? "bg-white text-black" : "liquid-glass text-white/30") +
-            " mt-5 flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 font-body text-sm font-medium"
-          }
-        >
-          <Icons.Refresh className="h-4 w-4" />
-          {syncing ? "Syncing…" : "Sync now"}
-        </button>
       </window.Modal>
     </div>
   );

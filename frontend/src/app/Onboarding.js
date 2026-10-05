@@ -70,6 +70,7 @@ function Onboarding() {
       baseline: user.baseline || null,
       skills: user.skills || [],
       githubUrl: user.githubUrl || "",
+      githubConnected: !!user.githubConnected,
     });
   }
 

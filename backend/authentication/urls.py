@@ -14,6 +14,8 @@ auth_urlpatterns = [
     path("verify-email", views.VerifyEmailView.as_view()),
     path("resend-verification", views.ResendVerificationEmailView.as_view()),
     path("oauth/github", views.GithubOAuthView.as_view()),
+    path("oauth/github/config", views.GithubOAuthConfigView.as_view()),
+    path("oauth/github/connect", views.GithubConnectView.as_view()),
     path("oauth/google", views.GoogleOAuthView.as_view()),
 ]
 

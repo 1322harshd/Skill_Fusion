@@ -24,10 +24,11 @@ class GrowthLogEntrySerializer(serializers.ModelSerializer):
             "skillTags",
             "competencyTags",
             "verified",
+            "isPrivate",
             "loggedAt",
             "credential",
         ]
-        read_only_fields = ["entryId", "source", "verified", "loggedAt", "credential"]
+        read_only_fields = ["entryId", "source", "verified", "isPrivate", "loggedAt", "credential"]
 
 
 class CreateEntrySerializer(serializers.ModelSerializer):

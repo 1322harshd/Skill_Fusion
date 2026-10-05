@@ -23,6 +23,7 @@ class GrowthLogEntry(models.Model):
     competencyTags = models.JSONField(default=list, blank=True)
 
     verified = models.BooleanField(default=False)
+    isPrivate = models.BooleanField(default=False)
     loggedAt = models.DateTimeField(auto_now_add=True)
 
     class Meta:

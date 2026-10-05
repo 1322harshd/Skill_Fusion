@@ -94,6 +94,32 @@ function App() {
   }, [route, isLanding]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    if (!code) return;
+
+    const state = params.get("state");
+    const expected = sessionStorage.getItem("gh_oauth_state");
+    sessionStorage.removeItem("gh_oauth_state");
+    window.history.replaceState(null, "", window.location.pathname + window.location.hash);
+
+    if (!state || state !== expected) {
+      window.Toast.show("GitHub connection failed — please try again.", "error");
+      return;
+    }
+    window.Api.githubConnect(code)
+      .then((data) => {
+        window.Store.updateUser({ githubUrl: data.user.githubUrl, githubConnected: !!data.user.githubConnected });
+        window.Store.loadGithubContributions().catch(() => {});
+        window.Toast.show("GitHub connected", "success");
+        window.Router.go("/log");
+      })
+      .catch((e) => {
+        window.Toast.show(e.message || "Couldn't connect GitHub", "error");
+      });
+  }, []);
+
+  useEffect(() => {
     window.Api.bootstrap().then((user) => {
       if (!user) return;
       window.Store.updateUser({
@@ -106,6 +132,7 @@ function App() {
         baseline: user.baseline || null,
         skills: user.skills || [],
         githubUrl: user.githubUrl || "",
+        githubConnected: !!user.githubConnected,
       });
       const cur = window.Router.current();
       const onboarded = !!(user.personaTypes && user.personaTypes.length && user.baseline && user.baseline.method);

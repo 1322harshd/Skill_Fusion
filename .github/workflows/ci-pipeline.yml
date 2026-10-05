@@ -3,7 +3,7 @@ on:
     push:
         paths:
             - 'frontend/**'
-            - '.github/workflow/frontend.yml'
+            - '.github/workflows/frontend.yml'
 
 jobs:
     lint:

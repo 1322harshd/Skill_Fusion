@@ -3,7 +3,7 @@ on:
     push:
         paths:
             - 'frontend/**'
-            - '.github/workflows/frontend.yml'
+            - '.github/workflows/frontend-ci-pipeline.yml'
 
 jobs:
     lint:

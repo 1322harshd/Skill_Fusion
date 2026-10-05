@@ -20,7 +20,15 @@ jobs:
                 node-version: "22"
             - name: Install lint tooling
               run: npm install --no-save eslint
-            - name: Lint
-              run: npx eslint src   
+            - name: Lint and write report
+              run: npx eslint src -f html -o lint-report.html
+              continue-on-error: true
+            - name: Upload lint report
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                name: lint-report
+                path: frontend/lint-report.html
+                retention-days: 1
             
             

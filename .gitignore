@@ -19,3 +19,7 @@ dist/
 build/
 *.zip
 *.bak
+
+
+test-results/
+playwright-report

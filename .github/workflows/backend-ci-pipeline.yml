@@ -63,7 +63,7 @@ jobs:
             DB_NAME: SkillFusion_Database
             DB_USER: postgres
             DB_PASSWORD: postgres
-            DB_HOST: locahost
+            DB_HOST: localhost
             DB_PORT: 5431
 
         steps:

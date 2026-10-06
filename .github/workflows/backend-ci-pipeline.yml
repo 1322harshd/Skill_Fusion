@@ -1,0 +1,27 @@
+name: Backend CI Pipeline
+
+on:
+    push:
+        paths:
+            - 'backend/**'
+            - '.github/workflows/backend-ci-pipeline.yml'
+
+defaults:
+    run:
+        working-directory: backend
+
+jobs: 
+    lint:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+            - name: Setup Django
+              uses: actions/setup-python@v5
+              with:
+                python-version: "3.13"
+            - name: Install ruff
+              run: pip install ruff
+
+            - name: Lint
+              run: ruff check .

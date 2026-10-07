@@ -10,14 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-<<<<<<< HEAD
 from datetime import timedelta
 from pathlib import Path
 from decouple import config, Csv
-=======
-from pathlib import Path
-from decouple import config
->>>>>>> f844bd3 (Add Django backend scaffold with authentication app)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -44,24 +39,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-<<<<<<< HEAD
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'authentication',
     'growthlog',
-=======
-    'authentication',
->>>>>>> f844bd3 (Add Django backend scaffold with authentication app)
 
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-<<<<<<< HEAD
     'corsheaders.middleware.CorsMiddleware',
-=======
->>>>>>> f844bd3 (Add Django backend scaffold with authentication app)
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -89,7 +77,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'SkillFusion.wsgi.application'
 
-<<<<<<< HEAD
 AUTH_USER_MODEL = 'authentication.User'
 
 REST_FRAMEWORK = {
@@ -143,8 +130,6 @@ GOOGLE_OAUTH_CLIENT_SECRET = config('GOOGLE_OAUTH_CLIENT_SECRET', default='')
 # Needs no scopes beyond the default (public data only) — https://github.com/settings/tokens
 GITHUB_API_TOKEN = config('GITHUB_API_TOKEN', default='')
 
-=======
->>>>>>> f844bd3 (Add Django backend scaffold with authentication app)
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases

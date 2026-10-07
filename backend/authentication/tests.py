@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from unittest.mock import patch
 
 from django.core.cache import cache
@@ -101,8 +100,3 @@ class AuthTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.user.refresh_from_db()
         self.assertEqual(self.user.githubAccessToken, "")
-=======
-from django.test import TestCase
-
-# Create your tests here.
->>>>>>> f844bd3 (Add Django backend scaffold with authentication app)

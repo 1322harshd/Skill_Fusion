@@ -1,5 +1,4 @@
 asgiref==3.12.1
-<<<<<<< HEAD
 certifi==2026.7.22
 charset-normalizer==3.5.1
 Django==6.1
@@ -14,9 +13,3 @@ requests==2.34.2
 ruff==0.16.10
 sqlparse==0.6.0
 urllib3==2.7.0
-=======
-Django==6.1
-psycopg2-binary==2.9.12
-python-decouple==3.8
-sqlparse==0.6.0
->>>>>>> f844bd3 (Add Django backend scaffold with authentication app)

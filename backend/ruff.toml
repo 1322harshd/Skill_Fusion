@@ -1,0 +1,4 @@
+exclude = [".venv", "migrations"]
+
+[lint]
+select = ["E9", "F"]   # syntax errors and pyflakes: undefined names, unused imports

@@ -1,4 +1,6 @@
 backend/.venv/
+node_modules/
+.DS_Store
 __pycache__/
 *.pyc
 *.pyo
@@ -10,6 +12,14 @@ db.sqlite3
 staticfiles/
 media/
 
-.DS_Store
 .idea/
 .vscode/
+
+dist/
+build/
+*.zip
+*.bak
+
+
+test-results/
+playwright-report

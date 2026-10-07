@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="600" viewBox="0 0 1440 600">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="600" fill="#FFFFFF"/>
+
+    <!-- Section heading -->
+    <text x="80" y="130" font-size="52" font-style="italic" font-weight="800" fill="#1F1F1F">How rare is your combination?</text>
+
+    <!-- Left: big number -->
+    <text x="90" y="330" font-size="150" font-style="italic" font-weight="800" fill="#1F1F1F">2.4%</text>
+    <text x="420" y="296" font-size="14" fill="#333333">of skill pairs are rarer</text>
+    <text x="420" y="318" font-size="14" fill="#333333">than this one.</text>
+    <text x="90" y="380" font-size="14" fill="#444444">Fusion Score is computed from real job-market demand — where your combination actually shows up in listings,</text>
+    <text x="90" y="400" font-size="14" fill="#444444">how much it's worth, and whether it's growing. No vibes, no surveys.</text>
+
+    <!-- Right: slider -->
+    <text x="760" y="210" font-size="12" fill="#666666">More common</text>
+    <text x="1330" y="210" font-size="12" text-anchor="end" fill="#666666">Rarer</text>
+    <rect x="760" y="228" width="570" height="8" rx="4" fill="#DADADA"/>
+    <rect x="760" y="228" width="556" height="8" rx="4" fill="#1F1F1F"/>
+    <circle cx="1316" cy="232" r="10" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="2.5"/>
+
+    <!-- Meta tiles -->
+    <rect x="760" y="300" width="180" height="72" rx="16" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/>
+    <text x="788" y="340" font-size="22" font-style="italic" font-weight="800" fill="#1F1F1F">12,000+</text>
+    <text x="788" y="360" font-size="11" fill="#555555">Listings scanned</text>
+    <rect x="956" y="300" width="180" height="72" rx="16" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/>
+    <text x="984" y="340" font-size="22" font-style="italic" font-weight="800" fill="#1F1F1F">37%</text>
+    <text x="984" y="360" font-size="11" fill="#555555">Pay delta vs. single skill</text>
+    <rect x="1152" y="300" width="178" height="72" rx="16" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="0.8"/>
+    <text x="1180" y="340" font-size="22" font-style="italic" font-weight="800" fill="#1F1F1F">+4.1%/yr</text>
+    <text x="1180" y="360" font-size="11" fill="#555555">Demand growth</text>
+
+    <text x="80" y="560" font-size="12" fill="#888888">[Score] Rarity slider animates on scroll</text>
+  </g>
+</svg>

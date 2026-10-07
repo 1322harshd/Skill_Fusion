@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif" fill="none" stroke="#222" stroke-width="1.2">
+    <rect width="1440" height="900" fill="#fff"/>
+    <text x="720" y="80" text-anchor="middle" font-size="36" font-style="italic" font-weight="800" fill="#222" stroke="none">Fuse any two skills</text>
+    <!-- Skill picker 1 -->
+    <text x="520" y="170" font-size="11" font-weight="600" fill="#888" stroke="none">SKILL ONE</text>
+    <rect x="520" y="185" width="400" height="48" rx="12" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="540" y="215" font-size="14" fill="#aaa" stroke="none">Pick a skill from any domain</text>
+    <!-- Orb -->
+    <circle cx="720" cy="280" r="28" fill="#f0f0f0" stroke="#bbb"/>
+    <text x="720" y="288" text-anchor="middle" font-size="20" font-weight="600" fill="#222" stroke="none">x</text>
+    <!-- Skill picker 2 -->
+    <text x="520" y="340" font-size="11" font-weight="600" fill="#888" stroke="none">SKILL TWO</text>
+    <rect x="520" y="355" width="400" height="48" rx="12" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="540" y="385" font-size="14" fill="#aaa" stroke="none">Pick another skill from any domain</text>
+    <!-- Fuse button -->
+    <rect x="570" y="440" width="300" height="50" rx="25" fill="#e0e0e0" stroke="#aaa"/>
+    <text x="720" y="471" text-anchor="middle" font-size="14" font-weight="600" fill="#222" stroke="none">Fuse two skills</text>
+    <text x="40" y="860" font-size="11" fill="#999" stroke="none">[Fuse Input] Two skill pickers + orb + disabled fuse button</text>
+  </g>
+</svg>

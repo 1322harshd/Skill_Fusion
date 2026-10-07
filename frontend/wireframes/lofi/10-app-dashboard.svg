@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="900" fill="#FFFFFF"/>
+
+    <!-- Top nav bar -->
+    <rect width="1440" height="60" fill="#F8F8F8" stroke="#EEE" stroke-width="0 0 1 0"/>
+    <circle cx="40" cy="30" r="18" fill="#E5E5E5"/>
+    <text x="40" y="36" text-anchor="middle" font-size="14" font-style="italic" font-weight="800" fill="#666">s</text>
+    <text x="200" y="36" font-size="13" font-weight="600" fill="#1F1F1F">Dashboard</text>
+    <text x="320" y="36" font-size="13" fill="#999">Fuse</text>
+    <text x="400" y="36" font-size="13" fill="#999">Roadmaps</text>
+    <text x="510" y="36" font-size="13" fill="#999">Log</text>
+    <text x="580" y="36" font-size="13" fill="#999">Resume</text>
+    <text x="660" y="36" font-size="13" fill="#999">Connect</text>
+    <rect x="1320" y="14" width="100" height="32" rx="16" fill="#F0F0F0"/>
+    <text x="1370" y="35" text-anchor="middle" font-size="11" fill="#666">username</text>
+
+    <!-- Greeting -->
+    <text x="80" y="120" font-size="13" fill="#999">// Today at a glance</text>
+    <text x="80" y="165" font-size="42" font-style="italic" font-weight="800" fill="#1F1F1F">Good morning, Alex</text>
+    <text x="80" y="200" font-size="14" fill="#666">You're building Design × Code — a rare blend with 847 points on the line.</text>
+
+    <!-- Featured fusion card -->
+    <rect x="80" y="240" width="1280" height="180" rx="20" fill="#F8F8F8" stroke="#1F1F1F" stroke-width="1.5"/>
+    <text x="120" y="280" font-size="11" fill="#999" letter-spacing="2">FEATURED FUSION</text>
+    <rect x="120" y="300" width="140" height="32" rx="16" fill="#E5E5E5"/>
+    <text x="190" y="321" text-anchor="middle" font-size="13" font-weight="600" fill="#555">Design × Code</text>
+    <text x="120" y="370" font-size="24" font-style="italic" font-weight="700" fill="#1F1F1F">The Design Engineer's Blueprint</text>
+    <rect x="120" y="390" width="160" height="36" rx="18" fill="#1F1F1F"/>
+    <text x="200" y="414" text-anchor="middle" font-size="13" font-weight="600" fill="#FFF">Open project</text>
+    <rect x="300" y="390" width="140" height="36" rx="18" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="370" y="414" text-anchor="middle" font-size="13" fill="#555">Fusion score</text>
+
+    <!-- Score display -->
+    <text x="1200" y="320" text-anchor="end" font-size="52" font-style="italic" font-weight="800" fill="#1F1F1F">847</text>
+    <text x="1200" y="345" text-anchor="end" font-size="12" fill="#999">rare blend · high demand</text>
+    <!-- Mini sparkline placeholder -->
+    <rect x="1100" y="355" width="160" height="40" rx="6" fill="#F0F0F0"/>
+
+    <!-- Your fusions section -->
+    <text x="80" y="470" font-size="22" font-style="italic" font-weight="700" fill="#1F1F1F">Your fusions</text>
+    <text x="1280" y="470" text-anchor="end" font-size="13" fill="#999">+ Fuse a new pair</text>
+
+    <!-- Fusion grid cards -->
+    <rect x="80" y="500" width="390" height="200" rx="16" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <rect x="110" y="525" width="120" height="28" rx="14" fill="#F0F0F0"/>
+    <text x="170" y="544" text-anchor="middle" font-size="12" fill="#555">Design × Code</text>
+    <text x="350" y="544" text-anchor="end" font-size="12" fill="#999">847</text>
+    <text x="110" y="580" font-size="16" font-style="italic" font-weight="600" fill="#1F1F1F">The Design Engineer's Blueprint</text>
+    <text x="110" y="620" font-size="11" fill="#999">Week 6 of 10 · 60%</text>
+    <rect x="110" y="635" width="340" height="6" rx="3" fill="#F0F0F0"/>
+    <rect x="110" y="635" width="204" height="6" rx="3" fill="#1F1F1F"/>
+
+    <rect x="500" y="500" width="390" height="200" rx="16" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <rect x="530" y="525" width="120" height="28" rx="14" fill="#F0F0F0"/>
+    <text x="590" y="544" text-anchor="middle" font-size="12" fill="#555">Data × Writing</text>
+    <text x="770" y="544" text-anchor="end" font-size="12" fill="#999">623</text>
+    <text x="530" y="580" font-size="16" font-style="italic" font-weight="600" fill="#1F1F1F">Content Data Analyst</text>
+    <text x="530" y="620" font-size="11" fill="#999">Week 3 of 8 · 38%</text>
+    <rect x="530" y="635" width="340" height="6" rx="3" fill="#F0F0F0"/>
+    <rect x="530" y="635" width="129" height="6" rx="3" fill="#1F1F1F"/>
+
+    <rect x="920" y="500" width="390" height="200" rx="16" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <rect x="950" y="525" width="120" height="28" rx="14" fill="#F0F0F0"/>
+    <text x="1010" y="544" text-anchor="middle" font-size="12" fill="#555">Marketing × AI</text>
+    <text x="1190" y="544" text-anchor="end" font-size="12" fill="#999">512</text>
+    <text x="950" y="580" font-size="16" font-style="italic" font-weight="600" fill="#1F1F1F">AI Growth Marketer</text>
+    <text x="950" y="620" font-size="11" fill="#999">Week 1 of 6 · 17%</text>
+    <rect x="950" y="635" width="340" height="6" rx="3" fill="#F0F0F0"/>
+    <rect x="950" y="635" width="58" height="6" rx="3" fill="#1F1F1F"/>
+
+    <!-- Skill profile -->
+    <text x="80" y="750" font-size="22" font-style="italic" font-weight="700" fill="#1F1F1F">Skill profile</text>
+    <rect x="80" y="770" width="620" height="100" rx="16" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <text x="110" y="805" font-size="13" font-weight="500" fill="#1F1F1F">Design</text>
+    <rect x="220" y="795" width="200" height="6" rx="3" fill="#F0F0F0"/>
+    <rect x="220" y="795" width="160" height="6" rx="3" fill="#1F1F1F"/>
+    <text x="440" y="805" font-size="14" font-style="italic" fill="#666">8</text>
+    <text x="110" y="845" font-size="13" font-weight="500" fill="#1F1F1F">Code</text>
+    <rect x="220" y="835" width="200" height="6" rx="3" fill="#F0F0F0"/>
+    <rect x="220" y="835" width="120" height="6" rx="3" fill="#1F1F1F"/>
+    <text x="440" y="845" font-size="14" font-style="italic" fill="#666">6</text>
+
+    <!-- Up next -->
+    <text x="740" y="750" font-size="22" font-style="italic" font-weight="700" fill="#1F1F1F">Up next</text>
+    <rect x="740" y="770" width="570" height="100" rx="16" fill="#F8F8F8" stroke="#EEE" stroke-width="1"/>
+    <text x="770" y="805" font-size="11" fill="#999" letter-spacing="2">UP NEXT</text>
+    <text x="770" y="835" font-size="16" font-style="italic" font-weight="600" fill="#1F1F1F">Week 7 — Motion & Prototyping</text>
+    <text x="770" y="855" font-size="13" fill="#888">Build interactive prototypes with code</text>
+
+    <text x="60" y="870" font-size="11" fill="#999">[LOFI] Dashboard — greeting, featured card, 3 fusion grid cards, skill profile, up next</text>
+  </g>
+</svg>

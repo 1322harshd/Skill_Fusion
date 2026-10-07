@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="600" viewBox="0 0 1440 600">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="600" fill="#FFFFFF"/>
+
+    <!-- Section heading -->
+    <text x="80" y="90" font-size="13" font-weight="700" letter-spacing="2" fill="#666666">HOW IT WORKS</text>
+    <text x="80" y="150" font-size="52" font-style="italic" font-weight="800" fill="#1F1F1F">Two skills. One future.</text>
+
+    <!-- Connecting line -->
+    <line x1="60" y1="300" x2="1380" y2="300" stroke="#CCCCCC" stroke-width="1.5"/>
+
+    <!-- Step 1 -->
+    <rect x="40" y="210" width="335" height="300" rx="22" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+    <circle cx="207" cy="258" r="14" fill="#1F1F1F"/>
+    <text x="207" y="300" text-anchor="middle" font-size="40" font-style="italic" font-weight="800" fill="#B9B9B9">01</text>
+    <circle cx="207" cy="336" r="4" fill="#1F1F1F"/>
+    <text x="207" y="372" text-anchor="middle" font-size="20" font-style="italic" font-weight="800" fill="#1F1F1F">Pick two skills</text>
+    <text x="207" y="402" text-anchor="middle" font-size="13" fill="#444444">Anything works — design + code, writing +</text>
+    <text x="207" y="420" text-anchor="middle" font-size="13" fill="#444444">data, sales + AI. If it's two skills, it's a fusion.</text>
+
+    <!-- Step 2 -->
+    <rect x="395" y="210" width="335" height="300" rx="22" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+    <circle cx="562" cy="258" r="14" fill="#1F1F1F"/>
+    <text x="562" y="300" text-anchor="middle" font-size="40" font-style="italic" font-weight="800" fill="#B9B9B9">02</text>
+    <circle cx="562" cy="336" r="4" fill="#1F1F1F"/>
+    <text x="562" y="372" text-anchor="middle" font-size="20" font-style="italic" font-weight="800" fill="#1F1F1F">AI finds the real overlap</text>
+    <text x="562" y="402" text-anchor="middle" font-size="13" fill="#444444">Our engine scans real job listings to find where</text>
+    <text x="562" y="420" text-anchor="middle" font-size="13" fill="#444444">your combination is genuinely valued — not a</text>
+    <text x="562" y="438" text-anchor="middle" font-size="13" fill="#444444">generic course mashup.</text>
+
+    <!-- Step 3 -->
+    <rect x="750" y="210" width="335" height="300" rx="22" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+    <circle cx="917" cy="258" r="14" fill="#1F1F1F"/>
+    <text x="917" y="300" text-anchor="middle" font-size="40" font-style="italic" font-weight="800" fill="#B9B9B9">03</text>
+    <circle cx="917" cy="336" r="4" fill="#1F1F1F"/>
+    <text x="917" y="372" text-anchor="middle" font-size="20" font-style="italic" font-weight="800" fill="#1F1F1F">Follow a 4–12 week roadmap</text>
+    <text x="917" y="402" text-anchor="middle" font-size="13" fill="#444444">Three real outcome paths. Pick a direction,</text>
+    <text x="917" y="420" text-anchor="middle" font-size="13" fill="#444444">check off milestones, and finish with a real project.</text>
+
+    <!-- Step 4 -->
+    <rect x="1105" y="210" width="335" height="300" rx="22" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+    <circle cx="1272" cy="258" r="14" fill="#1F1F1F"/>
+    <text x="1272" y="300" text-anchor="middle" font-size="40" font-style="italic" font-weight="800" fill="#B9B9B9">04</text>
+    <circle cx="1272" cy="336" r="4" fill="#1F1F1F"/>
+    <text x="1272" y="372" text-anchor="middle" font-size="20" font-style="italic" font-weight="800" fill="#1F1F1F">Earn a verified score</text>
+    <text x="1272" y="402" text-anchor="middle" font-size="13" fill="#444444">Your fusion gets a rarity score grounded in</text>
+    <text x="1272" y="420" text-anchor="middle" font-size="13" fill="#444444">job-market data, plus growth badges your</text>
+    <text x="1272" y="438" text-anchor="middle" font-size="13" fill="#444444">GitHub can prove.</text>
+
+    <text x="80" y="560" font-size="12" fill="#888888">[How It Works] Background video + 4 step cards</text>
+  </g>
+</svg>

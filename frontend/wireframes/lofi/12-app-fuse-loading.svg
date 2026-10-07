@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="900" fill="#FFFFFF"/>
+
+    <!-- Top nav -->
+    <rect width="1440" height="60" fill="#F8F8F8" stroke="#EEE" stroke-width="1"/>
+    <circle cx="40" cy="30" r="18" fill="#E5E5E5"/>
+    <text x="40" y="36" text-anchor="middle" font-size="14" font-style="italic" font-weight="800" fill="#666">s</text>
+    <text x="320" y="36" font-size="13" font-weight="600" fill="#1F1F1F">Fuse</text>
+
+    <!-- Loading container -->
+    <rect x="340" y="200" width="760" height="400" rx="20" fill="#F8F8F8" stroke="#1F1F1F" stroke-width="1.5"/>
+
+    <!-- Header -->
+    <rect x="340" y="200" width="760" height="70" rx="20" fill="#F0F0F0"/>
+    <text x="720" y="245" text-anchor="middle" font-size="20" font-style="italic" font-weight="600" fill="#1F1F1F">Reading the Design × Code overlap</text>
+
+    <!-- AI Steps -->
+    <rect x="380" y="300" width="680" height="50" rx="10" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <circle cx="410" cy="325" r="10" fill="#1F1F1F"/>
+    <text x="410" y="330" text-anchor="middle" font-size="10" font-weight="700" fill="#FFF">✓</text>
+    <text x="440" y="330" font-size="14" fill="#555">Mapping the overlap</text>
+    <text x="960" y="330" text-anchor="end" font-size="12" fill="#999">Finding where the two skills actually meet.</text>
+
+    <rect x="380" y="360" width="680" height="50" rx="10" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <circle cx="410" cy="385" r="10" fill="#1F1F1F"/>
+    <text x="410" y="390" text-anchor="middle" font-size="10" font-weight="700" fill="#FFF">✓</text>
+    <text x="440" y="390" font-size="14" fill="#555">Sampling job listings</text>
+    <text x="960" y="390" text-anchor="end" font-size="12" fill="#999">Pulling live postings that want this blend.</text>
+
+    <rect x="380" y="420" width="680" height="50" rx="10" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <circle cx="410" cy="445" r="10" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="440" y="450" font-size="14" fill="#999">Checking rarity</text>
+    <text x="960" y="450" text-anchor="end" font-size="12" fill="#CCC">Measuring how often the pair appears together.</text>
+
+    <rect x="380" y="480" width="680" height="50" rx="10" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <circle cx="410" cy="505" r="10" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="440" y="510" font-size="14" fill="#CCC">Drafting your story</text>
+    <text x="960" y="510" text-anchor="end" font-size="12" fill="#CCC">Writing your personalized fusion brief.</text>
+
+    <!-- Spinner placeholder -->
+    <circle cx="720" cy="570" r="16" fill="none" stroke="#DDD" stroke-width="2" stroke-dasharray="20 10"/>
+
+    <text x="60" y="870" font-size="11" fill="#999">[LOFI] Fuse Loading — card with AI step progress (4 steps, checkmarks)</text>
+  </g>
+</svg>

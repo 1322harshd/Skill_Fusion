@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif" fill="none" stroke="#222" stroke-width="1.2">
+    <rect width="1440" height="900" fill="#fff"/>
+
+    <!-- Navbar -->
+    <circle cx="60" cy="52" r="20" stroke-width="1.5"/>
+    <text x="60" y="58" text-anchor="middle" font-size="18" font-style="italic" font-weight="800" fill="#222" stroke="none">s</text>
+    <text x="200" y="58" font-size="13" fill="#555" stroke="none">Home</text>
+    <text x="300" y="58" font-size="13" fill="#555" stroke="none">How It Works</text>
+    <text x="430" y="58" font-size="13" fill="#555" stroke="none">Features</text>
+    <text x="540" y="58" font-size="13" fill="#555" stroke="none">Community</text>
+    <text x="650" y="58" font-size="13" fill="#555" stroke="none">Pricing</text>
+    <rect x="1200" y="36" width="160" height="36" rx="18" fill="#222" stroke="none"/>
+    <text x="1280" y="59" text-anchor="middle" font-size="13" font-weight="600" fill="#fff" stroke="none">Start Fusing</text>
+
+    <!-- Announcement pill -->
+    <rect x="510" y="140" width="420" height="36" rx="18" fill="#f0f0f0"/>
+    <rect x="520" y="148" width="44" height="20" rx="10" fill="#222"/>
+    <text x="542" y="162" text-anchor="middle" font-size="11" font-weight="700" fill="#fff" stroke="none">NEW</text>
+    <text x="576" y="162" font-size="13" fill="#222" stroke="none">Fusion Score Is Now Live</text>
+
+    <!-- Headline placeholder -->
+    <text x="720" y="240" text-anchor="middle" font-size="14" fill="#888" stroke="none">// HEADLINE</text>
+    <rect x="220" y="260" width="1000" height="8" rx="4" fill="#ddd" stroke="none"/>
+    <rect x="300" y="280" width="840" height="8" rx="4" fill="#ddd" stroke="none"/>
+
+    <!-- Sub copy placeholder -->
+    <rect x="400" y="320" width="640" height="6" rx="3" fill="#ccc" stroke="none"/>
+    <rect x="440" y="336" width="560" height="6" rx="3" fill="#ccc" stroke="none"/>
+
+    <!-- CTA buttons -->
+    <rect x="500" y="380" width="200" height="44" rx="22" fill="#222" stroke="none"/>
+    <text x="600" y="407" text-anchor="middle" font-size="14" font-weight="600" fill="#fff" stroke="none">Start Your Fusion</text>
+    <text x="780" y="407" font-size="14" fill="#222" stroke="none">▶ See How It Works</text>
+
+    <!-- Stat cards -->
+    <rect x="370" y="460" width="300" height="120" rx="16" fill="#f8f8f8" stroke="#bbb"/>
+    <rect x="390" y="480" width="28" height="28" rx="6" fill="#e0e0e0" stroke="#999"/>
+    <text x="390" y="558" font-size="28" font-style="italic" font-weight="800" fill="#222" stroke="none">12,000+</text>
+    <text x="390" y="575" font-size="11" fill="#666" stroke="none">Real Job Listings Analyzed</text>
+
+    <rect x="770" y="460" width="300" height="120" rx="16" fill="#f8f8f8" stroke="#bbb"/>
+    <rect x="790" y="480" width="28" height="28" rx="6" fill="#e0e0e0" stroke="#999"/>
+    <text x="790" y="558" font-size="28" font-style="italic" font-weight="800" fill="#222" stroke="none">4–12 Wk</text>
+    <text x="790" y="575" font-size="11" fill="#666" stroke="none">Personalized Roadmaps</text>
+
+    <!-- Trust strip -->
+    <rect x="540" y="620" width="360" height="30" rx="15" fill="#f0f0f0"/>
+    <text x="720" y="640" text-anchor="middle" font-size="12" fill="#555" stroke="none">Grounded in real infrastructure</text>
+
+    <!-- Logos -->
+    <text x="440" y="700" text-anchor="middle" font-size="18" font-style="italic" font-weight="700" fill="#222" stroke="none">Adzuna</text>
+    <text x="600" y="700" text-anchor="middle" font-size="18" font-style="italic" font-weight="700" fill="#222" stroke="none">GitHub</text>
+    <text x="740" y="700" text-anchor="middle" font-size="18" font-style="italic" font-weight="700" fill="#222" stroke="none">Ollama</text>
+    <text x="880" y="700" text-anchor="middle" font-size="18" font-style="italic" font-weight="700" fill="#222" stroke="none">PostgreSQL</text>
+    <text x="1040" y="700" text-anchor="middle" font-size="18" font-style="italic" font-weight="700" fill="#222" stroke="none">Open Source</text>
+
+    <!-- Annotation -->
+    <text x="40" y="860" font-size="11" fill="#999" stroke="none">[Hero] Full-bleed video bg · pill navbar · headline + stats + trust strip</text>
+  </g>
+</svg>

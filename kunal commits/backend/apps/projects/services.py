@@ -1,15 +1,13 @@
-import hashlib
-def hash(s):
-    h=0
-    for ch in str(s): h=(h*31+ord(ch)) & 0xFFFFFFFF
-    return abs(h)
-def category_of(name):
-    # simplified
-    return "tech"
-def make_project(a,b):
-    seed=hash(a+'×'+b)
-    formats=["Portfolio artifact","Product prototype","Case study","Launch piece"]
-    fmt=formats[seed%len(formats)]
-    tools=[a,b,"GitHub","Notion"]
-    if category_of(a)=="tech": tools.append("API docs")
-    return {"title":f"{a} × {b} — the flagship piece","client":"Modeled on hiring-manager needs","timeline":f"{4+(seed%3)} weeks","format":fmt,"audience":"Future teammates and hiring managers","goal":f"{a} meets {b}: build the one piece that proves this combination earns a place on a team.","tools":list(dict.fromkeys(tools)),"deliverables":["Working artifact","Short write-up","Published link"],"expectedOutcome":"A piece you can open in interviews — and the verified badge that comes from shipping it."}
+import asyncio
+try:
+    from apps.prompt_engineering.llm_client import call_sf14b_json
+except ImportError:
+    from prompt_engineering.llm_client import call_sf14b_json
+
+BRIEF_SHAPE = ('{"title": string, "fusion_pair": [string, string], '
+    '"key_deliverables": [string, string, string], "expected_outcome": string}')
+
+def make_project(a, b):
+    prompt = (f'Propose one flagship project brief combining "{a}" and "{b}". '
+              f'Return ONLY valid JSON: {BRIEF_SHAPE}')
+    return asyncio.run(call_sf14b_json("sf-project", prompt))

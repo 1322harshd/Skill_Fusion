@@ -21,6 +21,32 @@ def make_score_sync(a,b):
     delta=8+((seed>>3)%9)
     return {"value":value,"rarity":rarity,"demand":demand,"rarityLabel":rarityLabel,"demandLabel":demandLabel,"explanation":explanation,"recommendation":{"skill":skill,"delta":delta,"category":cat},"history":[value]}
 
-# async version for future pgvector
-async def make_score(a,b):
-    return make_score_sync(a,b)
+# async version: real pgvector + Adzuna when data exists, labeled heuristic otherwise.
+async def make_score(a, b):
+    try:
+        from django.db import connection
+        from .jobs_pipeline import embed_texts
+        with connection.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM scores_joblisting WHERE query IN (%s, %s)",
+                        [a, b])
+            n = cur.fetchone()[0]
+        if n >= 10:
+            [pair_vec] = embed_texts([f"{a} {b}"])
+            with connection.cursor() as cur:
+                cur.execute(
+                    "SELECT AVG(embedding <=> %s::vector) FROM scores_joblisting "
+                    "WHERE query IN (%s, %s) AND embedding IS NOT NULL",
+                    [pair_vec, a, b])
+                avg_dist = cur.fetchone()[0] or 1.0
+            rarity = round(max(0.0, min(1.0, avg_dist)), 3)
+            demand = round(max(0.0, min(1.0, min(n, 200) / 200)), 3)
+            value = round((rarity * 0.45 + demand * 0.55) * 100)
+            out = make_score_sync(a, b)
+            out.update({"value": value, "rarity": rarity, "demand": demand,
+                        "source": "jobdata", "listings": n})
+            return out
+    except Exception:
+        pass
+    out = make_score_sync(a, b)
+    out["source"] = "heuristic"
+    return out

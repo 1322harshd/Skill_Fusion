@@ -21,13 +21,16 @@ def fuse_view(request):
     a=request.data.get("a","").strip()
     b=request.data.get("b","").strip()
     if not a or not b: return Response({"error":"a and b required"}, status=400)
-    # score: heuristic until Phase 6 wires Adzuna + pgvector (labeled as such).
+    # score: real job-data when listings exist, else labeled heuristic.
     # brief: SF-first via make_brief (falls back to curated template on error).
     import asyncio
-    from apps.scores.services import make_score_sync
+    from apps.scores.services import make_score, make_score_sync
     from .services import make_brief
-    score = make_score_sync(a,b)
-    score["source"] = "heuristic"
+    try:
+        score = asyncio.run(make_score(a, b))
+    except Exception:
+        score = make_score_sync(a,b)
+        score["source"] = "heuristic"
     brief = asyncio.run(make_brief(a,b,score))
     roadmap = make_roadmap(a,b)
     project = __import__("apps.projects.services", fromlist=["make_project"]).make_project(a,b)

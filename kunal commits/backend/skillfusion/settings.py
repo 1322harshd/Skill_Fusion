@@ -39,6 +39,19 @@ MIDDLEWARE = [
 ROOT_URLCONF = "skillfusion.urls"
 WSGI_APPLICATION = "skillfusion.wsgi.application"
 
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {"context_processors": [
+            "django.template.context_processors.request",
+            "django.contrib.auth.context_processors.auth",
+            "django.contrib.messages.context_processors.messages",
+        ]},
+    }
+]
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -64,9 +77,10 @@ REST_FRAMEWORK = {
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-# Ollama SF:14B
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
-OLLAMA_MODEL = "mada-sf-14b"
+# SF serving (mlx_lm.server, OpenAI-compatible) — replaces the old Ollama path.
+SF_URL = os.getenv("SF_URL", "http://localhost:8081")
+SF_MODEL = "models/gemma4-12b-it-4bit"
+EMBED_URL = os.getenv("EMBED_URL", "http://localhost:11434")
 EMBED_MODEL = "nomic-embed-text"
 ADZUNA_ID = os.getenv("ADZUNA_ID")
 ADZUNA_KEY = os.getenv("ADZUNA_KEY")

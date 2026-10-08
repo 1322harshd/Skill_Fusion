@@ -32,10 +32,11 @@ def fuse_view(request):
         score = make_score_sync(a,b)
         score["source"] = "heuristic"
     brief = asyncio.run(make_brief(a,b,score))
-    roadmap = make_roadmap(a,b)
+    # NOTE: roadmap comes from /api/roadmap/previews/ (SF-wired), NOT bundled
+    # here — the old hash-template make_roadmap was removed rather than shipped.
     project = __import__("apps.projects.services", fromlist=["make_project"]).make_project(a,b)
     fid = f"f{hash(a+'×'+b)}"
-    return Response({"fusion": {"id":fid, "a":a,"b":b,"score":score,"brief":brief,"roadmap":roadmap,"project":project}})
+    return Response({"fusion": {"id":fid, "a":a,"b":b,"score":score,"brief":brief,"project":project}})
 
 @api_view(["POST"])
 @permission_classes([AllowAny])

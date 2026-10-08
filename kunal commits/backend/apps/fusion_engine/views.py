@@ -21,16 +21,14 @@ def fuse_view(request):
     a=request.data.get("a","").strip()
     b=request.data.get("b","").strip()
     if not a or not b: return Response({"error":"a and b required"}, status=400)
-    # score + brief via SF:14B
+    # score: heuristic until Phase 6 wires Adzuna + pgvector (labeled as such).
+    # brief: SF-first via make_brief (falls back to curated template on error).
     import asyncio
-    score = __import__("asyncio").run(make_score(a,b)) if False else None
-    # For scaffold, use sync fallback
     from apps.scores.services import make_score_sync
+    from .services import make_brief
     score = make_score_sync(a,b)
-    brief = __import__("asyncio").run(make_brief(a,b,score)) if False else None
-    # fallback sync
-    from .services import fallback_brief
-    brief = fallback_brief(a,b,score)
+    score["source"] = "heuristic"
+    brief = asyncio.run(make_brief(a,b,score))
     roadmap = make_roadmap(a,b)
     project = __import__("apps.projects.services", fromlist=["make_project"]).make_project(a,b)
     fid = f"f{hash(a+'×'+b)}"

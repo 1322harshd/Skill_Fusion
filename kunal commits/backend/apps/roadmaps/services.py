@@ -16,13 +16,35 @@ def make_roadmap(a,b, opts=None):
         wk=i+1
         weeks.append({"n":wk,"title": topics[i%len(topics)](i), "objectives":[ f"Name the three things {a} gives {b} work" if i==0 else f"Apply {b} to one {a} scenario", f"Skim five real listings that want this blend" if i==0 else "Collect one example"], "status": "done" if wk<1 else "current" if wk==1 else "upcoming", "tasks": [{"id":f"t{wk}a","label":f"Complete the {a} piece for week {wk}","done":False},{"id":f"t{wk}b","label":"Reflect and log one note in your Growth Log","done":True}] if wk==1 else []})
     return {"title":title,"weeks":weeks,"progressWeeks":1,"totalWeeks":n,"paused":False}
+import asyncio, json
+try:
+    from apps.prompt_engineering.llm_client import call_sf14b, call_sf14b_json
+except ImportError:  # direct module use
+    from prompt_engineering.llm_client import call_sf14b, call_sf14b_json
+
+PREVIEWS_SHAPE = ('{"previews": [{"title": string, "summary": string, "weeks": integer, '
+    '"outcomes": [string, string], "roadmap": {"title": string, "weeks": '
+    '[{"week": integer, "topic": string, "objectives": [string]}], '
+    '"outcome_statement": string}}]}')
+
 def get_previews(fusion, salt=0):
-    baseWeeks=fusion["roadmap"]["totalWeeks"]
-    variants=[
-        {"title":fusion["roadmap"]["title"],"summary":"The flagship path — follow the brief to a shipped, verified artifact.","weeks":baseWeeks,"outcomes":["Ship one verified artifact from the brief","Reach your first fusion-score milestone"]},
-        {"title":f"Become the {fusion['a']}-minded {fusion['b']} hire","summary":"Position for roles that want this exact blend on a team.","weeks":4+((hash(fusion['a']+fusion['b'])+salt)%4),"outcomes":["Build a role-ready portfolio story","Get real replies in "+fusion['a']+" × "+fusion['b']+" roles"]},
-        {"title":f"Turn {fusion['a']} × {fusion['b']} into a service","summary":"Package the rare pair into an offering you can sell.","weeks":6+((hash(fusion['a']+"x"+fusion['b'])>>2)%3),"outcomes":["Package the pair into a sellable offering","Land your first paying project"]},
-    ]
-    rot=((salt%3)+3)%3
-    ordered=variants[rot:]+variants[:rot]
-    return [{"id":f"pv{i}-{salt}","title":v["title"],"summary":v["summary"],"weeks":v["weeks"],"outcomes":v["outcomes"],"roadmap": make_roadmap(fusion['a'],fusion['b'],{"title":v["title"],"totalWeeks":v["weeks"],"salt":salt+i})} for i,v in enumerate(ordered)]
+    a, b = fusion["a"], fusion["b"]
+    # Call 1 (short): 3 preview shells only — full roadmaps derail mid-object.
+    shells_prompt = (
+        f'List 3 learning roadmap previews combining "{a}" and "{b}" (set {salt}). '
+        'Return ONLY valid JSON: '
+        '{"previews": [{"title": string, "summary": string, "weeks": integer, '
+        '"outcomes": [string, string]}]}')
+    shells = asyncio.run(call_sf14b_json("sf-roadmap", shells_prompt))["previews"]
+    assert len(shells) == 3, "expected 3 previews"
+    # Calls 2-4 (medium): expand weeks per preview.
+    out = []
+    for i, s in enumerate(shells):
+        wp = (f'Roadmap "{s["title"]}" ({a} + {b}), exactly {s["weeks"]} weeks. '
+            'Return ONLY valid JSON: {"title": string, '
+            '"weeks": [{"week": integer, "topic": string, "objectives": [string, string]}], '
+            '"outcome_statement": string}')
+        detail = asyncio.run(call_sf14b_json("sf-roadmap", wp, max_tokens=1200))
+        out.append({"id": f"pv{i}-{salt}", "title": s["title"], "summary": s["summary"],
+                    "weeks": s["weeks"], "outcomes": s["outcomes"], "roadmap": detail})
+    return out

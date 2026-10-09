@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'authentication',
     'growthlog',
+    'resume',
 
 ]
 
@@ -89,6 +90,7 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'login': '5/min',
         'resend-verification': '3/min',
+        'resume-generate': '5/min',
     },
 }
 
@@ -129,6 +131,10 @@ GOOGLE_OAUTH_CLIENT_SECRET = config('GOOGLE_OAUTH_CLIENT_SECRET', default='')
 # Server-owned PAT used to read public contribution data via GitHub's GraphQL API.
 # Needs no scopes beyond the default (public data only) — https://github.com/settings/tokens
 GITHUB_API_TOKEN = config('GITHUB_API_TOKEN', default='')
+
+# Self-hosted LLM used to generate resumes/cover letters, OpenAI-compatible /v1/chat/completions.
+LLM_API_URL = config('LLM_API_URL', default='http://localhost:8081')
+LLM_MODEL = config('LLM_MODEL', default='models/gemma4-12b-it-4bit')
 
 
 # Database

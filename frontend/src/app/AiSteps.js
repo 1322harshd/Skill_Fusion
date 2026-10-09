@@ -2,19 +2,24 @@ const { useState, useEffect } = React;
 const { motion, AnimatePresence } = window.Motion;
 const { Icons } = window;
 
-function AiSteps({ steps, speed = 1300, onDone, className = "" }) {
+function AiSteps({ steps, speed = 1300, onDone, loop = false, className = "" }) {
   const [i, setI] = useState(0);
   const done = i >= steps.length;
 
+  // Non-looping (default): stop advancing once every step is done, same as before.
+  // Looping: cycle back to the first step instead, so there's always visible motion
+  // for a wait of unknown/longer length instead of freezing on "all done".
   useEffect(() => {
-    if (i >= steps.length) return;
-    const t = setTimeout(() => setI((v) => v + 1), speed);
+    if (done && !loop) return;
+    const t = setTimeout(() => {
+      setI((v) => (v + 1 >= steps.length && loop ? 0 : v + 1));
+    }, speed);
     return () => clearTimeout(t);
-  }, [i, speed, steps.length]);
+  }, [i, speed, steps.length, loop, done]);
 
   useEffect(() => {
-    if (done) onDone?.();
-  }, [done]);
+    if (done && !loop) onDone?.();
+  }, [done, loop]);
 
   return (
     <div className={className}>

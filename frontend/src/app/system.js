@@ -20,11 +20,34 @@ function VerifiedBadge({ verified = true, label, className = "" }) {
   return (
     <span
       className={
-        "liquid-glass inline-flex select-none items-center rounded-full px-2.5 py-0.5 font-body text-[11px] font-medium tracking-wide text-white " +
+        "liquid-glass inline-flex select-none items-center gap-1 rounded-full px-2.5 py-0.5 font-body text-[11px] font-medium tracking-wide text-white " +
         className
       }
     >
+      <Icons.Flag className="h-3 w-3" />
       {label || "Self-reported"}
+    </span>
+  );
+}
+
+function LogSourceBadge({ entry }) {
+  if (entry.source === "verified") return <VerifiedBadge verified label="Verified" />;
+  if (entry.source === "self-reported") return <VerifiedBadge verified={false} label="Self-reported" />;
+  if (entry.source === "failed") {
+    return (
+      <span className="liquid-glass flex items-center gap-1 rounded-full px-3 py-1 font-body text-[11px] font-medium text-amber-300">
+        <Icons.X className="h-3 w-3" />
+        Verification failed
+      </span>
+    );
+  }
+  const v = entry.verification || {};
+  const frac = v.ringFrac ?? 0.7;
+  const days = v.expiresInDays ?? 3;
+  return (
+    <span className="liquid-glass flex items-center gap-2 rounded-full px-3 py-1 font-body text-[11px] font-medium text-white/85">
+      <CountdownRing frac={frac} color="#ffffff" size={18} strokeWidth={2.5} />
+      {days <= 1 ? "1 day left" : `Verifying in ${days} days`}
     </span>
   );
 }
@@ -182,6 +205,7 @@ function FusionSidebar({ fusion, route, className = "" }) {
 }
 
 window.VerifiedBadge = VerifiedBadge;
+window.LogSourceBadge = LogSourceBadge;
 window.SkillTag = SkillTag;
 window.FusionGauge = FusionGauge;
 window.CountdownRing = CountdownRing;

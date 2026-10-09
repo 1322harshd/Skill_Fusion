@@ -14,22 +14,9 @@ const FILTERS = [
   ["all", "All"],
   ["verified", "Verified"],
   ["pending", "Pending"],
-  ["self", "Self-reported"],
+  ["self-reported", "Self-reported"],
+  ["failed", "Failed"],
 ];
-
-function LogSourceBadge({ entry }) {
-  if (entry.source === "verified") return <VerifiedBadge verified label="Verified" />;
-  if (entry.source === "self-reported") return <VerifiedBadge verified={false} label="Self-reported" />;
-  const v = entry.verification || {};
-  const frac = v.ringFrac ?? 0.7;
-  const days = v.expiresInDays ?? 3;
-  return (
-    <span className="liquid-glass flex items-center gap-2 rounded-full px-3 py-1 font-body text-[11px] font-medium text-white/85">
-      <CountdownRing frac={frac} color="#ffffff" size={18} strokeWidth={2.5} />
-      {days <= 1 ? "1 day left" : `Verifying in ${days} days`}
-    </span>
-  );
-}
 
 const CONTRIBUTION_LEVELS = [
   "rgba(255,255,255,0.08)",
@@ -106,8 +93,13 @@ function GrowthLog() {
   const [syncOpen, setSyncOpen] = useState(false);
   const [verifyTarget, setVerifyTarget] = useState(null);
   const [link, setLink] = useState("");
+  const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
+  const [certIssuer, setCertIssuer] = useState("");
+  const [certLink, setCertLink] = useState("");
   const [sel, setSel] = useState([]);
+  const [customSkill, setCustomSkill] = useState("");
+  const [customCompetency, setCustomCompetency] = useState("");
   const [saving, setSaving] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -131,19 +123,46 @@ function GrowthLog() {
     setSel((xs) => (xs.some((x) => x.label === t.label) ? xs.filter((x) => x.label !== t.label) : [...xs, t]));
   }
 
+  function addCustomTag(kind) {
+    const value = kind === "skill" ? customSkill : customCompetency;
+    const label = value.trim();
+    if (!label) return;
+    setSel((xs) =>
+      xs.some((x) => x.label === label) ? xs : [...xs, { label, kind, color: kind === "skill" ? F.colorOf(label) : null }]
+    );
+    if (kind === "skill") setCustomSkill("");
+    else setCustomCompetency("");
+  }
+
   async function saveEntry() {
-    const first = sel[0];
+    if (!title.trim()) return;
     setSaving(true);
     try {
-      await Store.addLog({
-        title: first ? `Logged — ${first.label}` : "Logged a note",
+      const created = await Store.addLog({
+        title: title.trim(),
         description: desc,
         tags: sel,
       });
+
+      let finalEntry = created;
+      if (certLink.trim()) {
+        try {
+          finalEntry = await Store.verifyEntry(created.id, certLink.trim(), certIssuer.trim());
+        } catch (e) {
+          window.Toast.show(e.message || "Logged, but couldn't verify that link", "error");
+        }
+      }
+
+      setTitle("");
       setDesc("");
+      setCertIssuer("");
+      setCertLink("");
       setSel([]);
       setAddOpen(false);
-      window.Toast.show("Logged to your Growth Log", "success");
+      window.Toast.show(
+        finalEntry.source === "verified" ? "Logged and verified" : "Logged to your Growth Log",
+        "success"
+      );
     } catch (e) {
       window.Toast.show(e.message || "Couldn't save that entry", "error");
     } finally {
@@ -318,7 +337,7 @@ function GrowthLog() {
 
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
                     <div className="flex items-center gap-4">
-                      {(e.source === "pending" || e.source === "self-reported") && (
+                      {(e.source === "pending" || e.source === "self-reported" || e.source === "failed") && (
                         <button
                           type="button"
                           onClick={() => {
@@ -327,7 +346,7 @@ function GrowthLog() {
                           }}
                           className="font-body text-sm text-white/70 transition-colors hover:text-white"
                         >
-                          Add link
+                          {e.source === "failed" ? "Try a different link" : "Add link"}
                         </button>
                       )}
                       <a href={"#/posts/" + e.id} className="font-body text-sm text-white/70 transition-colors hover:text-white">
@@ -356,6 +375,13 @@ function GrowthLog() {
         <h3 className="font-heading text-2xl italic text-white">Log something</h3>
         <p className="mt-1 font-body text-xs font-light text-white/60">Add evidence to your growth ledger.</p>
 
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Title — e.g. AWS Certified Cloud Practitioner"
+          className="mt-4 w-full rounded-xl bg-black/40 px-4 py-3 font-body text-sm text-white outline-none ring-1 ring-white/15 focus:ring-white/40"
+        />
+
         <div className="mt-4">
           <p className="mb-2 font-body text-[11px] uppercase tracking-[0.18em] text-white/50">Technical skills</p>
           <div className="flex flex-wrap gap-2">
@@ -375,6 +401,27 @@ function GrowthLog() {
                 </button>
               );
             })}
+          </div>
+          <div className="mt-2 flex gap-2">
+            <input
+              value={customSkill}
+              onChange={(e) => setCustomSkill(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addCustomTag("skill");
+                }
+              }}
+              placeholder="Not listed? Add your own…"
+              className="flex-1 rounded-full bg-black/40 px-3 py-1.5 font-body text-xs text-white outline-none ring-1 ring-white/15 focus:ring-white/40"
+            />
+            <button
+              type="button"
+              onClick={() => addCustomTag("skill")}
+              className="liquid-glass shrink-0 rounded-full px-3 py-1.5 font-body text-xs font-medium text-white/85"
+            >
+              Add
+            </button>
           </div>
         </div>
 
@@ -398,22 +445,84 @@ function GrowthLog() {
               );
             })}
           </div>
+          <div className="mt-2 flex gap-2">
+            <input
+              value={customCompetency}
+              onChange={(e) => setCustomCompetency(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addCustomTag("competency");
+                }
+              }}
+              placeholder="Not listed? Add your own…"
+              className="flex-1 rounded-full bg-black/40 px-3 py-1.5 font-body text-xs text-white outline-none ring-1 ring-white/15 focus:ring-white/40"
+            />
+            <button
+              type="button"
+              onClick={() => addCustomTag("competency")}
+              className="liquid-glass shrink-0 rounded-full px-3 py-1.5 font-body text-xs font-medium text-white/85"
+            >
+              Add
+            </button>
+          </div>
         </div>
+
+        {sel.length > 0 && (
+          <div className="mt-4">
+            <p className="mb-2 font-body text-[11px] uppercase tracking-[0.18em] text-white/50">Selected</p>
+            <div className="flex flex-wrap gap-2">
+              {sel.map((t) => (
+                <button
+                  key={t.label}
+                  type="button"
+                  onClick={() => toggleTag(t)}
+                  className="liquid-glass flex items-center gap-1.5 rounded-full px-3 py-1.5 font-body text-xs font-medium text-white/85"
+                >
+                  {t.label}
+                  <Icons.X className="h-3 w-3" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <textarea
           value={desc}
           onChange={(e) => setDesc(e.target.value)}
           rows={3}
-          placeholder="What did you do?"
+          placeholder="What did you do? (optional)"
           className="mt-4 w-full rounded-xl bg-black/40 px-4 py-3 font-body text-sm text-white outline-none ring-1 ring-white/15 focus:ring-white/40"
         />
+
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <p className="mb-2 font-body text-[11px] uppercase tracking-[0.18em] text-white/50">
+            Certificate or credential (optional)
+          </p>
+          <p className="mb-3 font-body text-xs font-light text-white/50">
+            Got a certificate? Paste its public link and we'll verify it right away — it checks that
+            the page resolves and names you.
+          </p>
+          <input
+            value={certIssuer}
+            onChange={(e) => setCertIssuer(e.target.value)}
+            placeholder="Issuer — e.g. Amazon Web Services"
+            className="w-full rounded-xl bg-black/40 px-4 py-3 font-body text-sm text-white outline-none ring-1 ring-white/15 focus:ring-white/40"
+          />
+          <input
+            value={certLink}
+            onChange={(e) => setCertLink(e.target.value)}
+            placeholder="https://… (verification link)"
+            className="mt-2 w-full rounded-xl bg-black/40 px-4 py-3 font-body text-sm text-white outline-none ring-1 ring-white/15 focus:ring-white/40"
+          />
+        </div>
 
         <button
           type="button"
           onClick={saveEntry}
-          disabled={!desc.trim() || saving}
+          disabled={!title.trim() || saving}
           className={
-            (desc.trim() && !saving ? "bg-white text-black" : "liquid-glass text-white/30") +
+            (title.trim() && !saving ? "bg-white text-black" : "liquid-glass text-white/30") +
             " mt-4 flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 font-body text-sm font-medium"
           }
         >

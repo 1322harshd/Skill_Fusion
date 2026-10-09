@@ -102,6 +102,45 @@ class GithubImportTests(TestCase):
         self.assertEqual(second, [])
 
 
+class VerifyCredentialTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada")
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+        self.entry = GrowthLogEntry.objects.create(user=self.user, title="A certificate")
+
+    def test_oversized_url_is_rejected_cleanly_not_a_500(self):
+        # Regression: VerifyCredentialSerializer didn't cap length to match the
+        # Credential model's max_length=200, so an oversized value passed
+        # validation and crashed at the DB insert (DataError -> 500) instead of
+        # failing serializer validation (-> 400).
+        long_url = "https://example.com/cert?token=" + ("a" * 250)
+        response = self.client.post(
+            f"/api/growth-log/entries/{self.entry.entryId}/verify-credential",
+            {"verificationUrl": long_url},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_oversized_issuer_is_rejected_cleanly_not_a_500(self):
+        response = self.client.post(
+            f"/api/growth-log/entries/{self.entry.entryId}/verify-credential",
+            {"verificationUrl": "https://example.com/cert", "issuer": "x" * 250},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @patch("growthlog.verification.requests.get")
+    def test_normal_length_values_are_accepted(self, get):
+        get.return_value = MagicMock(status_code=200, text="credential confirmed for ada")
+        response = self.client.post(
+            f"/api/growth-log/entries/{self.entry.entryId}/verify-credential",
+            {"verificationUrl": "https://example.com/cert", "issuer": "Amazon Web Services"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
 class ContributionsTests(TestCase):
     def setUp(self):
         self.client = APIClient()

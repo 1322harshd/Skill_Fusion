@@ -17,27 +17,13 @@ const RESUME_LOADING_STEPS = [
 
 const enter = window.MotionKit.enter;
 
-function resumeText(res) {
-  const lines = [
-    res.headline,
-    "",
-    "Summary",
-    res.summary,
-    "",
-    "Skills",
-    res.skills.join("  ·  "),
-    "",
-    "Evidence",
-  ];
-  res.evidence.forEach((e) => lines.push(`• ${e.title} (${e.date}) — ${e.description}`));
-  return lines.join("\n");
-}
-
 function Resume() {
+  const s = Store.useStore();
   const [listing, setListing] = useState("");
   const [phase, setPhase] = useState("input");
   const [tab, setTab] = useState("resume");
   const [res, setRes] = useState(null);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     const f = Store.getSnapshot().fusions[0];
@@ -45,26 +31,49 @@ function Resume() {
     else window.Ambient.clear();
   }, []);
 
-  function generate() {
-    if (!listing.trim()) return;
-    setRes(Store.buildResume(listing));
+  useEffect(() => {
+    window.Api
+      .listResumeDocuments()
+      .then((docs) => {
+        if (docs && docs.length) {
+          setRes(docs[0]); // ordered newest-first by the backend
+          setPhase("done");
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  async function generate() {
     setTab("resume");
     setPhase("loading");
+    try {
+      const document = await window.Api.generateResume(listing);
+      setRes(document);
+      setPhase("done");
+    } catch (e) {
+      window.Toast.show(e.message || "Couldn't generate that — try again", "error");
+      setPhase("input");
+    }
   }
 
-  function download() {
-    const text = tab === "resume" ? resumeText(res) : res.coverLetter;
-    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = tab === "resume" ? "resume.txt" : "cover-letter.txt";
-    a.click();
-    URL.revokeObjectURL(url);
+  async function download() {
+    setDownloading(true);
+    try {
+      const filename = tab === "resume" ? "resume.pdf" : "cover-letter.pdf";
+      await window.Api.downloadResumeExport(res.documentId, tab === "resume" ? "resume" : "cover", filename);
+    } catch (e) {
+      window.Toast.show(e.message || "Couldn't download the PDF", "error");
+    } finally {
+      setDownloading(false);
+    }
   }
 
   function copy() {
-    navigator.clipboard.writeText(tab === "resume" ? resumeText(res) : res.coverLetter);
+    const text =
+      tab === "resume"
+        ? [res.resumeSummary, "", ...res.resumeBullets.map((b) => "• " + b)].join("\n")
+        : res.coverLetter;
+    navigator.clipboard.writeText(text);
     window.Toast.show("Copied to clipboard", "success");
   }
 
@@ -80,12 +89,14 @@ function Resume() {
         <AnimatePresence mode="wait">
           {phase === "input" && (
             <motion.div key="input" {...enter(0.05)} className="liquid-glass-strong rounded-[1.5rem] p-8 md:p-10">
-              <p className="font-body text-[11px] uppercase tracking-[0.18em] text-white/50">Paste a job listing</p>
+              <p className="font-body text-[11px] uppercase tracking-[0.18em] text-white/50">
+                Paste a job listing (optional)
+              </p>
               <textarea
                 value={listing}
                 onChange={(e) => setListing(e.target.value)}
                 rows={6}
-                placeholder="Paste the job description here…"
+                placeholder="Paste the job description here… or leave blank for a general-purpose resume"
                 className="mt-4 w-full rounded-xl bg-black/40 px-4 py-3 font-body text-sm text-white outline-none ring-1 ring-white/15 focus:ring-white/40"
               />
               <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
@@ -99,12 +110,8 @@ function Resume() {
                 <motion.button
                   type="button"
                   onClick={generate}
-                  disabled={!listing.trim()}
                   whileTap={{ scale: 0.97 }}
-                  className={
-                    (listing.trim() ? "bg-white text-black" : "liquid-glass text-white/50") +
-                    " flex items-center gap-2 rounded-full px-6 py-3 font-body text-sm font-medium disabled:cursor-not-allowed"
-                  }
+                  className="bg-white text-black flex items-center gap-2 rounded-full px-6 py-3 font-body text-sm font-medium"
                 >
                   Generate
                   <Icons.Doc className="h-4 w-4" />
@@ -119,7 +126,13 @@ function Resume() {
                 <div className="border-b border-white/10 px-6 py-6 text-center">
                   <p className="font-heading text-2xl italic text-white">Drafting your document</p>
                 </div>
-                <AiSteps steps={RESUME_LOADING_STEPS} speed={1000} onDone={() => setPhase("done")} />
+                <AiSteps steps={RESUME_LOADING_STEPS} speed={1400} loop />
+                <div className="flex items-center justify-center gap-2 border-t border-white/10 px-6 py-5">
+                  <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-white" />
+                  <p className="font-body text-xs font-light text-white/50">
+                    Still working — this can take up to two minutes.
+                  </p>
+                </div>
               </div>
             </motion.div>
           )}
@@ -157,10 +170,11 @@ function Resume() {
                   <button
                     type="button"
                     onClick={download}
-                    className="tappable flex items-center gap-2 rounded-full bg-white px-5 py-2.5 font-body text-sm font-medium text-black"
+                    disabled={downloading}
+                    className="tappable flex items-center gap-2 rounded-full bg-white px-5 py-2.5 font-body text-sm font-medium text-black disabled:opacity-60"
                   >
                     <Icons.Download className="h-4 w-4" />
-                    Download
+                    {downloading ? "Downloading…" : "Download PDF"}
                   </button>
                 </div>
               </div>
@@ -168,25 +182,28 @@ function Resume() {
               <div className="mt-6 rounded-[1.5rem] bg-[var(--color-paper)] p-8 text-black shadow-[var(--shadow-paper)] md:p-12">
                 {tab === "resume" ? (
                   <div className="font-body">
-                    <p className="font-heading text-3xl italic">{res.headline}</p>
+                    <p className="font-heading text-3xl italic">{s.user.name}</p>
                     <div className="mt-6">
                       <p className="text-[11px] uppercase tracking-[0.2em] text-black/50">Summary</p>
-                      <p className="mt-2 text-sm font-light leading-relaxed">{res.summary}</p>
+                      <p className="mt-2 text-sm font-light leading-relaxed">{res.resumeSummary}</p>
                     </div>
 
-                    <div className="mt-8">
-                      <p className="text-[11px] uppercase tracking-[0.2em] text-black/50">Skills</p>
-                      <p className="mt-2 text-sm leading-relaxed">{res.skills.join(" · ")}</p>
-                    </div>
+                    {s.user.skills && s.user.skills.length > 0 && (
+                      <div className="mt-8">
+                        <p className="text-[11px] uppercase tracking-[0.2em] text-black/50">Skills</p>
+                        <p className="mt-2 text-sm leading-relaxed">
+                          {s.user.skills.map((sk) => sk.label || sk).join(" · ")}
+                        </p>
+                      </div>
+                    )}
 
                     <div className="mt-8">
-                      <p className="text-[11px] uppercase tracking-[0.2em] text-black/50">Evidence</p>
-                      <div className="mt-3 flex flex-col gap-3">
-                        {res.evidence.map((e) => (
-                          <div key={e.title}>
-                            <p className="text-sm font-medium">{e.title}</p>
-                            <p className="text-[13px] font-light text-black/60">{e.description}</p>
-                          </div>
+                      <p className="text-[11px] uppercase tracking-[0.2em] text-black/50">Highlights</p>
+                      <div className="mt-3 flex flex-col gap-2">
+                        {res.resumeBullets.map((b, i) => (
+                          <p key={i} className="text-sm font-light leading-relaxed">
+                            • {b}
+                          </p>
                         ))}
                       </div>
                     </div>
@@ -203,8 +220,8 @@ function Resume() {
                   Grounded in your Growth Log
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {res.evidence.map((e) => (
-                    <span key={e.title} className="liquid-glass rounded-full px-3 py-1.5 font-body text-xs font-medium text-white/85">
+                  {s.logEntries.slice(0, 6).map((e) => (
+                    <span key={e.id} className="liquid-glass rounded-full px-3 py-1.5 font-body text-xs font-medium text-white/85">
                       {e.title}
                     </span>
                   ))}

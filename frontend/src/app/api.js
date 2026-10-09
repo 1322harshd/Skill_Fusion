@@ -174,6 +174,40 @@ window.Api = (function () {
     return request("/growth-log/stats");
   }
 
+  function generateResume(jobListing) {
+    return request("/resume/generate", { method: "POST", body: { jobListing: jobListing || "" } });
+  }
+
+  function listResumeDocuments() {
+    return request("/resume/");
+  }
+
+  // PDF export returns a binary body, not JSON, so it can't go through request().
+  // Reuses the same access token / single-retry-on-401 behavior as everything else.
+  async function downloadResumeExport(documentId, doc, filename) {
+    async function fetchOnce(token) {
+      return fetch(BASE_URL + "/resume/" + encodeURIComponent(documentId) + "/export?doc=" + doc, {
+        headers: token ? { Authorization: "Bearer " + token } : {},
+        credentials: "include",
+      });
+    }
+
+    let res = await fetchOnce(accessToken);
+    if (res.status === 401) {
+      const refreshed = await refresh();
+      if (refreshed) res = await fetchOnce(accessToken);
+    }
+    if (!res.ok) throw new Error("Couldn't generate the PDF. Please try again.");
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function bootstrap() {
     const ok = await refresh();
     if (!ok) return null;
@@ -208,5 +242,8 @@ window.Api = (function () {
     githubOAuthConfig,
     githubConnect,
     growthLogStats,
+    generateResume,
+    listResumeDocuments,
+    downloadResumeExport,
   };
 })();

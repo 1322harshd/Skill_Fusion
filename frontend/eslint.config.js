@@ -28,6 +28,7 @@ const appGlobals = {
   Fuse: "readonly",
   Fusion: "readonly",
   FusionGauge: "readonly",
+  LogSourceBadge: "readonly",
   FusionSidebar: "readonly",
   GrowthLog: "readonly",
   Hero: "readonly",

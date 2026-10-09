@@ -136,7 +136,7 @@ const FusionGridCard = React.forwardRef(function FusionGridCard({ fusion }, ref)
         {evidence ? (
           <div className="mt-2 flex items-center justify-between gap-3">
             <p className="truncate font-body text-[13px] font-light text-white/75">{evidence.title}</p>
-            <DashBadge source={evidence.source} />
+            <LogSourceBadge entry={evidence} />
           </div>
         ) : (
           <p className="mt-2 font-body text-[13px] font-light text-white/45">Nothing logged yet for this fusion.</p>

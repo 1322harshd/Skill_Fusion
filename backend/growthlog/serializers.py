@@ -45,5 +45,8 @@ class CreateEntrySerializer(serializers.ModelSerializer):
 
 
 class VerifyCredentialSerializer(serializers.Serializer):
-    verificationUrl = serializers.URLField()
-    issuer = serializers.CharField(required=False, allow_blank=True, default="")
+    # max_length matches the Credential model fields — without it, DRF lets an
+    # oversized value through validation and it crashes at the DB insert instead
+    # of failing cleanly with a 400.
+    verificationUrl = serializers.URLField(max_length=200)
+    issuer = serializers.CharField(required=False, allow_blank=True, default="", max_length=200)

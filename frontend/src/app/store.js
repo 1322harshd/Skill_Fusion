@@ -168,7 +168,8 @@ function fromBackendEntry(e) {
   const skillTags = (e.skillTags || []).map((label) => logTag(label, "skill"));
   const competencyTags = (e.competencyTags || []).map((label) => logTag(label, "competency"));
   const pending = e.credential && e.credential.verificationStatus === "pending";
-  const source = pending ? "pending" : e.verified ? "verified" : "self-reported";
+  const failed = e.credential && e.credential.verificationStatus === "failed";
+  const source = pending ? "pending" : failed ? "failed" : e.verified ? "verified" : "self-reported";
   return {
     id: e.entryId,
     fusionId: null,
@@ -320,8 +321,8 @@ window.Store = (function () {
     return mapped;
   }
 
-  async function verifyEntry(id, link) {
-    const updated = await window.Api.verifyCredential(id, link);
+  async function verifyEntry(id, link, issuer = "") {
+    const updated = await window.Api.verifyCredential(id, link, issuer);
     const mapped = fromBackendEntry(updated);
     set({ logEntries: state.logEntries.map((e) => (e.id === id ? mapped : e)) });
     return mapped;
@@ -360,25 +361,6 @@ window.Store = (function () {
     const res = await window.Api.githubContributions();
     set({ githubContributions: res.weeks || [] });
     return res.weeks;
-  }
-
-  function buildResume(listing) {
-    const user = state.user;
-    const skills = (user.skills || []).map((s) => s.label);
-    const lead = skills.slice(0, 2);
-    const evidence = state.logEntries
-      .slice(0, 5)
-      .map((e) => ({ title: e.title, description: e.description, date: e.date, source: e.source }));
-    const seed = F.hash(listing || "");
-    const focus = (seed % 3 === 0 ? lead[0] : seed % 3 === 1 ? lead[1] : lead.join(" and ")) || "my skills";
-    return {
-      headline: `${user.name} — ${lead.join(" × ")}`,
-      summary: `I build at the intersection of ${lead.join(" and ") || "two disciplines"}. My work is grounded in shipped artifacts, not titles — each piece below is real, documented, and verified.`,
-      focus,
-      skills,
-      evidence,
-      coverLetter: `Dear hiring team,\n\nYour listing caught my eye because it asks for ${focus} — exactly the combination I've been deliberately building. I don't just list these skills; I've shipped projects that require holding both at once.\n\nIn my Growth Log you'll find documented, verified evidence: projects, milestones, and the rare-pair thinking behind them.\n\nI'd love to show you what ${focus} looks like when it's the whole point of a role, not a side mention.\n\nBest,\n${user.name}`,
-    };
   }
 
   function sendMessage(msg) {
@@ -560,7 +542,6 @@ window.Store = (function () {
     syncGithub,
     loadGrowthLog,
     loadGithubContributions,
-    buildResume,
     SKILL_TAGS,
     COMPETENCIES,
     logTag,

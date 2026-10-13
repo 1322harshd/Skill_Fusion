@@ -6,7 +6,7 @@ def parse_with_retry(text, schema, retries=2):
             t=re.sub(r",\s*([}\]])", r"\1", t)
             obj=json.loads(t)
             return schema.model_validate(obj).model_dump()
-        except Exception as e:
+        except Exception:
             if i==retries: raise
             m=re.search(r"\{[\s\S]*\}", text)
             if m: text=m.group(0)

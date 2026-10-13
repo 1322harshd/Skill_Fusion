@@ -54,7 +54,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16
+        image: pgvector/pgvector:pg16  # plain postgres:16 lacks the vector extension scores' migration needs
         env:
           POSTGRES_DB: SkillFusion_Database
           POSTGRES_USER: postgres

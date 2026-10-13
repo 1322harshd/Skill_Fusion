@@ -1,4 +1,3 @@
-import hashlib, json
 def hash(s):
     h=0
     for ch in str(s): h=(h*31+ord(ch)) & 0xFFFFFFFF

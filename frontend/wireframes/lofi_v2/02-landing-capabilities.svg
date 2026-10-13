@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif" fill="none" stroke="#222" stroke-width="1.2">
+    <rect width="1440" height="900" fill="#fff"/>
+
+    <!-- Section heading -->
+    <text x="80" y="100" font-size="42" font-style="italic" font-weight="800" fill="#222" stroke="none">Learning</text>
+    <text x="80" y="150" font-size="42" font-style="italic" font-weight="800" fill="#222" stroke="none">reimagined</text>
+
+    <!-- 3 capability cards -->
+    <!-- Card 1 -->
+    <rect x="80" y="220" width="400" height="340" rx="20" fill="#f8f8f8" stroke="#bbb"/>
+    <rect x="110" y="250" width="36" height="36" rx="8" fill="#e0e0e0" stroke="#999"/>
+    <rect x="320" y="250" width="50" height="20" rx="10" fill="#f0f0f0" stroke="#ccc"/>
+    <rect x="380" y="250" width="50" height="20" rx="10" fill="#f0f0f0" stroke="#ccc"/>
+    <rect x="440" y="250" width="40" height="20" rx="10" fill="#f0f0f0" stroke="#ccc"/>
+    <text x="110" y="340" font-size="22" font-style="italic" font-weight="700" fill="#222" stroke="none">Fusion Engine</text>
+    <rect x="110" y="360" width="320" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="110" y="376" width="280" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="110" y="392" width="200" height="6" rx="3" fill="#ddd" stroke="none"/>
+
+    <!-- Card 2 -->
+    <rect x="520" y="220" width="400" height="340" rx="20" fill="#f8f8f8" stroke="#bbb"/>
+    <rect x="550" y="250" width="36" height="36" rx="8" fill="#e0e0e0" stroke="#999"/>
+    <rect x="760" y="250" width="50" height="20" rx="10" fill="#f0f0f0" stroke="#ccc"/>
+    <rect x="820" y="250" width="50" height="20" rx="10" fill="#f0f0f0" stroke="#ccc"/>
+    <rect x="880" y="250" width="30" height="20" rx="10" fill="#f0f0f0" stroke="#ccc"/>
+    <text x="550" y="340" font-size="22" font-style="italic" font-weight="700" fill="#222" stroke="none">Living Roadmap</text>
+    <rect x="550" y="360" width="320" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="550" y="376" width="280" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="550" y="392" width="180" height="6" rx="3" fill="#ddd" stroke="none"/>
+
+    <!-- Card 3 -->
+    <rect x="960" y="220" width="400" height="340" rx="20" fill="#f8f8f8" stroke="#bbb"/>
+    <rect x="990" y="250" width="36" height="36" rx="8" fill="#e0e0e0" stroke="#999"/>
+    <rect x="1200" y="250" width="50" height="20" rx="10" fill="#f0f0f0" stroke="#ccc"/>
+    <rect x="1260" y="250" width="50" height="20" rx="10" fill="#f0f0f0" stroke="#ccc"/>
+    <rect x="1320" y="250" width="30" height="20" rx="10" fill="#f0f0f0" stroke="#ccc"/>
+    <text x="990" y="340" font-size="22" font-style="italic" font-weight="700" fill="#222" stroke="none">Verified Growth</text>
+    <rect x="990" y="360" width="320" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="990" y="376" width="280" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="990" y="392" width="240" height="6" rx="3" fill="#ddd" stroke="none"/>
+
+    <text x="40" y="860" font-size="11" fill="#999" stroke="none">[Capabilities] 3 feature cards with icon + tags + description</text>
+  </g>
+</svg>

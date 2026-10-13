@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="660" viewBox="0 0 1440 660">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="660" fill="#FFFFFF"/>
+
+    <!-- CTA headline -->
+    <text x="720" y="230" text-anchor="middle" font-size="72" font-style="italic" font-weight="800" fill="#1F1F1F">Fuse what you know</text>
+    <text x="720" y="320" text-anchor="middle" font-size="72" font-style="italic" font-weight="800" fill="#1F1F1F">into what you'll become</text>
+
+    <!-- Sub copy -->
+    <text x="720" y="390" text-anchor="middle" font-size="16" fill="#333333">Start free, no credit card. Your first fusion is live in under five minutes.</text>
+
+    <!-- CTA button -->
+    <rect x="600" y="440" width="240" height="52" rx="26" fill="#1F1F1F"/>
+    <text x="720" y="471" text-anchor="middle" font-size="15" font-weight="600" fill="#FFFFFF">Start Your Fusion</text>
+
+    <!-- Trust line -->
+    <text x="720" y="520" text-anchor="middle" font-size="13" fill="#666666">Backed by Adzuna · GitHub · Ollama · PostgreSQL · Open Source</text>
+
+    <!-- Background video note -->
+    <rect x="40" y="60" width="1360" height="560" rx="28" fill="none" stroke="#C9C9C9" stroke-width="1.4" stroke-dasharray="8 8"/>
+    <line x1="40" y1="60" x2="1400" y2="620" stroke="#C9C9C9" stroke-width="1.2" stroke-dasharray="8 8"/>
+    <line x1="1400" y1="60" x2="40" y2="620" stroke="#C9C9C9" stroke-width="1.2" stroke-dasharray="8 8"/>
+    <text x="720" y="354" text-anchor="middle" font-size="14" fill="#999999">CTA BACKGROUND VIDEO (full-bleed crop)</text>
+  </g>
+</svg>

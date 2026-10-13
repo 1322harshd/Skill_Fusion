@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="620" viewBox="0 0 1440 620">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="620" fill="#EBEBEB"/>
+
+    <!-- Modal 1: Log something -->
+    <g>
+      <rect x="60" y="70" width="420" height="500" rx="24" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+      <text x="92" y="118" font-size="22" font-style="italic" font-weight="800" fill="#1F1F1F">Log something</text>
+      <text x="92" y="144" font-size="13" fill="#555555">Add evidence to your growth ledger.</text>
+      <text x="92" y="182" font-size="10" font-weight="700" letter-spacing="1.5" fill="#666666">FUSION</text>
+      <rect x="92" y="196" width="70" height="26" rx="13" fill="#1F1F1F"/><text x="127" y="213" text-anchor="middle" font-size="10" fill="#FFFFFF">Design × AI</text>
+      <rect x="170" y="196" width="92" height="26" rx="13" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="1"/><text x="216" y="213" text-anchor="middle" font-size="10" fill="#1F1F1F">Data × Writing</text>
+      <text x="92" y="256" font-size="10" font-weight="700" letter-spacing="1.5" fill="#666666">TECHNICAL SKILLS</text>
+      <rect x="92" y="268" width="356" height="40" rx="20" fill="#F7F7F7" stroke="#1F1F1F" stroke-width="1.2"/>
+      <text x="112" y="293" font-size="13" fill="#888888">Pick any skills from any domain</text>
+      <text x="92" y="344" font-size="10" font-weight="700" letter-spacing="1.5" fill="#666666">EMPLOYABILITY COMPETENCIES</text>
+      <g>
+        <rect x="92" y="356" width="130" height="28" rx="14" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/><text x="157" y="375" text-anchor="middle" font-size="11" fill="#1F1F1F">Communicating</text>
+        <rect x="230" y="356" width="140" height="28" rx="14" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/><text x="300" y="375" text-anchor="middle" font-size="11" fill="#1F1F1F">Explaining complexity</text>
+        <rect x="378" y="356" width="70" height="28" rx="14" fill="#1F1F1F"/><text x="413" y="375" text-anchor="middle" font-size="11" fill="#FFFFFF">Project delivery</text>
+        <rect x="92" y="392" width="90" height="28" rx="14" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/><text x="137" y="411" text-anchor="middle" font-size="11" fill="#1F1F1F">Leading</text>
+        <rect x="190" y="392" width="90" height="28" rx="14" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/><text x="235" y="411" text-anchor="middle" font-size="11" fill="#1F1F1F">Curiosity</text>
+        <rect x="288" y="392" width="80" height="28" rx="14" fill="#F1F1F1" stroke="#1F1F1F" stroke-width="0.8"/><text x="328" y="411" text-anchor="middle" font-size="11" fill="#1F1F1F">Resilience</text>
+      </g>
+      <text x="92" y="460" font-size="10" font-weight="700" letter-spacing="1.5" fill="#666666">WHAT DID YOU DO?</text>
+      <rect x="92" y="472" width="356" height="58" rx="12" fill="#F7F7F7" stroke="#1F1F1F" stroke-width="1.2"/>
+      <text x="112" y="500" font-size="13" fill="#888888">Shipped the AI-assisted prototype to the incubator…</text>
+      <rect x="92" y="540" width="356" height="14" rx="7" fill="none"/>
+      <rect x="92" y="566" width="356" height="0" fill="none"/>
+    </g>
+
+    <!-- Modal 2: Verify evidence -->
+    <g>
+      <rect x="520" y="120" width="400" height="360" rx="24" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+      <text x="552" y="168" font-size="22" font-style="italic" font-weight="800" fill="#1F1F1F">Verify this evidence</text>
+      <text x="552" y="194" font-size="13" fill="#555555">Paste a link that proves it — a GitHub commit,</text>
+      <text x="552" y="212" font-size="13" fill="#555555">a live artifact, a published piece.</text>
+      <text x="552" y="256" font-size="11" font-weight="700" letter-spacing="1.5" fill="#666666">LINK</text>
+      <rect x="552" y="270" width="336" height="44" rx="22" fill="#F7F7F7" stroke="#1F1F1F" stroke-width="1.2"/>
+      <text x="574" y="297" font-size="13" fill="#888888">https://…</text>
+      <rect x="552" y="380" width="336" height="46" rx="23" fill="#1F1F1F"/>
+      <text x="720" y="408" text-anchor="middle" font-size="14" font-weight="600" fill="#FFFFFF">✓ Mark verified</text>
+    </g>
+
+    <!-- Modal 3: Sync GitHub -->
+    <g>
+      <rect x="960" y="120" width="400" height="360" rx="24" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+      <text x="992" y="168" font-size="22" font-style="italic" font-weight="800" fill="#1F1F1F">Sync GitHub</text>
+      <text x="992" y="196" font-size="13" fill="#555555">We'll pull your public contributions in as verified</text>
+      <text x="992" y="214" font-size="13" fill="#555555">evidence — with a contribution graph attached.</text>
+      <rect x="992" y="270" width="336" height="70" rx="16" fill="#F5F5F5"/>
+      <text x="1016" y="300" font-size="12" font-weight="600" fill="#1F1F1F">ada.codes</text>
+      <text x="1016" y="320" font-size="12" fill="#666666">123 public contributions this month</text>
+      <rect x="992" y="380" width="336" height="46" rx="23" fill="#1F1F1F"/>
+      <text x="1160" y="408" text-anchor="middle" font-size="14" font-weight="600" fill="#FFFFFF">↻ Sync now</text>
+    </g>
+
+    <text x="60" y="600" font-size="13" font-weight="700" fill="#444444">Growth Log — modal dialogs (dimmer + blur overlay behind each)</text>
+  </g>
+</svg>

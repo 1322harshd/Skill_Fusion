@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1200" viewBox="0 0 1440 1200">
+  <g font-family="Helvetica, Arial, sans-serif" fill="none" stroke="#222" stroke-width="1.2">
+    <rect width="1440" height="1200" fill="#fff"/>
+    <!-- Top nav bar -->
+    <circle cx="40" cy="40" r="18" stroke-width="1.5"/>
+    <text x="40" y="46" text-anchor="middle" font-size="16" font-style="italic" font-weight="800" fill="#222" stroke="none">s</text>
+    <rect x="300" y="24" width="72" height="32" rx="16" fill="#f0f0f0" stroke="#ccc"/>
+    <text x="336" y="45" text-anchor="middle" font-size="12" fill="#222" stroke="none">Dashboard</text>
+    <rect x="380" y="24" width="52" height="32" rx="16" fill="#f0f0f0" stroke="#ccc"/>
+    <text x="406" y="45" text-anchor="middle" font-size="12" fill="#222" stroke="none">Fuse</text>
+    <rect x="440" y="24" width="72" height="32" rx="16" fill="#f0f0f0" stroke="#ccc"/>
+    <text x="476" y="45" text-anchor="middle" font-size="12" fill="#222" stroke="none">Roadmaps</text>
+    <rect x="520" y="24" width="44" height="32" rx="16" fill="#f0f0f0" stroke="#ccc"/>
+    <text x="542" y="45" text-anchor="middle" font-size="12" fill="#222" stroke="none">Log</text>
+    <rect x="572" y="24" width="56" height="32" rx="16" fill="#f0f0f0" stroke="#ccc"/>
+    <text x="600" y="45" text-anchor="middle" font-size="12" fill="#222" stroke="none">Resume</text>
+    <rect x="636" y="24" width="60" height="32" rx="16" fill="#f0f0f0" stroke="#ccc"/>
+    <text x="666" y="45" text-anchor="middle" font-size="12" fill="#222" stroke="none">Connect</text>
+    <!-- Avatar -->
+    <circle cx="1380" cy="40" r="18" fill="#e0e0e0" stroke="#999"/>
+    <text x="1380" y="46" text-anchor="middle" font-size="10" font-weight="700" fill="#222" stroke="none">U</text>
+
+    <!-- Greeting section -->
+    <rect x="80" y="100" width="1280" height="140" rx="24" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="120" y="130" font-size="13" fill="#888" stroke="none">// Today at a glance</text>
+    <text x="120" y="170" font-size="36" font-style="italic" font-weight="800" fill="#222" stroke="none">Good there</text>
+    <rect x="120" y="190" width="500" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="120" y="206" width="400" height="6" rx="3" fill="#ddd" stroke="none"/>
+
+    <!-- Featured fusion card -->
+    <rect x="80" y="260" width="1280" height="200" rx="24" fill="#f0f0f0" stroke="#bbb"/>
+    <text x="120" y="295" font-size="11" font-weight="600" fill="#888" stroke="none">FEATURED FUSION</text>
+    <rect x="120" y="310" width="120" height="28" rx="14" fill="#e0e0e0" stroke="#aaa"/>
+    <text x="180" y="329" text-anchor="middle" font-size="12" font-weight="600" fill="#222" stroke="none">Design x Code</text>
+    <text x="120" y="365" font-size="24" font-style="italic" font-weight="700" fill="#222" stroke="none">The UI Engineer Roadmap</text>
+    <rect x="120" y="385" width="160" height="40" rx="20" fill="#222" stroke="none"/>
+    <text x="200" y="410" text-anchor="middle" font-size="13" font-weight="600" fill="#fff" stroke="none">Open project</text>
+    <rect x="300" y="385" width="140" height="40" rx="20" fill="#e0e0e0" stroke="#aaa"/>
+    <text x="370" y="410" text-anchor="middle" font-size="13" fill="#222" stroke="none">Fusion score</text>
+    <!-- Score on right -->
+    <text x="1200" y="370" font-size="48" font-style="italic" font-weight="800" fill="#222" stroke="none">87</text>
+    <text x="1200" y="395" font-size="11" fill="#888" stroke="none">rarity + demand</text>
+    <!-- Sparkline placeholder -->
+    <rect x="1100" y="410" width="200" height="40" rx="6" fill="#e8e8e8" stroke="#ccc"/>
+    <polyline points="1110,440 1130,430 1150,435 1170,420 1190,425 1210,415 1230,418 1250,410 1270,412 1290,405" fill="none" stroke="#999" stroke-width="1.5"/>
+
+    <!-- Your fusions heading -->
+    <text x="80" y="510" font-size="20" font-style="italic" font-weight="700" fill="#222" stroke="none">Your fusions</text>
+    <text x="1300" y="510" font-size="13" fill="#888" stroke="none">+ Fuse a new pair</text>
+
+    <!-- Fusion grid cards -->
+    <rect x="80" y="530" width="400" height="180" rx="16" fill="#f8f8f8" stroke="#bbb"/>
+    <rect x="110" y="555" width="100" height="24" rx="12" fill="#e0e0e0" stroke="#aaa"/>
+    <text x="160" y="572" text-anchor="middle" font-size="11" font-weight="600" fill="#222" stroke="none">Design x Code</text>
+    <text x="380" y="572" font-size="12" fill="#888" stroke="none">87</text>
+    <text x="110" y="610" font-size="16" font-style="italic" font-weight="600" fill="#222" stroke="none">The UI Engineer Roadmap</text>
+    <text x="110" y="640" font-size="10" fill="#aaa" stroke="none">Week 4 of 8</text>
+    <rect x="110" y="650" width="340" height="6" rx="3" fill="#e0e0e0" stroke="none"/>
+    <rect x="110" y="650" width="170" height="6" rx="3" fill="#222" stroke="none"/>
+    <line x1="110" y1="680" x2="450" y2="680" stroke="#eee" stroke-width="1"/>
+    <text x="110" y="700" font-size="10" font-weight="600" fill="#aaa" stroke="none">LATEST EVIDENCE</text>
+    <text x="110" y="716" font-size="12" fill="#666" stroke="none">Shipped the prototype</text>
+
+    <rect x="520" y="530" width="400" height="180" rx="16" fill="#f8f8f8" stroke="#bbb"/>
+    <rect x="550" y="555" width="100" height="24" rx="12" fill="#e0e0e0" stroke="#aaa"/>
+    <text x="600" y="572" text-anchor="middle" font-size="11" font-weight="600" fill="#222" stroke="none">Data x Writing</text>
+    <text x="820" y="572" font-size="12" fill="#888" stroke="none">72</text>
+    <text x="550" y="610" font-size="16" font-style="italic" font-weight="600" fill="#222" stroke="none">Content Analyst Path</text>
+    <text x="550" y="640" font-size="10" fill="#aaa" stroke="none">Week 2 of 6</text>
+    <rect x="550" y="650" width="340" height="6" rx="3" fill="#e0e0e0" stroke="none"/>
+    <rect x="550" y="650" width="113" height="6" rx="3" fill="#222" stroke="none"/>
+
+    <rect x="960" y="530" width="400" height="180" rx="16" fill="#f8f8f8" stroke="#bbb"/>
+    <rect x="990" y="555" width="100" height="24" rx="12" fill="#e0e0e0" stroke="#aaa"/>
+    <text x="1040" y="572" text-anchor="middle" font-size="11" font-weight="600" fill="#222" stroke="none">AI x Marketing</text>
+    <text x="1260" y="572" font-size="12" fill="#888" stroke="none">91</text>
+    <text x="990" y="610" font-size="16" font-style="italic" font-weight="600" fill="#222" stroke="none">Growth Hacker Blueprint</text>
+    <text x="990" y="640" font-size="10" fill="#aaa" stroke="none">Week 6 of 10</text>
+    <rect x="990" y="650" width="340" height="6" rx="3" fill="#e0e0e0" stroke="none"/>
+    <rect x="990" y="650" width="204" height="6" rx="3" fill="#222" stroke="none"/>
+
+    <!-- Requests section -->
+    <text x="80" y="770" font-size="20" font-style="italic" font-weight="700" fill="#222" stroke="none">Requests</text>
+    <rect x="80" y="790" width="1280" height="70" rx="16" fill="#f8f8f8" stroke="#bbb"/>
+    <circle cx="130" cy="825" r="18" fill="#e0e0e0" stroke="#999"/>
+    <text x="130" y="831" text-anchor="middle" font-size="10" font-weight="700" fill="#222" stroke="none">JR</text>
+    <text x="160" y="822" font-size="14" font-style="italic" font-weight="600" fill="#222" stroke="none">jordan.r</text>
+    <rect x="160" y="832" width="80" height="18" rx="9" fill="#e0e0e0" stroke="#aaa"/>
+    <text x="200" y="845" text-anchor="middle" font-size="10" fill="#222" stroke="none">AI x Code</text>
+    <rect x="1200" y="810" width="80" height="32" rx="16" fill="#222" stroke="none"/>
+    <text x="1240" y="831" text-anchor="middle" font-size="12" font-weight="600" fill="#fff" stroke="none">Accept</text>
+    <rect x="1290" y="810" width="80" height="32" rx="16" fill="#e0e0e0" stroke="#aaa"/>
+    <text x="1330" y="831" text-anchor="middle" font-size="12" fill="#222" stroke="none">Decline</text>
+
+    <!-- Skill profile + Up next -->
+    <text x="80" y="910" font-size="20" font-style="italic" font-weight="700" fill="#222" stroke="none">Skill profile</text>
+    <rect x="80" y="930" width="620" height="200" rx="16" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="120" y="965" font-size="13" font-weight="600" fill="#222" stroke="none">Design</text>
+    <rect x="220" y="955" width="300" height="8" rx="4" fill="#e0e0e0" stroke="none"/>
+    <rect x="220" y="955" width="240" height="8" rx="4" fill="#222" stroke="none"/>
+    <text x="540" y="965" font-size="14" font-style="italic" fill="#222" stroke="none">8</text>
+    <text x="120" y="1000" font-size="13" font-weight="600" fill="#222" stroke="none">Code</text>
+    <rect x="220" y="990" width="300" height="8" rx="4" fill="#e0e0e0" stroke="none"/>
+    <rect x="220" y="990" width="210" height="8" rx="4" fill="#222" stroke="none"/>
+    <text x="540" y="1000" font-size="14" font-style="italic" fill="#222" stroke="none">7</text>
+    <text x="120" y="1035" font-size="13" font-weight="600" fill="#222" stroke="none">Writing</text>
+    <rect x="220" y="1025" width="300" height="8" rx="4" fill="#e0e0e0" stroke="none"/>
+    <rect x="220" y="1025" width="150" height="8" rx="4" fill="#222" stroke="none"/>
+    <text x="540" y="1035" font-size="14" font-style="italic" fill="#222" stroke="none">5</text>
+
+    <text x="740" y="910" font-size="20" font-style="italic" font-weight="700" fill="#222" stroke="none">Up next</text>
+    <rect x="740" y="930" width="620" height="200" rx="16" fill="#f0f0f0" stroke="#bbb"/>
+    <text x="780" y="965" font-size="11" font-weight="600" fill="#888" stroke="none">UP NEXT</text>
+    <text x="780" y="995" font-size="18" font-style="italic" font-weight="600" fill="#222" stroke="none">Week 5 - Build the Component Library</text>
+    <rect x="780" y="1015" width="400" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <rect x="780" y="1030" width="300" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <text x="780" y="1070" font-size="13" fill="#888" stroke="none">Continue the roadmap</text>
+
+    <text x="40" y="1160" font-size="11" fill="#999" stroke="none">[Dashboard] Greeting + featured fusion + fusion grid + requests + skill profile + up next</text>
+  </g>
+</svg>

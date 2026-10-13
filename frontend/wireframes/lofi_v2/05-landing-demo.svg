@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1000" viewBox="0 0 1440 1000">
+  <g font-family="Helvetica, Arial, sans-serif" fill="none" stroke="#222" stroke-width="1.2">
+    <rect width="1440" height="1000" fill="#fff"/>
+    <text x="80" y="80" font-size="12" font-weight="600" fill="#888" stroke="none">TRY IT</text>
+    <text x="80" y="120" font-size="38" font-style="italic" font-weight="800" fill="#222" stroke="none">Fuse your own skills</text>
+    <rect x="200" y="180" width="1040" height="500" rx="24" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="260" y="230" font-size="11" font-weight="600" fill="#888" stroke="none">SKILL ONE</text>
+    <rect x="260" y="250" width="70" height="32" rx="16" fill="#e8e8e8" stroke="#aaa"/>
+    <text x="295" y="271" text-anchor="middle" font-size="12" fill="#222" stroke="none">Design</text>
+    <rect x="340" y="250" width="60" height="32" rx="16" fill="#e8e8e8" stroke="#aaa"/>
+    <text x="370" y="271" text-anchor="middle" font-size="12" fill="#222" stroke="none">Code</text>
+    <rect x="410" y="250" width="56" height="32" rx="16" fill="#e8e8e8" stroke="#aaa"/>
+    <text x="438" y="271" text-anchor="middle" font-size="12" fill="#222" stroke="none">Data</text>
+    <rect x="476" y="250" width="72" height="32" rx="16" fill="#e8e8e8" stroke="#aaa"/>
+    <text x="512" y="271" text-anchor="middle" font-size="12" fill="#222" stroke="none">Writing</text>
+    <rect x="558" y="250" width="80" height="32" rx="16" fill="#e8e8e8" stroke="#aaa"/>
+    <text x="598" y="271" text-anchor="middle" font-size="12" fill="#222" stroke="none">Marketing</text>
+    <text x="720" y="230" font-size="11" font-weight="600" fill="#888" stroke="none">SKILL TWO</text>
+    <rect x="720" y="250" width="54" height="32" rx="16" fill="#222" stroke="none"/>
+    <text x="747" y="271" text-anchor="middle" font-size="12" fill="#fff" stroke="none">AI</text>
+    <rect x="784" y="250" width="80" height="32" rx="16" fill="#e8e8e8" stroke="#aaa"/>
+    <text x="824" y="271" text-anchor="middle" font-size="12" fill="#222" stroke="none">Illustration</text>
+    <rect x="874" y="250" width="64" height="32" rx="16" fill="#e8e8e8" stroke="#aaa"/>
+    <text x="906" y="271" text-anchor="middle" font-size="12" fill="#222" stroke="none">Product</text>
+    <rect x="580" y="320" width="280" height="44" rx="22" fill="#222" stroke="none"/>
+    <text x="720" y="347" text-anchor="middle" font-size="14" font-weight="600" fill="#fff" stroke="none">Fuse Design x AI</text>
+    <line x1="260" y1="390" x2="1180" y2="390" stroke="#ddd" stroke-width="1"/>
+    <text x="260" y="420" font-size="11" font-weight="600" fill="#888" stroke="none">YOUR FUSION</text>
+    <text x="260" y="450" font-size="28" font-style="italic" font-weight="700" fill="#222" stroke="none">Design x AI</text>
+    <text x="1100" y="440" font-size="48" font-style="italic" font-weight="800" fill="#222" stroke="none">1.8%</text>
+    <text x="1100" y="460" font-size="11" fill="#888" stroke="none">rarer than average</text>
+    <rect x="260" y="490" width="920" height="56" rx="14" fill="#f0f0f0" stroke="#ccc"/>
+    <text x="290" y="524" font-size="16" font-style="italic" fill="#bbb" stroke="none">01</text>
+    <text x="340" y="520" font-size="15" font-style="italic" font-weight="600" fill="#222" stroke="none">Foundations</text>
+    <text x="340" y="536" font-size="12" fill="#888" stroke="none">Get fluent in AI applied to Design</text>
+    <text x="1120" y="524" font-size="12" fill="#888" stroke="none">4 days</text>
+    <rect x="260" y="556" width="920" height="56" rx="14" fill="#f0f0f0" stroke="#ccc"/>
+    <text x="290" y="590" font-size="16" font-style="italic" fill="#bbb" stroke="none">02</text>
+    <text x="340" y="586" font-size="15" font-style="italic" font-weight="600" fill="#222" stroke="none">First artifact</text>
+    <text x="340" y="602" font-size="12" fill="#888" stroke="none">Build a real Design artifact powered by AI</text>
+    <text x="1120" y="590" font-size="12" fill="#888" stroke="none">1 week</text>
+    <rect x="260" y="622" width="920" height="56" rx="14" fill="#f0f0f0" stroke="#ccc"/>
+    <text x="290" y="656" font-size="16" font-style="italic" fill="#bbb" stroke="none">03</text>
+    <text x="340" y="652" font-size="15" font-style="italic" font-weight="600" fill="#222" stroke="none">The project</text>
+    <text x="340" y="668" font-size="12" fill="#888" stroke="none">Ship the flagship Design + AI portfolio piece</text>
+    <text x="1120" y="656" font-size="12" fill="#888" stroke="none">2 weeks</text>
+    <text x="460" y="730" font-size="11" fill="#aaa" stroke="none">Sample output - real roadmap built live from job-market data when you sign up.</text>
+    <text x="40" y="960" font-size="11" fill="#999" stroke="none">[Demo] Interactive skill picker + fuse button + result with roadmap steps</text>
+  </g>
+</svg>

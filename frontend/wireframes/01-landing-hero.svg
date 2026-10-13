@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="940" viewBox="0 0 1440 940">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="940" fill="#FFFFFF"/>
+
+    <!-- Navbar -->
+    <circle cx="72" cy="62" r="26" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+    <text x="72" y="70" text-anchor="middle" font-size="22" font-style="italic" font-weight="800" fill="#1F1F1F">s</text>
+    <text x="520" y="68" text-anchor="middle" font-size="15" fill="#1F1F1F">Home</text>
+    <text x="640" y="68" text-anchor="middle" font-size="15" fill="#1F1F1F">How It Works</text>
+    <text x="765" y="68" text-anchor="middle" font-size="15" fill="#1F1F1F">Features</text>
+    <text x="870" y="68" text-anchor="middle" font-size="15" fill="#1F1F1F">Community</text>
+    <text x="985" y="68" text-anchor="middle" font-size="15" fill="#1F1F1F">Pricing</text>
+    <rect x="1170" y="40" width="200" height="44" rx="22" fill="#1F1F1F"/>
+    <text x="1270" y="67" text-anchor="middle" font-size="15" font-weight="600" fill="#FFFFFF">Start Fusing</text>
+
+    <!-- Announcement pill -->
+    <rect x="600" y="150" width="450" height="40" rx="20" fill="#F4F4F4"/>
+    <rect x="612" y="160" width="56" height="20" rx="10" fill="#1F1F1F"/>
+    <text x="640" y="174" text-anchor="middle" font-size="12" font-weight="700" fill="#FFFFFF">NEW</text>
+    <text x="680" y="174" font-size="14" fill="#1F1F1F">Fusion Score Is Now Live — See Where You Rank</text>
+
+    <!-- Headline -->
+    <text x="720" y="262" text-anchor="middle" font-size="58" font-style="italic" font-weight="800" fill="#1F1F1F">Fuse What You Know Into What You'll Become</text>
+    <text x="720" y="322" text-anchor="middle" font-size="58" font-style="italic" font-weight="800" fill="#1F1F1F">What You'll Become</text>
+
+    <!-- Sub copy -->
+    <text x="720" y="380" text-anchor="middle" font-size="16" fill="#333333">Combine any two skills and our AI builds your personalized roadmap,</text>
+    <text x="720" y="402" text-anchor="middle" font-size="16" fill="#333333">a real project, and a data-backed score of how rare that combination is.</text>
+
+    <!-- Buttons -->
+    <rect x="560" y="440" width="220" height="50" rx="25" fill="#1F1F1F"/>
+    <text x="670" y="470" text-anchor="middle" font-size="15" font-weight="600" fill="#FFFFFF">Start Your Fusion</text>
+    <circle cx="742" cy="468" r="9" fill="none" stroke="#1F1F1F" stroke-width="1.4"/>
+    <text x="862" y="470" text-anchor="middle" font-size="15" fill="#1F1F1F">▶ See How It Works</text>
+
+    <!-- Stat cards -->
+    <rect x="370" y="530" width="340" height="138" rx="22" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+    <rect x="400" y="558" width="34" height="34" rx="9" fill="#E7E7E7"/>
+    <text x="388" y="668" font-size="34" font-style="italic" font-weight="800" fill="#1F1F1F">12,000+</text>
+    <text x="388" y="692" font-size="13" fill="#444444">Real Job Listings Analyzed</text>
+    <rect x="730" y="530" width="340" height="138" rx="22" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+    <rect x="760" y="558" width="34" height="34" rx="9" fill="#E7E7E7"/>
+    <text x="748" y="668" font-size="34" font-style="italic" font-weight="800" fill="#1F1F1F">4–12 Wk</text>
+    <text x="748" y="692" font-size="13" fill="#444444">Personalized Roadmaps</text>
+
+    <!-- Trust strip -->
+    <rect x="596" y="716" width="248" height="30" rx="15" fill="#F4F4F4"/>
+    <text x="720" y="736" text-anchor="middle" font-size="12" fill="#1F1F1F">Grounded in real infrastructure, not vibes</text>
+    <text x="520" y="806" text-anchor="middle" font-size="22" font-style="italic" font-weight="700" fill="#1F1F1F">Adzuna</text>
+    <text x="660" y="806" text-anchor="middle" font-size="22" font-style="italic" font-weight="700" fill="#1F1F1F">GitHub</text>
+    <text x="790" y="806" text-anchor="middle" font-size="22" font-style="italic" font-weight="700" fill="#1F1F1F">Ollama</text>
+    <text x="915" y="806" text-anchor="middle" font-size="22" font-style="italic" font-weight="700" fill="#1F1F1F">PostgreSQL</text>
+    <text x="1045" y="806" text-anchor="middle" font-size="22" font-style="italic" font-weight="700" fill="#1F1F1F">Open Source</text>
+
+    <text x="80" y="900" font-size="12" fill="#888888">[Hero] Background video (desktop 120% bleed) + fixed pill navbar</text>
+  </g>
+</svg>

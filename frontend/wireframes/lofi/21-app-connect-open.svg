@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="900" fill="#FFFFFF"/>
+
+    <!-- Top nav -->
+    <rect width="1440" height="60" fill="#F8F8F8" stroke="#EEE" stroke-width="1"/>
+    <circle cx="40" cy="30" r="18" fill="#E5E5E5"/>
+    <text x="40" y="36" text-anchor="middle" font-size="14" font-style="italic" font-weight="800" fill="#666">s</text>
+    <text x="400" y="36" font-size="13" font-weight="600" fill="#1F1F1F">Connect</text>
+
+    <!-- Title -->
+    <text x="80" y="120" font-size="42" font-style="italic" font-weight="800" fill="#1F1F1F">Connect</text>
+
+    <!-- Room tabs -->
+    <rect x="80" y="150" width="140" height="36" rx="18" fill="#1F1F1F"/>
+    <text x="150" y="173" text-anchor="middle" font-size="13" font-weight="600" fill="#FFF">Open room</text>
+    <rect x="240" y="150" width="150" height="36" rx="18" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="315" y="173" text-anchor="middle" font-size="13" fill="#555">Private room</text>
+
+    <!-- Chat container -->
+    <rect x="80" y="210" width="1280" height="580" rx="20" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+
+    <!-- Room header with image placeholder -->
+    <rect x="80" y="210" width="1280" height="120" rx="20" fill="#F0F0F0"/>
+    <!-- X for image -->
+    <line x1="80" y1="210" x2="200" y2="330" stroke="#DDD" stroke-width="1"/>
+    <line x1="200" y1="210" x2="80" y2="330" stroke="#DDD" stroke-width="1"/>
+    <text x="140" y="380" font-size="11" fill="#999" letter-spacing="2">OPEN ROOM · LIVE NOW</text>
+    <text x="140" y="410" font-size="26" font-style="italic" font-weight="700" fill="#1F1F1F">The fusion lounge</text>
+    <rect x="500" y="395" width="80" height="24" rx="12" fill="#F0F0F0"/>
+    <text x="540" y="412" text-anchor="middle" font-size="11" fill="#555">8 here</text>
+
+    <!-- Presence row -->
+    <rect x="80" y="430" width="1280" height="60" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <circle cx="140" cy="460" r="16" fill="#E5E5E5"/>
+    <text x="140" y="466" text-anchor="middle" font-size="10" font-weight="600" fill="#666">AO</text>
+    <text x="140" y="490" text-anchor="middle" font-size="9" fill="#999">amara.o</text>
+    <circle cx="220" cy="460" r="16" fill="#E5E5E5"/>
+    <text x="220" y="466" text-anchor="middle" font-size="10" font-weight="600" fill="#666">DR</text>
+    <text x="220" y="490" text-anchor="middle" font-size="9" fill="#999">daniel.r</text>
+    <circle cx="300" cy="460" r="16" fill="#E5E5E5"/>
+    <text x="300" y="466" text-anchor="middle" font-size="10" font-weight="600" fill="#666">PN</text>
+    <text x="300" y="490" text-anchor="middle" font-size="9" fill="#999">priya.n</text>
+    <circle cx="380" cy="460" r="16" fill="#E5E5E5"/>
+    <text x="380" y="466" text-anchor="middle" font-size="10" font-weight="600" fill="#666">KC</text>
+    <text x="380" y="490" text-anchor="middle" font-size="9" fill="#999">kai.c</text>
+
+    <!-- Chat messages -->
+    <rect x="120" y="520" width="400" height="40" rx="16" fill="#F0F0F0"/>
+    <text x="140" y="545" font-size="13" fill="#555">Has anyone tried combining design + data?</text>
+    <text x="140" y="575" font-size="10" fill="#CCC">amara.o · 2m ago</text>
+
+    <rect x="820" y="570" width="360" height="40" rx="16" fill="#1F1F1F"/>
+    <text x="840" y="595" font-size="13" fill="#FFF">Yes! I'm on week 4 of that fusion.</text>
+    <text x="840" y="625" font-size="10" fill="#999">you · 1m ago</text>
+
+    <rect x="120" y="640" width="320" height="40" rx="16" fill="#F0F0F0"/>
+    <text x="140" y="665" font-size="13" fill="#555">The roadmap is really well structured.</text>
+    <text x="140" y="695" font-size="10" fill="#CCC">daniel.r · just now</text>
+
+    <!-- Typing indicator -->
+    <text x="120" y="730" font-size="11" fill="#CCC" font-style="italic">priya.n is typing...</text>
+
+    <!-- Message input -->
+    <rect x="120" y="750" width="1100" height="40" rx="20" fill="#F8F8F8" stroke="#DDD" stroke-width="1"/>
+    <text x="140" y="775" font-size="13" fill="#CCC">Drop a note for the room...</text>
+    <rect x="1240" y="750" width="80" height="40" rx="20" fill="#1F1F1F"/>
+    <text x="1280" y="775" text-anchor="middle" font-size="12" font-weight="600" fill="#FFF">Send</text>
+
+    <text x="60" y="870" font-size="11" fill="#999">[LOFI] Connect Open Room — room header, presence avatars, chat bubbles, input bar</text>
+  </g>
+</svg>

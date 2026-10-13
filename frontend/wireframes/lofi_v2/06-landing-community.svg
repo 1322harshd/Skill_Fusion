@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="800" viewBox="0 0 1440 800">
+  <g font-family="Helvetica, Arial, sans-serif" fill="none" stroke="#222" stroke-width="1.2">
+    <rect width="1440" height="800" fill="#fff"/>
+
+    <!-- Section heading -->
+    <text x="80" y="100" font-size="38" font-style="italic" font-weight="800" fill="#222" stroke="none">Built by people fusing now</text>
+
+    <!-- Badge pills -->
+    <rect x="80" y="130" width="100" height="24" rx="12" fill="#f0f0f0" stroke="#ccc"/>
+    <text x="130" y="147" text-anchor="middle" font-size="11" fill="#222" stroke="none">GitHub Synced</text>
+    <rect x="192" y="130" width="90" height="24" rx="12" fill="#f0f0f0" stroke="#ccc"/>
+    <text x="237" y="147" text-anchor="middle" font-size="11" fill="#222" stroke="none">Dual-Tagged</text>
+    <rect x="294" y="130" width="110" height="24" rx="12" fill="#f0f0f0" stroke="#ccc"/>
+    <text x="349" y="147" text-anchor="middle" font-size="11" fill="#222" stroke="none">Portfolio-Ready</text>
+    <rect x="416" y="130" width="110" height="24" rx="12" fill="#f0f0f0" stroke="#ccc"/>
+    <text x="471" y="147" text-anchor="middle" font-size="11" fill="#222" stroke="none">Verified Badges</text>
+
+    <!-- 3 quote cards -->
+    <rect x="80" y="190" width="400" height="260" rx="20" fill="#f8f8f8" stroke="#bbb"/>
+    <rect x="110" y="220" width="340" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="110" y="236" width="300" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="110" y="252" width="260" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="110" y="268" width="320" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="110" y="284" width="180" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <!-- Avatar -->
+    <circle cx="130" cy="330" r="18" fill="#e0e0e0" stroke="#999"/>
+    <text x="130" y="336" text-anchor="middle" font-size="11" font-weight="700" fill="#222" stroke="none">AO</text>
+    <text x="160" y="328" font-size="13" font-weight="600" fill="#222" stroke="none">Amara Osei</text>
+    <text x="160" y="344" font-size="11" fill="#888" stroke="none">Marketing × Python</text>
+
+    <rect x="520" y="190" width="400" height="260" rx="20" fill="#f8f8f8" stroke="#bbb"/>
+    <rect x="550" y="220" width="340" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="550" y="236" width="300" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="550" y="252" width="280" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="550" y="268" width="320" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="550" y="284" width="200" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <circle cx="570" cy="330" r="18" fill="#e0e0e0" stroke="#999"/>
+    <text x="570" y="336" text-anchor="middle" font-size="11" font-weight="700" fill="#222" stroke="none">DR</text>
+    <text x="600" y="328" font-size="13" font-weight="600" fill="#222" stroke="none">Daniel Reyes</text>
+    <text x="600" y="344" font-size="11" fill="#888" stroke="none">Design × Code</text>
+
+    <rect x="960" y="190" width="400" height="260" rx="20" fill="#f8f8f8" stroke="#bbb"/>
+    <rect x="990" y="220" width="340" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="990" y="236" width="280" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="990" y="252" width="320" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="990" y="268" width="240" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <circle cx="1010" cy="330" r="18" fill="#e0e0e0" stroke="#999"/>
+    <text x="1010" y="336" text-anchor="middle" font-size="11" font-weight="700" fill="#222" stroke="none">PN</text>
+    <text x="1040" y="328" font-size="13" font-weight="600" fill="#222" stroke="none">Priya Nair</text>
+    <text x="1040" y="344" font-size="11" fill="#888" stroke="none">Data × Writing</text>
+
+    <text x="40" y="760" font-size="11" fill="#999" stroke="none">[Community] 3 testimonial quote cards with avatar + fusion tag</text>
+  </g>
+</svg>

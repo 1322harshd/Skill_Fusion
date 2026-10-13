@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1100" viewBox="0 0 1440 1100">
+  <g font-family="Helvetica, Arial, sans-serif" fill="none" stroke="#222" stroke-width="1.2">
+    <rect width="1440" height="1100" fill="#fff"/>
+    <!-- Header -->
+    <text x="80" y="80" font-size="11" font-weight="600" fill="#888" stroke="none">YOUR FUSION</text>
+    <text x="80" y="115" font-size="40" font-style="italic" font-weight="800" fill="#222" stroke="none">Design x Code</text>
+    <text x="1200" y="100" font-size="56" font-style="italic" font-weight="800" fill="#222" stroke="none">87</text>
+    <text x="1200" y="120" font-size="11" fill="#888" stroke="none">rarity + demand</text>
+    <!-- Lede -->
+    <rect x="80" y="150" width="800" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="80" y="166" width="700" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <rect x="80" y="182" width="600" height="6" rx="3" fill="#ddd" stroke="none"/>
+    <!-- 4 info cards -->
+    <rect x="80" y="220" width="620" height="160" rx="16" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="110" y="255" font-size="11" font-weight="600" fill="#888" stroke="none">COMPLEMENTARITY</text>
+    <rect x="110" y="275" width="500" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <rect x="110" y="290" width="400" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <rect x="110" y="305" width="450" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <rect x="740" y="220" width="620" height="160" rx="16" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="770" y="255" font-size="11" font-weight="600" fill="#888" stroke="none">WHERE IT SHOWS UP</text>
+    <rect x="770" y="275" width="500" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <rect x="770" y="290" width="400" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <rect x="770" y="305" width="350" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <rect x="80" y="400" width="620" height="120" rx="16" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="110" y="435" font-size="11" font-weight="600" fill="#888" stroke="none">INDUSTRIES</text>
+    <rect x="110" y="455" width="80" height="24" rx="12" fill="#e0e0e0" stroke="#aaa"/>
+    <text x="150" y="472" text-anchor="middle" font-size="11" fill="#222" stroke="none">Tech</text>
+    <rect x="200" y="455" width="80" height="24" rx="12" fill="#e0e0e0" stroke="#aaa"/>
+    <text x="240" y="472" text-anchor="middle" font-size="11" fill="#222" stroke="none">Finance</text>
+    <rect x="290" y="455" width="80" height="24" rx="12" fill="#e0e0e0" stroke="#aaa"/>
+    <text x="330" y="472" text-anchor="middle" font-size="11" fill="#222" stroke="none">Health</text>
+    <rect x="740" y="400" width="620" height="120" rx="16" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="770" y="435" font-size="11" font-weight="600" fill="#888" stroke="none">INSIGHTS</text>
+    <rect x="770" y="455" width="500" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <rect x="770" y="470" width="400" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <!-- CTAs -->
+    <rect x="360" y="560" width="260" height="48" rx="24" fill="#222" stroke="none"/>
+    <text x="490" y="590" text-anchor="middle" font-size="14" font-weight="600" fill="#fff" stroke="none">Choose a roadmap</text>
+    <rect x="640" y="560" width="220" height="48" rx="24" fill="#f0f0f0" stroke="#bbb"/>
+    <text x="750" y="590" text-anchor="middle" font-size="14" fill="#222" stroke="none">See the score</text>
+    <text x="900" y="590" font-size="14" fill="#888" stroke="none">Fuse a new pair</text>
+    <text x="40" y="1060" font-size="11" fill="#999" stroke="none">[Fuse Result] Score + brief + 4 info cards + CTAs</text>
+  </g>
+</svg>

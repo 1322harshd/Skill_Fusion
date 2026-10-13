@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="700" viewBox="0 0 1440 700">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="700" fill="#FFFFFF"/>
+
+    <!-- Section heading -->
+    <text x="80" y="120" font-size="52" font-style="italic" font-weight="800" fill="#1F1F1F">Start free, fuse deeper</text>
+
+    <!-- Card 1: Free -->
+    <rect x="80" y="190" width="405" height="440" rx="28" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+    <text x="108" y="246" font-size="28" font-style="italic" font-weight="800" fill="#1F1F1F">Free</text>
+    <text x="108" y="306" font-size="46" font-style="italic" font-weight="800" fill="#1F1F1F">$0</text>
+    <text x="108" y="330" font-size="13" fill="#666666">forever</text>
+    <text x="108" y="356" font-size="13" fill="#444444">For the curious.</text>
+    <g>
+      <circle cx="116" cy="408" r="6" fill="#1F1F1F"/><text x="136" y="413" font-size="14" fill="#1F1F1F">2 fusions</text>
+      <circle cx="116" cy="442" r="6" fill="#1F1F1F"/><text x="136" y="447" font-size="14" fill="#1F1F1F">1 active roadmap</text>
+      <circle cx="116" cy="476" r="6" fill="#1F1F1F"/><text x="136" y="481" font-size="14" fill="#1F1F1F">Community access</text>
+      <circle cx="116" cy="510" r="6" fill="#1F1F1F"/><text x="136" y="515" font-size="14" fill="#1F1F1F">Fusion score basics</text>
+    </g>
+    <rect x="108" y="560" width="350" height="44" rx="22" fill="#1F1F1F"/>
+    <text x="283" y="586" text-anchor="middle" font-size="14" font-weight="600" fill="#FFFFFF">Start Free</text>
+
+    <!-- Card 2: Fusion Pro (featured) -->
+    <rect x="517" y="190" width="405" height="440" rx="28" fill="#1F1F1F"/>
+    <rect x="672" y="172" width="100" height="26" rx="13" fill="#FFFFFF"/>
+    <text x="722" y="190" text-anchor="middle" font-size="12" font-weight="700" fill="#1F1F1F">Most popular</text>
+    <text x="545" y="246" font-size="28" font-style="italic" font-weight="800" fill="#FFFFFF">Fusion Pro</text>
+    <text x="545" y="306" font-size="46" font-style="italic" font-weight="800" fill="#FFFFFF">$9</text>
+    <text x="611" y="330" font-size="13" fill="#CCCCCC">/month</text>
+    <text x="545" y="356" font-size="13" fill="#CCCCCC">For the serious builder.</text>
+    <g>
+      <circle cx="553" cy="408" r="6" fill="#FFFFFF"/><text x="573" y="413" font-size="14" fill="#FFFFFF">Unlimited fusions</text>
+      <circle cx="553" cy="442" r="6" fill="#FFFFFF"/><text x="573" y="447" font-size="14" fill="#FFFFFF">All 3 outcome paths</text>
+      <circle cx="553" cy="476" r="6" fill="#FFFFFF"/><text x="573" y="481" font-size="14" fill="#FFFFFF">Verified growth badges</text>
+      <circle cx="553" cy="510" r="6" fill="#FFFFFF"/><text x="573" y="515" font-size="14" fill="#FFFFFF">GitHub auto-posts</text>
+      <circle cx="553" cy="544" r="6" fill="#FFFFFF"/><text x="573" y="549" font-size="14" fill="#FFFFFF">Score history &amp; trends</text>
+    </g>
+    <rect x="545" y="560" width="350" height="44" rx="22" fill="#FFFFFF"/>
+    <text x="720" y="586" text-anchor="middle" font-size="14" font-weight="600" fill="#1F1F1F">Start 14-Day Trial</text>
+
+    <!-- Card 3: Teams -->
+    <rect x="954" y="190" width="405" height="440" rx="28" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+    <text x="982" y="246" font-size="28" font-style="italic" font-weight="800" fill="#1F1F1F">Teams</text>
+    <text x="982" y="306" font-size="46" font-style="italic" font-weight="800" fill="#1F1F1F">$24</text>
+    <text x="1048" y="330" font-size="13" fill="#666666">/seat /month</text>
+    <text x="982" y="356" font-size="13" fill="#444444">For squads and orgs.</text>
+    <g>
+      <circle cx="990" cy="408" r="6" fill="#1F1F1F"/><text x="1010" y="413" font-size="14" fill="#1F1F1F">Everything in Pro</text>
+      <circle cx="990" cy="442" r="6" fill="#1F1F1F"/><text x="1010" y="447" font-size="14" fill="#1F1F1F">Shared fusions</text>
+      <circle cx="990" cy="476" r="6" fill="#1F1F1F"/><text x="1010" y="481" font-size="14" fill="#1F1F1F">Admin dashboard</text>
+      <circle cx="990" cy="510" r="6" fill="#1F1F1F"/><text x="1010" y="515" font-size="14" fill="#1F1F1F">Priority roadmap builds</text>
+    </g>
+    <rect x="982" y="560" width="350" height="44" rx="22" fill="#1F1F1F"/>
+    <text x="1157" y="586" text-anchor="middle" font-size="14" font-weight="600" fill="#FFFFFF">Contact Sales</text>
+
+    <text x="720" y="680" text-anchor="middle" font-size="12" fill="#888888">All prices in USD, billed monthly. Cancel anytime.</text>
+  </g>
+</svg>

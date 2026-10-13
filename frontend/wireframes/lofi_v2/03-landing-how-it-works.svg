@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif" fill="none" stroke="#222" stroke-width="1.2">
+    <rect width="1440" height="900" fill="#fff"/>
+
+    <!-- Kicker -->
+    <text x="80" y="80" font-size="12" font-weight="600" fill="#888" stroke="none">HOW IT WORKS</text>
+    <!-- Section heading -->
+    <text x="80" y="120" font-size="38" font-style="italic" font-weight="800" fill="#222" stroke="none">Two skills. One future.</text>
+
+    <!-- Horizontal line -->
+    <line x1="80" y1="230" x2="1360" y2="230" stroke="#ddd" stroke-width="1"/>
+
+    <!-- Step 1 -->
+    <rect x="80" y="260" width="300" height="240" rx="16" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="110" y="310" font-size="36" font-style="italic" fill="#bbb" stroke="none">01</text>
+    <circle cx="110" cy="340" r="4" fill="#999" stroke="none"/>
+    <text x="110" y="375" font-size="18" font-style="italic" font-weight="700" fill="#222" stroke="none">Pick two skills</text>
+    <rect x="110" y="395" width="240" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <rect x="110" y="410" width="200" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <rect x="110" y="425" width="160" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+
+    <!-- Step 2 -->
+    <rect x="420" y="260" width="300" height="240" rx="16" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="450" y="310" font-size="36" font-style="italic" fill="#bbb" stroke="none">02</text>
+    <circle cx="450" cy="340" r="4" fill="#999" stroke="none"/>
+    <text x="450" y="375" font-size="18" font-style="italic" font-weight="700" fill="#222" stroke="none">AI finds the overlap</text>
+    <rect x="450" y="395" width="240" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <rect x="450" y="410" width="200" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <rect x="450" y="425" width="170" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+
+    <!-- Step 3 -->
+    <rect x="760" y="260" width="300" height="240" rx="16" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="790" y="310" font-size="36" font-style="italic" fill="#bbb" stroke="none">03</text>
+    <circle cx="790" cy="340" r="4" fill="#999" stroke="none"/>
+    <text x="790" y="375" font-size="18" font-style="italic" font-weight="700" fill="#222" stroke="none">Follow a roadmap</text>
+    <rect x="790" y="395" width="240" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <rect x="790" y="410" width="200" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <rect x="790" y="425" width="180" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+
+    <!-- Step 4 -->
+    <rect x="1100" y="260" width="300" height="240" rx="16" fill="#f8f8f8" stroke="#bbb"/>
+    <text x="1130" y="310" font-size="36" font-style="italic" fill="#bbb" stroke="none">04</text>
+    <circle cx="1130" cy="340" r="4" fill="#999" stroke="none"/>
+    <text x="1130" y="375" font-size="18" font-style="italic" font-weight="700" fill="#222" stroke="none">Earn a verified score</text>
+    <rect x="1130" y="395" width="240" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <rect x="1130" y="410" width="200" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+    <rect x="1130" y="425" width="150" height="5" rx="2.5" fill="#ddd" stroke="none"/>
+
+    <text x="40" y="860" font-size="11" fill="#999" stroke="none">[How It Works] 4-step horizontal flow with numbered cards</text>
+  </g>
+</svg>

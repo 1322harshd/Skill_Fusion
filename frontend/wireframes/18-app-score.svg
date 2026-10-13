@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="990" viewBox="0 0 1280 990">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1280" height="990" fill="#FFFFFF"/>
+
+    <!-- APP SHELL HEADER (no active nav item) -->
+    <circle cx="56" cy="52" r="24" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.3"/>
+    <text x="56" y="60" text-anchor="middle" font-size="20" font-style="italic" font-weight="800" fill="#1F1F1F">s</text>
+    <rect x="320" y="30" width="640" height="46" rx="23" fill="#F4F4F4"/>
+    <g>
+      <rect x="343" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="365" y="58" font-size="13" fill="#1F1F1F">Dashboard</text>
+      <rect x="449" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="471" y="58" font-size="13" fill="#1F1F1F">Fuse</text>
+      <rect x="555" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="577" y="58" font-size="13" fill="#1F1F1F">Roadmaps</text>
+      <rect x="661" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="683" y="58" font-size="13" fill="#1F1F1F">Log</text>
+      <rect x="767" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="789" y="58" font-size="13" fill="#1F1F1F">Resume</text>
+      <rect x="873" y="46" width="14" height="14" rx="4" fill="none" stroke="#1F1F1F" stroke-width="1.2"/><text x="895" y="58" font-size="13" fill="#1F1F1F">Connect</text>
+    </g>
+    <rect x="1112" y="30" width="128" height="46" rx="23" fill="#F4F4F4"/>
+    <circle cx="1138" cy="53" r="17" fill="#D9D9D9"/>
+    <text x="1164" y="58" font-size="13" font-weight="600" fill="#1F1F1F">Ada</text>
+
+    <!-- Header -->
+    <rect x="192" y="140" width="78" height="30" rx="15" fill="#1F1F1F"/><text x="231" y="160" text-anchor="middle" font-size="13" fill="#FFFFFF">Design</text>
+    <text x="280" y="160" text-anchor="middle" font-size="15" fill="#999999">×</text>
+    <rect x="298" y="140" width="44" height="30" rx="15" fill="#1F1F1F"/><text x="320" y="160" text-anchor="middle" font-size="13" fill="#FFFFFF">AI</text>
+    <text x="192" y="212" font-size="38" font-style="italic" font-weight="800" fill="#1F1F1F">Fusion Score</text>
+
+    <!-- fusion filter chips -->
+    <rect x="192" y="240" width="110" height="30" rx="15" fill="#1F1F1F"/><text x="247" y="260" text-anchor="middle" font-size="12" fill="#FFFFFF">Design × AI</text>
+    <rect x="312" y="240" width="120" height="30" rx="15" fill="#F4F4F4" stroke="#1F1F1F" stroke-width="1"/><text x="372" y="260" text-anchor="middle" font-size="12" fill="#1F1F1F">Data × Writing</text>
+
+    <!-- Gauge -->
+    <circle cx="340" cy="420" r="88" fill="none" stroke="#DDDDDD" stroke-width="16"/>
+    <path d="M 340 332 A 88 88 0 0 1 414 478" fill="none" stroke="#1F1F1F" stroke-width="16" stroke-linecap="round"/>
+    <circle cx="340" cy="420" r="72" fill="#FFFFFF"/>
+    <text x="340" y="428" text-anchor="middle" font-size="52" font-style="italic" font-weight="800" fill="#1F1F1F">78</text>
+    <text x="340" y="452" text-anchor="middle" font-size="10" font-weight="700" letter-spacing="2" fill="#666666">SCORE</text>
+    <text x="340" y="552" text-anchor="middle" font-size="12" fill="#666666">weights: rarity 45% · demand 55%</text>
+
+    <!-- Signal bars -->
+    <text x="560" y="360" font-size="14" font-weight="600" fill="#1F1F1F">Rarity signal</text>
+    <text x="1088" y="360" text-anchor="end" font-size="18" font-style="italic" font-weight="800" fill="#1F1F1F">Rare</text>
+    <rect x="560" y="378" width="528" height="8" rx="4" fill="#E3E3E3"/>
+    <rect x="560" y="378" width="528" height="8" rx="4" fill="#1F1F1F"/>
+    <text x="560" y="410" font-size="13" fill="#444444">Combined with AI only appears in about 2% of design listings.</text>
+
+    <text x="560" y="462" font-size="14" font-weight="600" fill="#1F1F1F">Demand signal</text>
+    <text x="1088" y="462" text-anchor="end" font-size="18" font-style="italic" font-weight="800" fill="#1F1F1F">High</text>
+    <rect x="560" y="480" width="528" height="8" rx="4" fill="#E3E3E3"/>
+    <rect x="560" y="480" width="424" height="8" rx="4" fill="#1F1F1F"/>
+    <text x="560" y="512" font-size="13" fill="#444444">Postings asking for design + AI grew ~4.1% per year over 18 months.</text>
+
+    <line x1="560" y1="548" x2="1088" y2="548" stroke="#DDDDDD" stroke-width="1"/>
+    <text x="560" y="580" font-size="13" fill="#444444">Combined, your blend sits above 78% of tracked skill pairs — a strong,</text>
+    <text x="560" y="600" font-size="13" fill="#444444">defensible niche worth leaning into.</text>
+
+    <!-- Natural next step -->
+    <rect x="192" y="650" width="896" height="100" rx="24" fill="#F7F7F7" stroke="#1F1F1F" stroke-width="1.2"/>
+    <text x="228" y="688" font-size="11" font-weight="700" letter-spacing="1.5" fill="#666666">NATURAL NEXT STEP</text>
+    <text x="228" y="724" font-size="20" font-style="italic" font-weight="800" fill="#1F1F1F">Add Design Eng. to lift your score to 90</text>
+    <rect x="856" y="672" width="200" height="46" rx="23" fill="#1F1F1F"/>
+    <text x="930" y="700" text-anchor="middle" font-size="14" font-weight="600" fill="#FFFFFF">Add Design Eng.</text>
+    <rect x="1020" y="684" width="44" height="22" rx="11" fill="#FFFFFF"/>
+    <text x="1042" y="699" text-anchor="middle" font-size="12" font-weight="700" fill="#1F1F1F">+12</text>
+
+    <!-- Score history -->
+    <rect x="192" y="780" width="896" height="160" rx="24" fill="#F7F7F7" stroke="#1F1F1F" stroke-width="1.2"/>
+    <text x="228" y="812" font-size="11" font-weight="700" letter-spacing="1.5" fill="#666666">SCORE HISTORY</text>
+    <polyline points="256,900 320,884 384,890 448,872 512,878 576,860 640,866 704,856 768,862 832,846 896,852 960,838 1024,844 1052,838" fill="none" stroke="#1F1F1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="1052" cy="838" r="4" fill="#1F1F1F"/>
+    <text x="256" y="926" font-size="11" fill="#888888">6 weeks ago</text>
+    <text x="1052" y="926" text-anchor="end" font-size="11" fill="#888888">today</text>
+  </g>
+</svg>

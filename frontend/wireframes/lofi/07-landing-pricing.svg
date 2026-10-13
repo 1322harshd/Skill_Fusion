@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="900" fill="#FFFFFF"/>
+
+    <!-- Section heading -->
+    <text x="100" y="80" font-size="48" font-style="italic" font-weight="800" fill="#1F1F1F">Start free, fuse deeper</text>
+
+    <!-- Tier 1: Free -->
+    <rect x="100" y="140" width="380" height="500" rx="20" fill="#FFF" stroke="#1F1F1F" stroke-width="1.5"/>
+    <text x="140" y="195" font-size="26" font-style="italic" font-weight="700" fill="#1F1F1F">Free</text>
+    <text x="140" y="250" font-size="44" font-style="italic" font-weight="800" fill="#1F1F1F">$0</text>
+    <text x="240" y="255" font-size="13" fill="#999">forever</text>
+    <text x="140" y="285" font-size="13" fill="#888">For the curious.</text>
+    <line x1="140" y1="310" x2="440" y2="310" stroke="#EEE" stroke-width="1"/>
+    <text x="140" y="340" font-size="13" fill="#555">2 fusions</text>
+    <text x="140" y="370" font-size="13" fill="#555">1 active roadmap</text>
+    <text x="140" y="400" font-size="13" fill="#555">Community access</text>
+    <text x="140" y="430" font-size="13" fill="#555">Fusion score basics</text>
+    <rect x="140" y="540" width="300" height="44" rx="22" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="290" y="568" text-anchor="middle" font-size="14" font-weight="600" fill="#555">Start Free</text>
+
+    <!-- Tier 2: Fusion Pro (featured) -->
+    <rect x="530" y="140" width="380" height="500" rx="20" fill="#1F1F1F"/>
+    <rect x="640" y="128" width="160" height="24" rx="12" fill="#FFF"/>
+    <text x="720" y="145" text-anchor="middle" font-size="11" font-weight="600" fill="#1F1F1F">Most popular</text>
+    <text x="570" y="195" font-size="26" font-style="italic" font-weight="700" fill="#FFF">Fusion Pro</text>
+    <text x="570" y="250" font-size="44" font-style="italic" font-weight="800" fill="#FFF">$9</text>
+    <text x="640" y="255" font-size="13" fill="#999">/month</text>
+    <text x="570" y="285" font-size="13" fill="#AAA">For the serious builder.</text>
+    <line x1="570" y1="310" x2="870" y2="310" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+    <text x="570" y="340" font-size="13" fill="#DDD">Unlimited fusions</text>
+    <text x="570" y="370" font-size="13" fill="#DDD">All 3 outcome paths</text>
+    <text x="570" y="400" font-size="13" fill="#DDD">Verified growth badges</text>
+    <text x="570" y="430" font-size="13" fill="#DDD">GitHub auto-posts</text>
+    <text x="570" y="460" font-size="13" fill="#DDD">Score history & trends</text>
+    <rect x="570" y="540" width="300" height="44" rx="22" fill="#FFF"/>
+    <text x="720" y="568" text-anchor="middle" font-size="14" font-weight="600" fill="#1F1F1F">Start 14-Day Trial</text>
+
+    <!-- Tier 3: Teams -->
+    <rect x="960" y="140" width="380" height="500" rx="20" fill="#FFF" stroke="#1F1F1F" stroke-width="1.5"/>
+    <text x="1000" y="195" font-size="26" font-style="italic" font-weight="700" fill="#1F1F1F">Teams</text>
+    <text x="1000" y="250" font-size="44" font-style="italic" font-weight="800" fill="#1F1F1F">$24</text>
+    <text x="1100" y="255" font-size="13" fill="#999">/seat /month</text>
+    <text x="1000" y="285" font-size="13" fill="#888">For squads and orgs.</text>
+    <line x1="1000" y1="310" x2="1300" y2="310" stroke="#EEE" stroke-width="1"/>
+    <text x="1000" y="340" font-size="13" fill="#555">Everything in Pro</text>
+    <text x="1000" y="370" font-size="13" fill="#555">Shared fusions</text>
+    <text x="1000" y="400" font-size="13" fill="#555">Admin dashboard</text>
+    <text x="1000" y="430" font-size="13" fill="#555">Priority roadmap builds</text>
+    <rect x="1000" y="540" width="300" height="44" rx="22" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="1150" y="568" text-anchor="middle" font-size="14" font-weight="600" fill="#555">Contact Sales</text>
+
+    <text x="620" y="700" text-anchor="middle" font-size="11" fill="#BBB">All prices in USD, billed monthly. Cancel anytime.</text>
+
+    <text x="60" y="870" font-size="11" fill="#999">[LOFI] Pricing — three tier cards, middle one dark/featured, feature lists</text>
+  </g>
+</svg>

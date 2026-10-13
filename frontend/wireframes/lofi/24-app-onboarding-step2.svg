@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="900" fill="#FFFFFF"/>
+
+    <!-- Step dots -->
+    <circle cx="660" cy="100" r="16" fill="#1F1F1F"/>
+    <text x="660" y="106" text-anchor="middle" font-size="12" font-weight="600" fill="#FFF">✓</text>
+    <line x1="680" y1="100" x2="720" y2="100" stroke="#1F1F1F" stroke-width="2"/>
+    <circle cx="740" cy="100" r="16" fill="#1F1F1F"/>
+    <text x="740" y="106" text-anchor="middle" font-size="12" font-weight="600" fill="#FFF">02</text>
+    <line x1="760" y1="100" x2="800" y2="100" stroke="#EEE" stroke-width="2"/>
+    <circle cx="820" cy="100" r="16" fill="#F0F0F0" stroke="#CCC" stroke-width="1"/>
+    <text x="820" y="106" text-anchor="middle" font-size="12" fill="#999">03</text>
+
+    <!-- Title -->
+    <text x="720" y="200" text-anchor="middle" font-size="42" font-style="italic" font-weight="800" fill="#1F1F1F">How do we read your baseline?</text>
+    <text x="720" y="235" text-anchor="middle" font-size="14" fill="#999">We calibrate your skill levels from real evidence — or from five quick questions.</text>
+
+    <!-- Two option cards -->
+    <rect x="300" y="290" width="380" height="160" rx="18" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <text x="340" y="340" font-size="16" font-weight="600" fill="#1F1F1F">Upload a resume or GitHub</text>
+    <text x="340" y="370" font-size="13" fill="#999">We read what you've already built and done.</text>
+
+    <rect x="760" y="290" width="380" height="160" rx="18" fill="#FFF" stroke="#EEE" stroke-width="1"/>
+    <text x="800" y="340" font-size="16" font-weight="600" fill="#1F1F1F">Skip — quick quizzes</text>
+    <text x="800" y="370" font-size="13" fill="#999">A five-minute read of your current level.</text>
+
+    <!-- Continue button -->
+    <rect x="570" y="520" width="300" height="48" rx="24" fill="#1F1F1F"/>
+    <text x="720" y="550" text-anchor="middle" font-size="14" font-weight="600" fill="#FFF">Continue</text>
+
+    <text x="60" y="870" font-size="11" fill="#999">[LOFI] Onboarding Step 2 — step dots, baseline method cards (upload vs quiz)</text>
+  </g>
+</svg>

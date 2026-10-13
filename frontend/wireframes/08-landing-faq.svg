@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="640" viewBox="0 0 1440 640">
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect width="1440" height="640" fill="#FFFFFF"/>
+
+    <!-- Section heading -->
+    <text x="80" y="120" font-size="52" font-style="italic" font-weight="800" fill="#1F1F1F">Questions, answered</text>
+
+    <!-- FAQ item 1 (open) -->
+    <rect x="80" y="180" width="1280" height="120" rx="24" fill="#F7F7F7" stroke="#1F1F1F" stroke-width="1.2"/>
+    <text x="120" y="228" font-size="20" font-style="italic" font-weight="700" fill="#1F1F1F">What counts as a skill?</text>
+    <text x="120" y="266" font-size="14" fill="#333333">Anything you can learn and apply — hard skills like Python or Figma, soft skills like</text>
+    <text x="120" y="286" font-size="14" fill="#333333">writing or sales. If you can name it, you can fuse it.</text>
+
+    <!-- FAQ items 2-6 (collapsed) -->
+    <g>
+      <rect x="80" y="312" width="1280" height="52" rx="16" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+      <text x="120" y="344" font-size="20" font-style="italic" font-weight="700" fill="#1F1F1F">Where does the Fusion Score come from?</text>
+
+      <rect x="80" y="376" width="1280" height="52" rx="16" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+      <text x="120" y="408" font-size="20" font-style="italic" font-weight="700" fill="#1F1F1F">How long does a roadmap take?</text>
+
+      <rect x="80" y="440" width="1280" height="52" rx="16" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+      <text x="120" y="472" font-size="20" font-style="italic" font-weight="700" fill="#1F1F1F">Do I need to be an expert first?</text>
+
+      <rect x="80" y="504" width="1280" height="52" rx="16" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+      <text x="120" y="536" font-size="20" font-style="italic" font-weight="700" fill="#1F1F1F">Is my progress really verifiable?</text>
+
+      <rect x="80" y="568" width="1280" height="52" rx="16" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="1.2"/>
+      <text x="120" y="600" font-size="20" font-style="italic" font-weight="700" fill="#1F1F1F">What if I want to change skills mid-roadmap?</text>
+    </g>
+
+    <!-- Plus icons -->
+    <g>
+      <line x1="1315" y1="338" x2="1315" y2="338" stroke="#1F1F1F" stroke-width="2" stroke-dasharray="0.1 8" stroke-linecap="round"/>
+    </g>
+    <text x="722" y="626" text-anchor="middle" font-size="12" fill="#888888">[Annotate] Chevron / plus toggle on each item</text>
+  </g>
+</svg>

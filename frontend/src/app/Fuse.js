@@ -1,4 +1,4 @@
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
 const { AnimatePresence, motion } = window.Motion;
 const { Icons } = window;
 const F = window.Fusion;
@@ -19,6 +19,12 @@ function Fuse() {
   const [b, setB] = useState("");
   const [phase, setPhase] = useState("input");
   const [fusion, setFusion] = useState(null);
+  const [error, setError] = useState(null);
+  const fusionRef = useRef(null);
+  const animDoneRef = useRef(false);
+  function maybeResult() {
+    if (fusionRef.current && animDoneRef.current) setPhase("result");
+  }
 
   const ready = a.trim().length > 0 && b.trim().length > 0;
 
@@ -28,17 +34,30 @@ function Fuse() {
     else window.Ambient.clear();
   }, [a, b, phase]);
 
-  function fuse() {
+  async function fuse() {
     if (!ready) return;
-    const f = Store.fuse(a.trim(), b.trim());
-    setFusion(f);
+    setError(null);
+    setFusion(null);
+    fusionRef.current = null;
+    animDoneRef.current = false;
     setPhase("loading");
+    try {
+      const f = await Store.fuseRemote(a.trim(), b.trim());
+      fusionRef.current = f;
+      setFusion(f);
+      maybeResult();
+    } catch (e) {
+      setPhase("error");
+    }
   }
 
   function reset() {
     setA("");
     setB("");
     setFusion(null);
+    setError(null);
+    fusionRef.current = null;
+    animDoneRef.current = false;
     setPhase("input");
   }
 
@@ -108,8 +127,18 @@ function Fuse() {
                 <AiSteps
                   steps={FUSE_LOADING_STEPS}
                   speed={1250}
-                  onDone={() => setPhase("result")}
+                  onDone={() => { animDoneRef.current = true; maybeResult(); }}
                 />
+              </div>
+            </motion.div>
+          )}
+
+          {phase === "error" && (
+            <motion.div key="error" {...enter(0.05)}>
+              <div className="liquid-glass-strong rounded-[1.5rem] px-8 py-8 text-center">
+                <p className="font-heading text-2xl italic text-white">Fusion engine unreachable</p>
+                <p className="mt-2 font-body text-sm text-white/70">Is the backend (:8000) and SF (:8081) running?</p>
+                <button type="button" onClick={() => setPhase("input")} className="mt-4 rounded-full bg-white px-6 py-2 font-body text-sm font-medium text-black">Try again</button>
               </div>
             </motion.div>
           )}

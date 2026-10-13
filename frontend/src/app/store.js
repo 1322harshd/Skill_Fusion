@@ -529,6 +529,70 @@ window.Store = (function () {
     });
   }
 
+  // ---- Backend (SF) wiring: async, fail-loud (no mock fallback) ----
+  const API_BASE =
+    (typeof process !== "undefined" && process.env && process.env.REACT_APP_API_URL) ||
+    "http://127.0.0.1:8000";
+
+  async function apiPost(path, body) {
+    const r = await fetch(`${API_BASE}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) throw new Error(`backend ${r.status} on ${path}`);
+    return r.json();
+  }
+
+  // POST /api/fusion/ -> normalize to store fusion shape (roadmap arrives
+  // separately from /api/roadmap/previews/; roadmap: null until chosen).
+  async function fuseRemote(a, b) {
+    const data = await apiPost("/api/fusion/", { a, b });
+    const f = data.fusion;
+    const fusion = {
+      id: f.id, a: f.a, b: f.b,
+      categoryA: F.categoryOf(a), categoryB: F.categoryOf(b),
+      createdAt: "just now", addedSkills: [],
+      score: f.score, brief: f.brief, project: f.project,
+      roadmap: null,
+    };
+    set({ fusions: [fusion, ...state.fusions] });
+    return fusion;
+  }
+
+  function normalizeRoadmap(rm, a, b) {
+    const weeks = (rm.weeks || []).map((w, i) => ({
+      n: w.week || i + 1,
+      title: w.topic,
+      objectives: w.objectives || [],
+      status: i === 0 ? "current" : "upcoming",
+      tasks: i === 0 ? [
+        { id: `t${i + 1}a`, label: `Complete the ${a} piece for week ${i + 1}`, done: false },
+        { id: `t${i + 1}b`, label: "Reflect and log one note in your Growth Log", done: false },
+      ] : [],
+    }));
+    return {
+      title: rm.title, weeks, progressWeeks: 1,
+      totalWeeks: weeks.length, paused: false,
+      outcome_statement: rm.outcome_statement,
+    };
+  }
+
+  // POST /api/roadmap/previews/ -> normalize previews + roadmaps to UI shape.
+  async function getPreviewsRemote(fusion, salt = 0) {
+    const data = await apiPost("/api/roadmap/previews/", {
+      fusion: { a: fusion.a, b: fusion.b }, salt,
+    });
+    return (data.previews || []).map((p) => ({
+      id: p.id,
+      title: p.title,
+      summary: p.summary,
+      weeks: p.weeks,
+      outcomes: p.outcomes || [],
+      roadmap: normalizeRoadmap(p.roadmap, fusion.a, fusion.b),
+    }));
+  }
+
   return {
     getSnapshot,
     subscribe,
@@ -536,6 +600,7 @@ window.Store = (function () {
     useStore,
     updateUser,
     fuse,
+    fuseRemote,
     getFusion,
     addSkillToFusion,
     addLog,
@@ -547,6 +612,7 @@ window.Store = (function () {
     addPeer,
     setPeerConnection,
     getPreviews,
+    getPreviewsRemote,
     chooseRoadmap,
     completeWeek,
     explainFeedback,

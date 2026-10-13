@@ -132,6 +132,7 @@ function Roadmaps() {
   const [salt, setSalt] = useState(0);
   const [busy, setBusy] = useState(false);
   const [previews, setPreviews] = useState([]);
+  const [loadError, setLoadError] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
 
@@ -139,7 +140,14 @@ function Roadmaps() {
   const selected = previews.find((p) => p.id === selectedId) || null;
 
   useEffect(() => {
-    if (fusion) setPreviews(Store.getPreviews(fusion, salt));
+    if (!fusion) return;
+    let live = true;
+    setBusy(true);
+    setLoadError(null);
+    Store.getPreviewsRemote(fusion, salt)
+      .then((pvs) => { if (live) { setPreviews(pvs); setBusy(false); } })
+      .catch(() => { if (live) { setLoadError("Couldn't load roadmaps — is the backend (:8000) and SF (:8081) running?"); setBusy(false); } });
+    return () => { live = false; };
   }, [fusionId, salt]);
 
   useEffect(() => {
@@ -202,6 +210,11 @@ function Roadmaps() {
           <motion.div key="busy" {...enter()} className="liquid-glass flex min-h-[240px] flex-col items-center justify-center gap-4 rounded-[1.5rem]">
             <motion.span animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.1, ease: "linear" }} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20"><Icons.Refresh className="h-4 w-4 text-white/80" /></motion.span>
             <p className="font-heading text-2xl italic text-white">Re-thinking…</p>
+          </motion.div>
+        ) : loadError ? (
+          <motion.div key="loaderr" {...enter()} className="liquid-glass rounded-[1.5rem] px-8 py-10 text-center">
+            <p className="font-heading text-2xl italic text-white">Roadmaps unreachable</p>
+            <p className="mt-2 font-body text-sm text-white/70">{loadError}</p>
           </motion.div>
         ) : expandedId ? (
           (() => {

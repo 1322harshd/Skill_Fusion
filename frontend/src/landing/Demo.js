@@ -51,16 +51,43 @@ function SkillChips({ label, selected, onSelect }) {
   );
 }
 
+const API_BASE = (typeof process !== "undefined" && process.env && process.env.REACT_APP_API_URL) || "http://127.0.0.1:8000";
+
 function Demo() {
   const [a, setA] = useState(null);
   const [b, setB] = useState(null);
   const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const ready = a && b;
 
-  function fuse() {
-    if (!ready) return;
-    setResult(fuseResult(a, b));
+  async function fuse() {
+    if (!ready || loading) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const r = await fetch(`${API_BASE}/api/fusion/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ a, b }),
+      });
+      if (!r.ok) throw new Error(`backend ${r.status}`);
+      const data = await r.json();
+      const f = data.fusion;
+      const apps = (f.brief && f.brief.applications) || [];
+      const steps = apps.slice(0, 4).map((body, i) => ({
+        num: `0${i + 1}`,
+        title: ["Foundations", "First artifact", "The project", "Verified badge"][i] || `Step ${i + 1}`,
+        body,
+        dur: DURATIONS[(f.score.value + i * 3) % DURATIONS.length],
+      }));
+      setResult({ rarity: f.score.value, steps, lede: (f.brief && f.brief.lede) || "", mock: !!f.score.source });
+    } catch (e) {
+      setError("Couldn't reach the fusion engine — is the backend running?");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function pickA(s) {
@@ -88,18 +115,21 @@ function Demo() {
               <motion.button
                 type="button"
                 onClick={fuse}
-                disabled={!ready}
+                disabled={!ready || loading}
                 whileTap={{ scale: 0.97 }}
                 className={
                   (ready ? "liquid-glass-strong text-white" : "text-white/50") +
                   " flex items-center gap-2 rounded-full px-6 py-3 font-body text-sm font-medium disabled:cursor-not-allowed"
                 }
               >
-                Fuse {a && b ? `${a} × ${b}` : "two skills"}
+                Fuse {loading ? "…" : a && b ? `${a} × ${b}` : "two skills"}
                 <Icons.Hub className="h-4 w-4" />
               </motion.button>
             </div>
 
+            {error ? (
+              <p className="mt-6 text-center font-body text-xs font-light text-red-300/80">{error}</p>
+            ) : null}
             <AnimatePresence mode="wait">
               {result ? (
                 <motion.div
@@ -144,9 +174,11 @@ function Demo() {
                     ))}
                   </div>
 
-                  <p className="mt-6 text-center font-body text-[11px] font-light text-white/50">
-                    Sample output — your real roadmap and score are built live from job-market data when you sign up.
-                  </p>
+                    <p className="mt-6 text-center font-body text-[11px] font-light text-white/50">
+                      {result.mock
+                        ? "Live brief · score is heuristic until Phase 6 wires job-market data."
+                        : "Live fusion — built by SF from job-market data when you sign up."}
+                    </p>
                 </motion.div>
               ) : null}
             </AnimatePresence>

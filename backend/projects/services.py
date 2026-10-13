@@ -1,6 +1,6 @@
 import asyncio
 try:
-    from apps.prompt_engineering.llm_client import call_sf14b_json
+    from prompt_engineering.llm_client import call_sf14b_json
 except ImportError:
     from prompt_engineering.llm_client import call_sf14b_json
 

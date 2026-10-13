@@ -22,6 +22,13 @@ from growthlog.urls import growthlog_urlpatterns
 from resume.urls import resume_urlpatterns
 
 urlpatterns = [
+    path('api/fusion/', include('fusion_engine.urls')),
+    path('api/roadmap/', include('roadmaps.urls')),
+    path('api/project/', include('projects.urls')),
+    path('api/score/', include('scores.urls')),
+    path('api/explain/', include('explain.urls')),
+    path('api/llm/', include('prompt_engineering.urls')),
+    path('api/infra/', include('infra.urls')),
     path('admin/', admin.site.urls),
     path('api/auth/', include(auth_urlpatterns)),
     path('api/users/', include(users_urlpatterns)),

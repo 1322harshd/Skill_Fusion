@@ -1,4 +1,4 @@
 from django.apps import AppConfig
-class FusionEngineConfig(AppConfig):
+class InfraConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "apps.fusion_engine"
+    name = "infra"

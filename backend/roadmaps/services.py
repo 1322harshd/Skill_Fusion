@@ -18,7 +18,7 @@ def make_roadmap(a,b, opts=None):
     return {"title":title,"weeks":weeks,"progressWeeks":1,"totalWeeks":n,"paused":False}
 import asyncio, json
 try:
-    from apps.prompt_engineering.llm_client import call_sf14b, call_sf14b_json
+    from prompt_engineering.llm_client import call_sf14b, call_sf14b_json
 except ImportError:  # direct module use
     from prompt_engineering.llm_client import call_sf14b, call_sf14b_json
 

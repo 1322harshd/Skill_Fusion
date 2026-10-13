@@ -2,8 +2,8 @@ import os, json, asyncio, requests
 # SF serving (mlx_lm.server, OpenAI-compatible). Replaces the old Ollama
 # "mada-sf-14b" path — the adapter now lives server-side, so `adapter` below
 # is accepted-but-unused to keep every caller unchanged.
-SF_URL = os.getenv("SF_URL", "http://localhost:8081")
-SF_MODEL = "models/gemma4-12b-it-4bit"
+SF_URL = os.getenv("LLM_API_URL", os.getenv("SF_URL", "http://localhost:8081"))
+SF_MODEL = os.getenv("LLM_MODEL", "models/gemma4-12b-it-4bit")
 def parse_sf_json(text):
     """Lenient SF-JSON parse: strict, then first-object extraction, then
     control-character-tolerant. Raises JSONDecodeError only if all fail."""

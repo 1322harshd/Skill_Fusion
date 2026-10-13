@@ -45,6 +45,13 @@ INSTALLED_APPS = [
     'authentication',
     'growthlog',
     'resume',
+    'explain',
+    'fusion_engine',
+    'infra',
+    'projects',
+    'prompt_engineering',
+    'roadmaps',
+    'scores',
 
 ]
 
@@ -193,3 +200,10 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ---- Kunal: SF + scoring infra (aligned to LLM_API_URL used by resume) ----
+EMBED_URL = config('EMBED_URL', default='http://localhost:11434')
+EMBED_MODEL = config('EMBED_MODEL', default='nomic-embed-text')
+ADZUNA_ID = config('ADZUNA_ID', default='')
+ADZUNA_KEY = config('ADZUNA_KEY', default='')
+ADZUNA_COUNTRY = config('ADZUNA_COUNTRY', default='nz')

@@ -1,6 +1,6 @@
 import hashlib
 from .prompts import week_prompt, milestone_prompt
-from apps.prompt_engineering.llm_client import call_sf14b
+from prompt_engineering.llm_client import call_sf14b
 
 def fallback(a,b,text):
     seed=hashlib.md5(f"{a}×{b}{text[:10]}".encode()).hexdigest()
@@ -15,6 +15,6 @@ async def explain_feedback(a,b, text, context="week"):
     try:
         raw = await call_sf14b(adapter="sf-fusion", prompt=prompt)
         import json
-        return __import__("apps.prompt_engineering.schemas", fromlist=["ExplainSchema"]).ExplainSchema.model_validate_json(raw).model_dump()
+        return __import__("prompt_engineering.schemas", fromlist=["ExplainSchema"]).ExplainSchema.model_validate_json(raw).model_dump()
     except Exception:
         return fallback(a,b,text)

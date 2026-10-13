@@ -1,9 +1,9 @@
+from django.conf import settings
 from django.db import models
-from django.contrib.auth.models import User
 
 class Fusion(models.Model):
     id = models.CharField(primary_key=True, max_length=64)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="fusions")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="fusions", null=True)
     a = models.CharField(max_length=64)
     b = models.CharField(max_length=64)
     category_a = models.CharField(max_length=20)

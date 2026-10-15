@@ -39,17 +39,46 @@ def embed_texts(texts):
     return r.json()["embeddings"]
 
 
-def ingest_query(query, max_results=50):
+def fetch_arbeitnow(query="", max_results=50):
+    """Free, no key. Remote-tech board; query filters client-side."""
+    r = requests.get("https://www.arbeitnow.com/api/job-board-api",
+                     timeout=30)
+    r.raise_for_status()
+    jobs = r.json().get("data", [])
+    if query:
+        q = query.lower()
+        jobs = [j for j in jobs
+                if q in f"{j.get('title','')} {j.get('description','')}".lower()]
+    return jobs[:max_results]
+
+
+def _normalize(job, source, query):
+    if source == "arbeitnow":
+        return {"title": job.get("title", ""),
+                "company": job.get("company_name", ""),
+                "description": job.get("description", ""),
+                "url": job.get("url", "")}
+    return {"title": job.get("title", ""),
+            "company": (job.get("company") or {}).get("display_name", ""),
+            "description": job.get("description", ""),
+            "url": job.get("redirect_url", "")}
+
+
+def ingest_query(query, max_results=50, source="arbeitnow"):
     """Fetch + embed + store jobs for a query. Returns count stored."""
     from .models import JobListing
-    jobs = fetch_jobs(query, max_results)
-    texts = [f"{j.get('title','')} {j.get('description','')[:500]}" for j in jobs]
+    if source == "arbeitnow":
+        jobs = fetch_arbeitnow(query, max_results)
+    else:
+        jobs = fetch_jobs(query, max_results)
+    norm = [_normalize(j, source, query) for j in jobs]
+    texts = [f"{n['title']} {n['description'][:500]}" for n in norm]
     vecs = embed_texts(texts)
-    objs = [JobListing(title=j.get("title", "")[:300],
-                       company=(j.get("company") or {}).get("display_name", "")[:200],
-                       description=j.get("description", "")[:2000],
-                       url=j.get("redirect_url", "")[:500],
-                       source="adzuna", query=query, embedding=v)
-            for j, v in zip(jobs, vecs)]
+    objs = [JobListing(title=n["title"][:300],
+                       company=n["company"][:200],
+                       description=n["description"][:2000],
+                       url=n["url"][:500],
+                       source=source, query=query, embedding=v)
+            for n, v in zip(norm, vecs)]
     JobListing.objects.bulk_create(objs)
     return len(objs)

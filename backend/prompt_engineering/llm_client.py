@@ -33,7 +33,7 @@ def parse_sf_json(text):
         return json.loads(t), t
     except json.JSONDecodeError:
         return json.loads(t, strict=False), t
-async def call_sf14b(adapter, prompt, retries=2, max_tokens=800):
+async def call_sf14b(adapter, prompt, retries=2, max_tokens=3000):
     import re
     body = {"model": SF_MODEL,
             "messages": [{"role": "user", "content": prompt}],
@@ -44,7 +44,14 @@ async def call_sf14b(adapter, prompt, retries=2, max_tokens=800):
             # sync requests in async wrapper for scaffold
             r=requests.post(f"{SF_URL}/v1/chat/completions", json=body, timeout=300)
             data=r.json()
-            msg=data["choices"][0]["message"]
+            choice=data["choices"][0]
+            msg=choice["message"]
+            # SF spends ~2000 tokens on a hidden reasoning pass before writing
+            # the actual answer (true regardless of enable_thinking). Too low
+            # a max_tokens cuts it off mid-thought with no answer at all —
+            # that reads as a JSONDecodeError below instead of what it is.
+            if choice.get("finish_reason") == "length":
+                raise ValueError(f"SF response cut off before completing (max_tokens={max_tokens} too low)")
             text=((msg.get("content") or "") + (msg.get("reasoning") or "")).strip().replace("```json","").replace("```","").strip()
             # repair trailing commas
             text=re.sub(r",\s*([}\]])", r"\1", text)
@@ -74,7 +81,7 @@ async def call_sf14b(adapter, prompt, retries=2, max_tokens=800):
             if attempt==retries: raise
             await asyncio.sleep(0.3*(attempt+1))
 
-async def call_sf14b_json(adapter, prompt, retries=4, max_tokens=800):
+async def call_sf14b_json(adapter, prompt, retries=4, max_tokens=3000):
     """Same as call_sf14b but returns the parsed object (lenient parse)."""
     text = await call_sf14b(adapter, prompt, retries=retries, max_tokens=max_tokens)
     obj, _ = parse_sf_json(text)

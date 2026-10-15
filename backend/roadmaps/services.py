@@ -40,7 +40,7 @@ def get_previews(fusion, salt=0):
             'Return ONLY valid JSON: {"title": string, '
             '"weeks": [{"week": integer, "topic": string, "objectives": [string, string]}], '
             '"outcome_statement": string}')
-        detail = asyncio.run(call_sf14b_json("sf-roadmap", wp, max_tokens=1200))
+        detail = asyncio.run(call_sf14b_json("sf-roadmap", wp, max_tokens=3000))
         out.append({"id": f"pv{i}-{salt}", "title": s["title"], "summary": s["summary"],
                     "weeks": s["weeks"], "outcomes": s["outcomes"], "roadmap": detail})
     return out

@@ -9,6 +9,11 @@ function Quiz() {
   const skills = picked.length ? picked : manual.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 4);
   const [session, setSession] = useState(null);
   const [choices, setChoices] = useState({});
+  const choicesRef = useRef({});
+  function pick(qid, oi) {
+    choicesRef.current = { ...choicesRef.current, [qid]: oi };
+    setChoices(choicesRef.current);
+  }
   const [left, setLeft] = useState(300);
   const [levels, setLevels] = useState(null);
   const [error, setError] = useState(null);
@@ -24,21 +29,22 @@ function Quiz() {
   useEffect(() => {
     if (!session || levels) return;
     timer.current = setInterval(() => {
-      setLeft((s) => {
-        if (s <= 1) {
-          clearInterval(timer.current);
-          submit();
-          return 0;
-        }
+          setLeft((s) => {
+            if (s <= 1) {
+              clearInterval(timer.current);
+              setTimeout(() => submit(true), 0);
+              return 0;
+            }
         return s - 1;
       });
     }, 1000);
     return () => clearInterval(timer.current);
   }, [session, levels]);
 
-  async function submit() {
+  async function submit(auto = false) {
     clearInterval(timer.current);
-    const answers = (session.questions || []).map((qq) => ({ id: qq.id, choice: choices[qq.id] ?? -1 }));
+    const picks = auto ? choicesRef.current : choices;
+    const answers = (session.questions || []).map((qq) => ({ id: qq.id, choice: picks[qq.id] ?? -1 }));
     try {
       const d = await window.Api.quizSubmit(session.session_id, answers);
       setLevels(d.levels);
@@ -113,7 +119,7 @@ function Quiz() {
               <button
                 key={oi}
                 type="button"
-                onClick={() => setChoices((c) => ({ ...c, [qq.id]: oi }))}
+                onClick={() => pick(qq.id, oi)}
                 className={(choices[qq.id] === oi ? "bg-white text-black" : "liquid-glass text-white/85 hover:text-white") + " rounded-xl px-4 py-2 text-left font-body text-sm"}
               >
                 {op}

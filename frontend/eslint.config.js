@@ -37,6 +37,7 @@ const appGlobals = {
   Modal: "readonly",
   Motion: "readonly",
   MotionConfig: "readonly",
+  process: "readonly", // guarded with typeof-checks; never actually defined in this plain-browser setup
   MotionKit: "readonly",
   Navbar: "readonly",
   Onboarding: "readonly",

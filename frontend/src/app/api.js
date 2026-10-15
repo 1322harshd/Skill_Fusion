@@ -182,6 +182,18 @@ window.Api = (function () {
     return request("/resume/");
   }
 
+  function generatePost(entryId, tone, salt) {
+    return request("/posts/generate", { method: "POST", body: { entryId, tone, salt } });
+  }
+
+  function listPosts() {
+    return request("/posts/");
+  }
+
+  function updatePost(postId, patch) {
+    return request("/posts/" + encodeURIComponent(postId), { method: "PATCH", body: patch });
+  }
+
   // PDF export returns a binary body, not JSON, so it can't go through request().
   // Reuses the same access token / single-retry-on-401 behavior as everything else.
   async function downloadResumeExport(documentId, doc, filename) {
@@ -244,6 +256,9 @@ window.Api = (function () {
     growthLogStats,
     generateResume,
     listResumeDocuments,
+    generatePost,
+    listPosts,
+    updatePost,
     downloadResumeExport,
     // ---- Kunal: SF-backed AI endpoints ----
     fuse: (a, b) => request("/fusion/", { method: "POST", body: { a, b }, auth: false }),

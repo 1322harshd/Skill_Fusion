@@ -187,37 +187,14 @@ function fromBackendEntry(e) {
   };
 }
 
-function draftFor(entry, tone, salt = 0) {
-  const t = tone || "Warm";
-  const openers = {
-    Professional: [
-      "I've been quietly building toward this one.",
-      "Sharing the work, not just the result.",
-      "A small entry for the log, a real one for the skill set.",
-    ],
-    Warm: [
-      "Small progress beats big plans — logging another.",
-      "Documenting the unglamorous middle.",
-      "Another week, another thing actually done.",
-    ],
-    Punchy: [
-      "Proof that rare combinations pay off:",
-      "Rare pair. Real output. Logged:",
-      "Don't call it a hobby. It's a fusion:",
-    ],
+function fromBackendPost(p) {
+  return {
+    id: p.postId,
+    entryId: p.entryId,
+    tone: p.tone,
+    status: p.status,
+    text: p.text,
   };
-  const closers = {
-    Professional: [
-      `Filed under ${entry.tags && entry.tags[0] ? entry.tags[0].label : "growth"}. Building in public.`,
-      "The boring version worked. Logging it anyway.",
-      "Documented so the next one is faster.",
-    ],
-    Warm: ["On to the next piece.", "The evidence keeps stacking.", "Logged, tagged, moving on."],
-    Punchy: ["The rare-pair bet keeps compounding.", "That's one more proof point.", "Combinations > credentials."],
-  };
-  const o = openers[t][salt % openers[t].length];
-  const c = closers[t][salt % closers[t].length];
-  return `${o}\n\n${entry.title}${entry.description ? " — " + entry.description : ""}\n\n${c}`;
 }
 
 function buildSeed() {
@@ -328,24 +305,30 @@ window.Store = (function () {
     return mapped;
   }
 
-  function addPost(post) {
-    set({ posts: [{ ...post, id: "p" + Date.now() }, ...state.posts] });
+  async function loadPosts() {
+    const posts = await window.Api.listPosts();
+    set({ posts: posts.map(fromBackendPost) });
   }
 
-  function savePost(id, status) {
-    set({ posts: state.posts.map((p) => (p.id === id ? { ...p, status } : p)) });
-  }
-
-  function draftPost(entry, tone, salt = 0) {
-    const text = draftFor(entry, tone, salt);
+  async function draftPost(entry, tone, salt = 0) {
+    const post = await window.Api.generatePost(entry.id, tone, salt);
+    const mapped = fromBackendPost(post);
     const existing = state.posts.find((p) => p.entryId === entry.id && p.status === "draft");
-    if (existing) {
-      set({ posts: state.posts.map((p) => (p.id === existing.id ? { ...p, text, tone, salt } : p)) });
-      return existing.id;
-    }
-    const post = { id: "p" + Date.now(), entryId: entry.id, tone, status: "draft", text, salt };
-    addPost(post);
-    return post.id;
+    set({
+      posts: existing
+        ? state.posts.map((p) => (p.id === existing.id ? mapped : p))
+        : [mapped, ...state.posts],
+    });
+    return mapped.id;
+  }
+
+  async function savePost(id, status, text) {
+    const patch = { status };
+    if (text !== undefined) patch.text = text;
+    const updated = await window.Api.updatePost(id, patch);
+    const mapped = fromBackendPost(updated);
+    set({ posts: state.posts.map((p) => (p.id === id ? mapped : p)) });
+    return mapped;
   }
 
   async function syncGithub() {
@@ -570,9 +553,9 @@ window.Store = (function () {
     addSkillToFusion,
     addLog,
     verifyEntry,
-    addPost,
     savePost,
     draftPost,
+    loadPosts,
     sendMessage,
     addPeer,
     setPeerConnection,

@@ -1,14 +1,9 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from django.contrib.auth.models import User
 from .services import make_brief
 from .quiz import generate_quiz, score_quiz
 from scores.services import make_score
-from roadmaps.services import make_roadmap
-from projects.services import make_project
-from .models import Fusion
-import hashlib
 
 def hash(s):
     h=0
@@ -24,8 +19,7 @@ def fuse_view(request):
     # score: real job-data when listings exist, else labeled heuristic.
     # brief: SF-first via make_brief (falls back to curated template on error).
     import asyncio
-    from scores.services import make_score, make_score_sync
-    from .services import make_brief
+    from scores.services import make_score_sync
     try:
         score = asyncio.run(make_score(a, b))
     except Exception:

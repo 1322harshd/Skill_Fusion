@@ -14,7 +14,6 @@ async def explain_feedback(a,b, text, context="week"):
     prompt = milestone_prompt(a,b,text) if context=="milestone" else week_prompt(a,b,text)
     try:
         raw = await call_sf14b(adapter="sf-fusion", prompt=prompt)
-        import json
         return __import__("prompt_engineering.schemas", fromlist=["ExplainSchema"]).ExplainSchema.model_validate_json(raw).model_dump()
     except Exception:
         return fallback(a,b,text)

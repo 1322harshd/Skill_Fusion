@@ -1,9 +1,15 @@
 import os, json, asyncio, requests
+from django.conf import settings
 # SF serving (mlx_lm.server, OpenAI-compatible). Replaces the old Ollama
 # "mada-sf-14b" path — the adapter now lives server-side, so `adapter` below
 # is accepted-but-unused to keep every caller unchanged.
-SF_URL = os.getenv("LLM_API_URL", os.getenv("SF_URL", "http://localhost:8081"))
-SF_MODEL = os.getenv("LLM_MODEL", "models/gemma4-12b-it-4bit")
+#
+# Reads via django.conf.settings, not os.getenv: this project loads .env
+# through python-decouple, which keeps values in its own store and never
+# exports them into the real OS environment — os.getenv("LLM_API_URL") would
+# always miss .env and silently fall back to localhost.
+SF_URL = getattr(settings, "LLM_API_URL", None) or os.getenv("SF_URL", "http://localhost:8081")
+SF_MODEL = getattr(settings, "LLM_MODEL", None) or "models/gemma4-12b-it-4bit"
 def parse_sf_json(text):
     """Lenient SF-JSON parse: strict, then first-object extraction, then
     control-character-tolerant. Raises JSONDecodeError only if all fail."""
@@ -64,7 +70,7 @@ async def call_sf14b(adapter, prompt, retries=2, max_tokens=800):
                     # raw newlines) — allow them rather than failing.
                     json.loads(text, strict=False)
             return text
-        except Exception as e:
+        except Exception:
             if attempt==retries: raise
             await asyncio.sleep(0.3*(attempt+1))
 

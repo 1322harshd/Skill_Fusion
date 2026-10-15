@@ -1,4 +1,3 @@
-import hashlib
 CURATED = {"Design×Code":"Ship a product you designed end-to-end","Marketing×Data":"Run campaigns you can prove worked"}
 GENERIC = [lambda a,b: f"Do {b} work that carries your {a} edge", lambda a,b: f"Turn your {a} instinct into {b} results", lambda a,b: f"Become the rare {a} + {b} hire"]
 def hash(s):
@@ -14,13 +13,10 @@ def make_roadmap(a,b, opts=None):
     weeks=[]
     for i in range(n):
         wk=i+1
-        weeks.append({"n":wk,"title": topics[i%len(topics)](i), "objectives":[ f"Name the three things {a} gives {b} work" if i==0 else f"Apply {b} to one {a} scenario", f"Skim five real listings that want this blend" if i==0 else "Collect one example"], "status": "done" if wk<1 else "current" if wk==1 else "upcoming", "tasks": [{"id":f"t{wk}a","label":f"Complete the {a} piece for week {wk}","done":False},{"id":f"t{wk}b","label":"Reflect and log one note in your Growth Log","done":True}] if wk==1 else []})
+        weeks.append({"n":wk,"title": topics[i%len(topics)](i), "objectives":[ f"Name the three things {a} gives {b} work" if i==0 else f"Apply {b} to one {a} scenario", "Skim five real listings that want this blend" if i==0 else "Collect one example"], "status": "done" if wk<1 else "current" if wk==1 else "upcoming", "tasks": [{"id":f"t{wk}a","label":f"Complete the {a} piece for week {wk}","done":False},{"id":f"t{wk}b","label":"Reflect and log one note in your Growth Log","done":True}] if wk==1 else []})
     return {"title":title,"weeks":weeks,"progressWeeks":1,"totalWeeks":n,"paused":False}
-import asyncio, json
-try:
-    from prompt_engineering.llm_client import call_sf14b, call_sf14b_json
-except ImportError:  # direct module use
-    from prompt_engineering.llm_client import call_sf14b, call_sf14b_json
+import asyncio
+from prompt_engineering.llm_client import call_sf14b_json
 
 PREVIEWS_SHAPE = ('{"previews": [{"title": string, "summary": string, "weeks": integer, '
     '"outcomes": [string, string], "roadmap": {"title": string, "weeks": '

@@ -10,7 +10,7 @@ def explain_view(request):
     from .services import explain_feedback
     try:
         return Response(asyncio.run(explain_feedback(a, b, text, context)))
-    except Exception as e:
+    except Exception:
         import hashlib
         seed=int(hashlib.md5(f"{a}×{b}{text[:10]}".encode()).hexdigest()[:2],16)
         clarity=["Clear","Tight","Specific"][seed%3]

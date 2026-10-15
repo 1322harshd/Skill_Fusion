@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'authentication',
     'growthlog',
     'resume',
+    'posts',
     'explain',
     'fusion_engine',
     'infra',
@@ -98,6 +99,7 @@ REST_FRAMEWORK = {
         'login': '5/min',
         'resend-verification': '3/min',
         'resume-generate': '5/min',
+        'post-generate': '10/min',
     },
 }
 

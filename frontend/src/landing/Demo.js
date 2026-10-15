@@ -51,8 +51,6 @@ function SkillChips({ label, selected, onSelect }) {
   );
 }
 
-const API_BASE = (typeof process !== "undefined" && process.env && process.env.REACT_APP_API_URL) || "http://127.0.0.1:8000";
-
 function Demo() {
   const [a, setA] = useState(null);
   const [b, setB] = useState(null);
@@ -67,13 +65,7 @@ function Demo() {
     setLoading(true);
     setError(null);
     try {
-      const r = await fetch(`${API_BASE}/api/fusion/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ a, b }),
-      });
-      if (!r.ok) throw new Error(`backend ${r.status}`);
-      const data = await r.json();
+      const data = await window.Api.fuse(a, b);
       const f = data.fusion;
       const apps = (f.brief && f.brief.applications) || [];
       const steps = apps.slice(0, 4).map((body, i) => ({

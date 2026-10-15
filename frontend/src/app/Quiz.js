@@ -1,0 +1,130 @@
+const { useState, useEffect, useRef } = React;
+const { motion } = window.Motion;
+
+function Quiz() {
+  const q = window.Router.query();
+  const urlSkills = (q.get("skills") || "").split(",").map((s) => s.trim()).filter(Boolean).slice(0, 4);
+  const [manual, setManual] = useState("");
+  const [picked, setPicked] = useState(urlSkills);
+  const skills = picked.length ? picked : manual.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 4);
+  const [session, setSession] = useState(null);
+  const [choices, setChoices] = useState({});
+  const [left, setLeft] = useState(300);
+  const [levels, setLevels] = useState(null);
+  const [error, setError] = useState(null);
+  const timer = useRef(null);
+
+  useEffect(() => {
+    if (!skills.length || session) return;
+    window.Api.quizGenerate(skills)
+      .then((d) => setSession(d))
+      .catch(() => setError("Couldn't load the quiz — is the backend running?"));
+  }, [skills.join(",")]);
+
+  useEffect(() => {
+    if (!session || levels) return;
+    timer.current = setInterval(() => {
+      setLeft((s) => {
+        if (s <= 1) {
+          clearInterval(timer.current);
+          submit();
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer.current);
+  }, [session, levels]);
+
+  async function submit() {
+    clearInterval(timer.current);
+    const answers = (session.questions || []).map((qq) => ({ id: qq.id, choice: choices[qq.id] ?? -1 }));
+    try {
+      const d = await window.Api.quizSubmit(session.session_id, answers);
+      setLevels(d.levels);
+    } catch (e) {
+      setError("Couldn't submit — is the backend running?");
+    }
+  }
+
+  const mm = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+
+  if (!picked.length && !session) {
+    return (
+      <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center text-center">
+        <p className="font-body text-sm text-white/70">Which skills should the quiz cover? (up to 4, comma-separated)</p>
+        <input value={manual} onChange={(e) => setManual(e.target.value)} placeholder="Photography, Marketing"
+          className="liquid-glass mt-4 w-full rounded-xl px-4 py-3 font-body text-sm text-white placeholder:text-white/30" />
+        <button type="button" disabled={!skills.length}
+          onClick={() => setPicked(skills)}
+          className="mt-4 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black disabled:opacity-40">Start quiz</button>
+      </div>
+    );
+  }
+  if (!skills.length) {
+    return (
+      <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center text-center">
+        <p className="font-body text-sm text-white/70">Pick skills first, then take the quiz.</p>
+        <button type="button" onClick={() => window.Router.go("/fuse")} className="mt-6 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black">Pick skills</button>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center text-center">
+        <p className="font-heading text-2xl italic text-white">Quiz unreachable</p>
+        <p className="mt-2 font-body text-sm text-white/70">{error}</p>
+      </div>
+    );
+  }
+  if (levels) {
+    return (
+      <div className="mx-auto max-w-2xl py-16 text-center">
+        <p className="font-body text-[11px] uppercase tracking-[0.18em] text-white/50">{"// Your baseline"}</p>
+        {levels.map((l) => (
+          <div key={l.label} className="liquid-glass mt-4 rounded-[1rem] px-6 py-5">
+            <p className="font-heading text-2xl italic text-white">{l.label}: {l.level}/10</p>
+            <p className="mt-1 font-body text-xs text-white/60">{l.reason}</p>
+          </div>
+        ))}
+        <button type="button" onClick={() => window.Router.go("/fuse")} className="mt-8 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black">Continue to fusion</button>
+      </div>
+    );
+  }
+  if (!session) {
+    return (
+      <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center">
+        <p className="font-heading text-2xl italic text-white">Writing your questions…</p>
+      </div>
+    );
+  }
+  return (
+    <div className="mx-auto max-w-2xl py-10">
+      <div className="mb-6 flex items-center justify-between">
+        <p className="font-body text-[11px] uppercase tracking-[0.18em] text-white/50">{"// Baseline quiz"}</p>
+        <p className="font-heading text-xl italic text-white">{mm}</p>
+      </div>
+      {session.questions.map((qq, i) => (
+        <div key={qq.id} className="liquid-glass mb-4 rounded-[1rem] px-6 py-5">
+          <p className="font-body text-[11px] uppercase tracking-[0.18em] text-white/40">{qq.skill} · {qq.difficulty} · Q{i + 1}</p>
+          <p className="mt-2 font-heading text-lg italic text-white">{qq.q}</p>
+          <div className="mt-3 flex flex-col gap-2">
+            {qq.options.map((op, oi) => (
+              <button
+                key={oi}
+                type="button"
+                onClick={() => setChoices((c) => ({ ...c, [qq.id]: oi }))}
+                className={(choices[qq.id] === oi ? "bg-white text-black" : "liquid-glass text-white/85 hover:text-white") + " rounded-xl px-4 py-2 text-left font-body text-sm"}
+              >
+                {op}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+      <button type="button" onClick={submit} className="mt-4 w-full rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black">Submit answers</button>
+    </div>
+  );
+}
+
+window.Quiz = Quiz;

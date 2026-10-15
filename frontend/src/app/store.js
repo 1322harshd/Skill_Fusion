@@ -511,25 +511,10 @@ window.Store = (function () {
     });
   }
 
-  // ---- Backend (SF) wiring: async, fail-loud (no mock fallback) ----
-  const API_BASE =
-    (typeof process !== "undefined" && process.env && process.env.REACT_APP_API_URL) ||
-    "http://127.0.0.1:8000";
-
-  async function apiPost(path, body) {
-    const r = await fetch(`${API_BASE}${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!r.ok) throw new Error(`backend ${r.status} on ${path}`);
-    return r.json();
-  }
-
-  // POST /api/fusion/ -> normalize to store fusion shape (roadmap arrives
-  // separately from /api/roadmap/previews/; roadmap: null until chosen).
+  // ---- Backend (SF) wiring via window.Api (auth-aware, single BASE_URL).
+  // Fail-loud: no mock fallback.
   async function fuseRemote(a, b) {
-    const data = await apiPost("/api/fusion/", { a, b });
+    const data = await window.Api.fuse(a, b);
     const f = data.fusion;
     const fusion = {
       id: f.id, a: f.a, b: f.b,
@@ -562,9 +547,7 @@ window.Store = (function () {
 
   // POST /api/roadmap/previews/ -> normalize previews + roadmaps to UI shape.
   async function getPreviewsRemote(fusion, salt = 0) {
-    const data = await apiPost("/api/roadmap/previews/", {
-      fusion: { a: fusion.a, b: fusion.b }, salt,
-    });
+    const data = await window.Api.roadmapPreviews(fusion.a, fusion.b, salt);
     return (data.previews || []).map((p) => ({
       id: p.id,
       title: p.title,

@@ -245,5 +245,21 @@ window.Api = (function () {
     generateResume,
     listResumeDocuments,
     downloadResumeExport,
+    // ---- Kunal: SF-backed AI endpoints ----
+    fuse: (a, b) => request("/fusion/", { method: "POST", body: { a, b }, auth: false }),
+    roadmapPreviews: (a, b, salt = 0) =>
+      request("/roadmap/previews/", { method: "POST", body: { fusion: { a, b }, salt }, auth: false }),
+    roadmapTweak: (payload) =>
+      request("/roadmap/tweak/", { method: "POST", body: payload, auth: false }),
+    projectBrief: (a, b) =>
+      request("/project/", { method: "POST", body: { a, b }, auth: false }),
+    fusionScore: (a, b) =>
+      request("/score/", { method: "POST", body: { a, b }, auth: false }),
+    quizGenerate: (skills) =>
+      request("/fusion/quiz/generate/", { method: "POST", body: { skills }, auth: false }),
+    quizSubmit: (session_id, answers) =>
+      request("/fusion/quiz/submit/", { method: "POST", body: { session_id, answers }, auth: false }),
+    explainFeedback: (a, b, text, context = "week") =>
+      request("/explain/", { method: "POST", body: { a, b, text, context }, auth: false }),
   };
 })();

@@ -17,3 +17,11 @@ class Fusion(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+
+class QuizSession(models.Model):
+    skills = models.JSONField(default=list)
+    questions = models.JSONField(default=list)
+    answers = models.JSONField(default=list)
+    levels = models.JSONField(default=list)
+    created_at = models.DateTimeField(auto_now_add=True)

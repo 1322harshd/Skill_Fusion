@@ -58,6 +58,7 @@ const ROUTES = [
   { pattern: "/verify-email", render: () => <window.VerifyEmail /> },
   { pattern: "/reset-password", render: () => <window.ResetPassword /> },
   { pattern: "/fuse", render: () => <window.Fuse /> },
+  { pattern: "/quiz", render: () => <window.Quiz /> },
   { pattern: "/roadmaps", render: () => <window.Roadmaps /> },
   { pattern: "/roadmaps/:id", render: (p) => <window.RoadmapDetail id={p.id} /> },
   { pattern: "/projects/:id", render: (p) => <window.Project id={p.id} /> },

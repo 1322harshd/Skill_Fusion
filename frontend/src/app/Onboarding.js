@@ -136,6 +136,12 @@ function Onboarding() {
     if (!baseline) return;
     Store.updateUser({ baseline });
     window.Api.updateMe({ baseline: { method: baseline } }).catch(() => {});
+    if (baseline === "quiz") {
+      const labels = ((window.Store && window.Store.getSnapshot().user.skills) || [])
+        .map((s) => s.label || s).filter(Boolean).slice(0, 4);
+      window.Router.go("/quiz" + (labels.length ? "?skills=" + encodeURIComponent(labels.join(",")) : ""));
+      return;
+    }
     window.Router.go("/dashboard");
   }
 

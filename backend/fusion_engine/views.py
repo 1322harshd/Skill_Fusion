@@ -42,4 +42,6 @@ def quiz_generate(request):
 @permission_classes([AllowAny])
 def quiz_submit(request):
     answers=request.data.get("answers", [])
-    return Response({"levels": score_quiz(answers)})
+    session_id=request.data.get("session_id")
+    if not session_id: return Response({"error":"session_id required"}, status=400)
+    return Response({"levels": score_quiz(session_id, answers)})

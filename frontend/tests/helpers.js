@@ -9,6 +9,8 @@ async function mockApi(
     resumeDocument = null,
     resumeHistory = [],
     verifyResult = "verified",
+    postDraft = null,
+    postHistory = [],
   } = {}
 ) {
   const baseUser = {
@@ -88,6 +90,21 @@ async function mockApi(
     if (url.includes("/api/resume/") && !url.includes("/export")) {
       return json(200, resumeHistory);
     }
+    if (url.includes("/api/posts/generate")) {
+      return postDraft
+        ? json(201, postDraft)
+        : json(502, { detail: "Could not reach the LLM service." });
+    }
+    if (url.includes("/api/posts/")) {
+      const method = route.request().method();
+      if (method === "PATCH") {
+        const body = route.request().postDataJSON();
+        const match = url.match(/\/api\/posts\/([^/?]+)/);
+        const existing = postHistory.find((p) => p.postId === (match && match[1])) || postDraft || {};
+        return json(200, { ...existing, ...body });
+      }
+      return json(200, postHistory);
+    }
     return json(200, {});
   });
 }
@@ -100,6 +117,19 @@ function resumeDoc(overrides = {}) {
     resumeBullets: ["Shipped the Growth Log feature", "Connected GitHub OAuth"],
     coverLetter: "Dear hiring team, ...",
     createdAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+function postDoc(overrides = {}) {
+  return {
+    postId: "p1",
+    entryId: "e1",
+    tone: "Warm",
+    text: "Small progress beats big plans — logging another real one.",
+    status: "draft",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     ...overrides,
   };
 }
@@ -121,4 +151,4 @@ function manualEntry(overrides = {}) {
   };
 }
 
-module.exports = { mockApi, manualEntry, resumeDoc };
+module.exports = { mockApi, manualEntry, resumeDoc, postDoc };

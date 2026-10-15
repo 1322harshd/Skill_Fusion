@@ -25,6 +25,8 @@ function Posts({ entryId }) {
   const [tone, setTone] = useState("Warm");
   const [salt, setSalt] = useState(0);
   const [draft, setDraft] = useState(null);
+  const [generating, setGenerating] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const selected = entries.find((e) => e.id === selectedId) || null;
 
@@ -43,42 +45,68 @@ function Posts({ entryId }) {
     else if (scanEntries[0]) window.Ambient.setHex(scanEntries[0].a, scanEntries[0].b);
   }, [selectedId]);
 
+  useEffect(() => {
+    Store.loadPosts().catch(() => {});
+  }, []);
+
+  async function generate(entry, t, salt_) {
+    setGenerating(true);
+    setDraft(null);
+    try {
+      const id = await Store.draftPost(entry, t, salt_);
+      const post = Store.getSnapshot().posts.find((p) => p.id === id);
+      setDraft({ id, text: post.text, tone: t });
+    } catch (e) {
+      window.Toast.show(e.message || "Couldn't draft that post — try again", "error");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   function pick(entry) {
     setSelectedId(entry.id);
     setTone("Warm");
     setSalt(0);
-    const id = Store.draftPost(entry, "Warm", 0);
-    const post = Store.getSnapshot().posts.find((p) => p.id === id);
-    setDraft({ id, text: post.text, tone: "Warm" });
+    generate(entry, "Warm", 0);
   }
 
   function setToneAndRedraft(t) {
-    if (!selected || !draft) return;
+    if (!selected) return;
     setTone(t);
-    const id = Store.draftPost(selected, t, salt);
-    const post = Store.getSnapshot().posts.find((p) => p.id === id);
-    setDraft({ id, text: post.text, tone: t });
+    generate(selected, t, salt);
   }
 
   function redraft() {
-    if (!selected || !draft) return;
+    if (!selected) return;
     const next = salt + 1;
     setSalt(next);
-    const id = Store.draftPost(selected, tone, next);
-    const post = Store.getSnapshot().posts.find((p) => p.id === id);
-    setDraft({ id, text: post.text, tone });
+    generate(selected, tone, next);
   }
 
-  function share() {
+  async function share() {
     if (!draft) return;
-    Store.savePost(draft.id, "shared");
-    window.Toast.show("Post shared", "success");
+    setSaving(true);
+    try {
+      await Store.savePost(draft.id, "shared", draft.text);
+      window.Toast.show("Post shared", "success");
+    } catch (e) {
+      window.Toast.show(e.message || "Couldn't share that post", "error");
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function queue() {
+  async function queue() {
     if (!draft) return;
-    Store.savePost(draft.id, "queued");
-    window.Toast.show("Queued for later", "success");
+    setSaving(true);
+    try {
+      await Store.savePost(draft.id, "queued", draft.text);
+      window.Toast.show("Queued for later", "success");
+    } catch (e) {
+      window.Toast.show(e.message || "Couldn't queue that post", "error");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -129,6 +157,14 @@ function Posts({ entryId }) {
                 Pick a Growth Log entry to draft a post from it.
               </p>
             </motion.div>
+          ) : generating ? (
+            <motion.div key={selectedId + "-loading"} {...enter(0.1)} className="liquid-glass-strong flex min-h-[280px] flex-col items-center justify-center gap-3 rounded-[1.5rem] p-8 text-center">
+              <p className="font-heading text-xl italic text-white">Drafting your post…</p>
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-white" />
+                <p className="font-body text-xs font-light text-white/50">This can take up to two minutes.</p>
+              </div>
+            </motion.div>
           ) : (
             <motion.div key={selectedId} {...enter(0.1)} className="liquid-glass-strong rounded-[1.5rem] p-8 md:p-10">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -150,9 +186,10 @@ function Posts({ entryId }) {
                     key={t}
                     type="button"
                     onClick={() => setToneAndRedraft(t)}
+                    disabled={saving}
                     className={
                       (tone === t ? "bg-white text-black" : "liquid-glass text-white/85 hover:text-white") +
-                      " tappable rounded-full px-3.5 py-1.5 font-body text-xs font-medium transition-colors"
+                      " tappable rounded-full px-3.5 py-1.5 font-body text-xs font-medium transition-colors disabled:opacity-50"
                     }
                   >
                     {t}
@@ -162,7 +199,8 @@ function Posts({ entryId }) {
                   <button
                     type="button"
                     onClick={redraft}
-                    className="tappable flex items-center gap-1.5 font-body text-sm text-white/70 transition-colors hover:text-white"
+                    disabled={saving}
+                    className="tappable flex items-center gap-1.5 font-body text-sm text-white/70 transition-colors hover:text-white disabled:opacity-50"
                   >
                     <Icons.Refresh className="h-4 w-4" />
                     Draft again
@@ -170,14 +208,16 @@ function Posts({ entryId }) {
                   <button
                     type="button"
                     onClick={queue}
-                    className="tappable liquid-glass-strong flex items-center gap-2 rounded-full px-4 py-2 font-body text-sm font-medium text-white"
+                    disabled={saving}
+                    className="tappable liquid-glass-strong flex items-center gap-2 rounded-full px-4 py-2 font-body text-sm font-medium text-white disabled:opacity-50"
                   >
                     Queue
                   </button>
                   <button
                     type="button"
                     onClick={share}
-                    className="tappable flex items-center gap-2 rounded-full bg-white px-5 py-2 font-body text-sm font-medium text-black"
+                    disabled={saving}
+                    className="tappable flex items-center gap-2 rounded-full bg-white px-5 py-2 font-body text-sm font-medium text-black disabled:opacity-50"
                   >
                     Share
                     <Icons.Send className="h-4 w-4" />

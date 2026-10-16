@@ -215,6 +215,15 @@ function Fuse() {
               </div>
 
               <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+                {window.Store && window.Store.getSnapshot().user.baseline === "quiz" && (
+                  <a
+                    href={"#/quiz?skills=" + encodeURIComponent(fusion.a + "," + fusion.b)}
+                    className="tappable flex items-center gap-2 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black"
+                  >
+                    Take the 5-min quiz
+                    <Icons.ArrowUpRight className="h-4 w-4" />
+                  </a>
+                )}
                 <a
                   href={"#/roadmaps"}
                   className="tappable flex items-center gap-2 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black"

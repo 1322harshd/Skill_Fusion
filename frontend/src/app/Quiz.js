@@ -4,9 +4,8 @@ const { motion } = window.Motion;
 function Quiz() {
   const q = window.Router.query();
   const urlSkills = (q.get("skills") || "").split(",").map((s) => s.trim()).filter(Boolean).slice(0, 4);
-  const [manual, setManual] = useState("");
-  const [picked, setPicked] = useState(urlSkills);
-  const skills = picked.length ? picked : manual.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 4);
+  const [skills, setSkills] = useState(urlSkills);
+  const [checking, setChecking] = useState(true);
   const [session, setSession] = useState(null);
   const [choices, setChoices] = useState({});
   const choicesRef = useRef({});
@@ -19,12 +18,24 @@ function Quiz() {
   const [error, setError] = useState(null);
   const timer = useRef(null);
 
+  // Evidence rule: skills already evidenced (CV/GitHub/Growth Log) are NOT
+  // quizzed. Fail-open: if evidence can't be read, quiz everything.
   useEffect(() => {
-    if (!skills.length || session) return;
-    window.Api.quizGenerate(skills)
-      .then((d) => setSession(d))
-      .catch(() => setError("Couldn't load the quiz — is the backend running?"));
-  }, [skills.join(",")]);
+    if (!urlSkills.length) { setChecking(false); return; }
+    window.Api.listGrowthLogEntries()
+      .then((entries) => {
+        const have = new Set();
+        (Array.isArray(entries) ? entries : entries.entries || []).forEach((e) => {
+          (e.tags || []).forEach((t) => have.add(String(t.label || t).toLowerCase()));
+          if (e.title) have.add(String(e.title).toLowerCase());
+        });
+        const need = urlSkills.filter((s) => ![...have].some((h) => h.includes(s.toLowerCase()) || s.toLowerCase().includes(h)));
+        setSkills(need.length ? need : []);
+        setChecking(false);
+        if (!need.length) setLevels([]);
+      })
+      .catch(() => { setSkills(urlSkills); setChecking(false); });
+  }, []);
 
   useEffect(() => {
     if (!session || levels) return;
@@ -55,15 +66,19 @@ function Quiz() {
 
   const mm = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
 
-  if (!picked.length && !session) {
+  if (checking) {
+    return (
+      <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center">
+        <p className="font-heading text-2xl italic text-white">Checking your evidence…</p>
+      </div>
+    );
+  }
+  if (!skills.length && !session) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center text-center">
-        <p className="font-body text-sm text-white/70">Which skills should the quiz cover? (up to 4, comma-separated)</p>
-        <input value={manual} onChange={(e) => setManual(e.target.value)} placeholder="Photography, Marketing"
-          className="liquid-glass mt-4 w-full rounded-xl px-4 py-3 font-body text-sm text-white placeholder:text-white/30" />
-        <button type="button" disabled={!skills.length}
-          onClick={() => setPicked(skills)}
-          className="mt-4 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black disabled:opacity-40">Start quiz</button>
+        <p className="font-heading text-2xl italic text-white">Already covered</p>
+        <p className="mt-2 font-body text-sm text-white/60">Your CV and logs already evidence these skills — no quiz needed.</p>
+        <button type="button" onClick={() => window.Router.go("/fuse")} className="mt-6 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black">Back to fusion</button>
       </div>
     );
   }

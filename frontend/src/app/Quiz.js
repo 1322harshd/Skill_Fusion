@@ -38,6 +38,13 @@ function Quiz() {
   }, []);
 
   useEffect(() => {
+    if (checking || !skills.length || session) return;
+    window.Api.quizGenerate(skills)
+      .then((d) => setSession(d))
+      .catch(() => setError("Couldn't load the quiz — is the backend running?"));
+  }, [checking, skills.join(",")]);
+
+  useEffect(() => {
     if (!session || levels) return;
     timer.current = setInterval(() => {
           setLeft((s) => {

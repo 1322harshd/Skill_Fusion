@@ -136,12 +136,6 @@ function Onboarding() {
     if (!baseline) return;
     Store.updateUser({ baseline });
     window.Api.updateMe({ baseline: { method: baseline } }).catch(() => {});
-    if (baseline === "quiz") {
-      const labels = ((window.Store && window.Store.getSnapshot().user.skills) || [])
-        .map((s) => s.label || s).filter(Boolean).slice(0, 4);
-      window.Router.go("/quiz" + (labels.length ? "?skills=" + encodeURIComponent(labels.join(",")) : ""));
-      return;
-    }
     window.Router.go("/dashboard");
   }
 
@@ -279,12 +273,12 @@ function Onboarding() {
                   className="justify-center font-heading text-5xl italic leading-[0.9] tracking-[-3px] text-white md:text-6xl"
                 />
                 <p className="mt-4 text-center font-body text-sm font-light text-white/60">
-                  Upload real evidence of what you've built — or take a quick five-minute quiz instead.
+                  Upload a resume — or skip it and prove each skill with a quick quiz instead.
                 </p>
                 <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
                   {[
-                    { key: "resume", title: "Upload a resume or GitHub", desc: "We read what you've already built and done." },
-                    { key: "quiz", title: "5-min baseline quiz", desc: "Quick 5-minute check — no files needed." },
+                    { key: "resume", title: "Upload a resume", desc: "We read what you've already built and done." },
+                    { key: "quiz", title: "No resume, quiz instead", desc: "Quick 5-minute check per skill — no files needed." },
                   ].map((opt) => {
                     const on = baseline === opt.key;
                     return (

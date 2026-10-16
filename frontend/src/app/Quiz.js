@@ -73,20 +73,21 @@ function Quiz() {
       </div>
     );
   }
-  if (!skills.length && !session) {
+  if (!urlSkills.length && !session) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center text-center">
-        <p className="font-heading text-2xl italic text-white">Already covered</p>
-        <p className="mt-2 font-body text-sm text-white/60">Your CV and logs already evidence these skills — no quiz needed.</p>
-        <button type="button" onClick={() => window.Router.go("/fuse")} className="mt-6 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black">Back to fusion</button>
+        <p className="font-heading text-2xl italic text-white">Fuse two skills first</p>
+        <p className="mt-2 font-body text-sm text-white/60">Quizzes are per-skill, after you choose a fusion — skills already evidenced are skipped automatically.</p>
+        <button type="button" onClick={() => window.Router.go("/fuse")} className="mt-6 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black">Go to fuse</button>
       </div>
     );
   }
   if (!skills.length) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center text-center">
-        <p className="font-body text-sm text-white/70">Pick skills first, then take the quiz.</p>
-        <button type="button" onClick={() => window.Router.go("/fuse")} className="mt-6 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black">Pick skills</button>
+        <p className="font-heading text-2xl italic text-white">Already covered</p>
+        <p className="mt-2 font-body text-sm text-white/60">Your CV and logs already evidence these skills — no quiz needed. The full picture is complete.</p>
+        <button type="button" onClick={() => window.Router.go("/roadmaps")} className="mt-6 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black">Continue to roadmaps</button>
       </div>
     );
   }
@@ -108,7 +109,7 @@ function Quiz() {
             <p className="mt-1 font-body text-xs text-white/60">{l.reason}</p>
           </div>
         ))}
-        <button type="button" onClick={() => window.Router.go("/fuse")} className="mt-8 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black">Continue to fusion</button>
+        <button type="button" onClick={() => window.Router.go("/roadmaps")} className="mt-8 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black">Continue to roadmaps</button>
       </div>
     );
   }

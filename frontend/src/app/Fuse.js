@@ -215,7 +215,7 @@ function Fuse() {
               </div>
 
               <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-                {window.Store && window.Store.getSnapshot().user.baseline === "quiz" && (
+                {window.Store && (
                   <a
                     href={"#/quiz?skills=" + encodeURIComponent(fusion.a + "," + fusion.b)}
                     className="tappable flex items-center gap-2 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black"

@@ -1,4 +1,4 @@
-const { useState, useEffect, useRef } = React;
+const { useState, useEffect } = React;
 const { motion, AnimatePresence } = window.Motion;
 const { Icons } = window;
 const { Avatar } = window;
@@ -12,6 +12,10 @@ const ROOMS = [
   ["open", "Open room"],
   ["private", "Private room"],
 ];
+
+const ROOM_POLL_MS = 4000;
+const MATCH_POLL_MS = 2500;
+const EXCHANGE_POLL_MS = 3000;
 
 const STATUS_DOT = { active: "bg-[var(--color-status-active)]", typing: "bg-[var(--color-status-typing)]", idle: "bg-white/50", away: "bg-white/15" };
 
@@ -84,10 +88,18 @@ function ChatBubble({ msg, reported, onReport }) {
 function ConnectOpenRoom() {
   const s = Store.useStore();
   const [draft, setDraft] = useState("");
-  const [typingPeer, setTypingPeer] = useState(null);
-  const timerRef = useRef(null);
 
-  useEffect(() => () => clearTimeout(timerRef.current), []);
+  useEffect(() => {
+    Store.loadRoomMessages().catch(() => {});
+    Store.loadPresence().catch(() => {});
+    Store.sendHeartbeat("active").catch(() => {});
+    const t = setInterval(() => {
+      Store.loadRoomMessages().catch(() => {});
+      Store.loadPresence().catch(() => {});
+      Store.sendHeartbeat("active").catch(() => {});
+    }, ROOM_POLL_MS);
+    return () => clearInterval(t);
+  }, []);
 
   const reported = new Set(s.reportedMessages);
 
@@ -111,18 +123,16 @@ function ConnectOpenRoom() {
     if (scanEntries[0]) window.Ambient.setHex(scanEntries[0].a, scanEntries[0].b);
   }, []);
 
-  function send() {
+  async function send() {
     if (!draft.trim()) return;
-    Store.sendRoomMessage(draft);
+    const text = draft;
     setDraft("");
-    const peers = s.presence.filter((p) => p.status === "active" || p.status === "idle");
-    const p = peers[Math.floor(Math.random() * peers.length)] || s.presence[0];
-    if (!p) return;
-    setTypingPeer(p.handle);
-    timerRef.current = setTimeout(() => {
-      Store.peerReplyTo();
-      setTypingPeer(null);
-    }, 1400);
+    try {
+      await Store.sendRoomMessage(text);
+    } catch (e) {
+      setDraft(text);
+      window.Toast.show(e.message || "Couldn't send that — try again", "error");
+    }
   }
 
   return (
@@ -147,16 +157,10 @@ function ConnectOpenRoom() {
           {s.presence.map((p) => (
             <PresenceAvatar key={p.handle} p={p} />
           ))}
+          {s.presence.length === 0 && (
+            <p className="font-body text-[12px] font-light text-white/40">No one else is here right now — be the first to say something.</p>
+          )}
         </div>
-        {typingPeer && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="mt-3 font-body text-[11px] font-light italic text-white/45"
-          >
-            {typingPeer} is typing…
-          </motion.p>
-        )}
       </div>
 
       <div className="flex max-h-[46vh] flex-col gap-4 overflow-y-auto bg-black/30 p-6">
@@ -167,7 +171,7 @@ function ConnectOpenRoom() {
             <ChatBubble
               msg={m}
               reported={reported.has(m.id)}
-              onReport={() => Store.reportRoomMessage(m.id)}
+              onReport={() => Store.reportRoomMessage(m.id).catch(() => {})}
             />
           );
           return ref ? (
@@ -204,24 +208,99 @@ function ConnectOpenRoom() {
   );
 }
 
+function PrivateChat({ matchId }) {
+  const s = Store.useStore();
+  const [draft, setDraft] = useState("");
+  const reported = new Set(s.reportedMessages);
+
+  useEffect(() => {
+    Store.loadMatchMessages().catch(() => {});
+    const t = setInterval(() => Store.loadMatchMessages().catch(() => {}), ROOM_POLL_MS);
+    return () => clearInterval(t);
+  }, [matchId]);
+
+  async function send() {
+    if (!draft.trim()) return;
+    const text = draft;
+    setDraft("");
+    try {
+      await Store.sendMatchMessage(text);
+    } catch (e) {
+      setDraft(text);
+      window.Toast.show(e.message || "Couldn't send that — try again", "error");
+    }
+  }
+
+  return (
+    <div className="liquid-glass mt-6 overflow-hidden rounded-[1.5rem]">
+      <div className="flex max-h-[32vh] min-h-[120px] flex-col gap-3 overflow-y-auto p-5">
+        {s.privateMessages.length === 0 && (
+          <p className="font-body text-[12px] font-light text-white/40">Say hello — this thread is just between you two.</p>
+        )}
+        {s.privateMessages.map((m) => (
+          <ChatBubble
+            key={m.id}
+            msg={m}
+            reported={reported.has(m.id)}
+            onReport={() => Store.reportMatchMessage(m.id).catch(() => {})}
+          />
+        ))}
+      </div>
+      <div className="flex items-center gap-3 border-t border-white/10 p-4">
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && send()}
+          placeholder="Message your match…"
+          className="liquid-glass-strong flex-1 rounded-full px-5 py-2.5 font-body text-sm text-white outline-none placeholder:text-white/30"
+        />
+        <motion.button
+          type="button"
+          onClick={send}
+          disabled={!draft.trim()}
+          whileTap={{ scale: 0.97 }}
+          className={
+            (draft.trim() ? "bg-white text-black" : "liquid-glass text-white/50") +
+            " flex items-center gap-2 rounded-full px-5 py-2.5 font-body text-sm font-medium disabled:cursor-not-allowed"
+          }
+        >
+          <Icons.Send className="h-4 w-4" />
+        </motion.button>
+      </div>
+    </div>
+  );
+}
+
 function ExchangePanel({ peer }) {
   const s = Store.useStore();
   const ex = s.exchanges.find((x) => x.handle === peer.handle);
 
   useEffect(() => {
-    if (ex && ex.status === "awaiting-peer") {
-      const t = setTimeout(() => Store.peerConfirmsExchange(peer.handle), 1400);
-      return () => clearTimeout(t);
-    }
-  }, [ex, peer.handle]);
+    Store.loadExchange().catch(() => {});
+  }, [peer.handle]);
 
-  function propose() {
-    Store.proposeExchange(peer.handle);
+  useEffect(() => {
+    if (ex && ex.status === "awaiting-peer") {
+      const t = setInterval(() => Store.loadExchange().catch(() => {}), EXCHANGE_POLL_MS);
+      return () => clearInterval(t);
+    }
+  }, [ex && ex.status, peer.handle]);
+
+  async function propose() {
+    try {
+      await Store.proposeExchange(peer.handle);
+    } catch (e) {
+      window.Toast.show(e.message || "Couldn't propose an exchange", "error");
+    }
   }
 
-  function finalize() {
-    Store.finalizeExchange(peer.handle);
-    window.Toast.show("Exchange started with " + peer.handle, "success");
+  async function finalize() {
+    try {
+      await Store.finalizeExchange(peer.handle);
+      window.Toast.show("Exchange started with " + peer.handle, "success");
+    } catch (e) {
+      window.Toast.show(e.message || "Couldn't confirm the exchange", "error");
+    }
   }
 
   return (
@@ -290,7 +369,8 @@ function ExchangePanel({ peer }) {
             </span>
             <p className="font-heading text-xl italic text-white">Exchange started</p>
             <p className="max-w-sm font-body text-[13px] font-light text-white/55">
-              You and {peer.handle} are swapping notes on {peer.fusionLabel}. First round lands in a couple of days.
+              You and {peer.handle} are swapping notes on {peer.fusionLabel}.
+              {ex.peer && <> That's {ex.peer.fullName} ({ex.peer.email}).</>}
             </p>
           </div>
         )}
@@ -299,19 +379,79 @@ function ExchangePanel({ peer }) {
   );
 }
 
-function BlockedNote() {
+function FindMatch() {
+  const s = Store.useStore();
+  const [joining, setJoining] = useState(null);
+
+  async function start(label) {
+    setJoining(label);
+    try {
+      await Store.joinMatch(label);
+    } catch (e) {
+      window.Toast.show(e.message || "Couldn't start matching", "error");
+    } finally {
+      setJoining(null);
+    }
+  }
+
   return (
     <motion.div
       {...enter(0.1)}
       className="liquid-glass-strong mx-auto flex max-w-md flex-col items-center gap-4 rounded-[1.5rem] p-10 text-center"
     >
       <span className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 text-white/50">
-        <Icons.Lock className="h-5 w-5" />
+        <Icons.UserPlus className="h-5 w-5" />
       </span>
-      <p className="font-heading text-2xl italic text-white">Conversation closed</p>
+      <p className="font-heading text-2xl italic text-white">Find a peer</p>
       <p className="font-body text-sm font-light leading-relaxed text-white/60">
-        You moved on from this exchange. Your standing in the room isn't affected — and the other side won't see you
-        anymore.
+        Matched anonymously by fusion — no names until you both agree to swap.
+      </p>
+      {s.fusions.length === 0 ? (
+        <p className="mt-2 font-body text-[13px] font-light text-white/45">Fuse two skills first, then come back to find a match.</p>
+      ) : (
+        <div className="mt-2 flex w-full flex-col gap-2">
+          {s.fusions.slice(0, 4).map((f) => {
+            const label = `${f.a}×${f.b}`;
+            return (
+              <motion.button
+                key={f.id}
+                type="button"
+                onClick={() => start(label)}
+                disabled={!!joining}
+                whileTap={{ scale: 0.97 }}
+                className="tappable flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black disabled:opacity-60"
+              >
+                {joining === label ? "Finding…" : `Match on ${label}`}
+              </motion.button>
+            );
+          })}
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+function WaitingForMatch() {
+  useEffect(() => {
+    const t = setInterval(() => Store.refreshMatch().catch(() => {}), MATCH_POLL_MS);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <motion.div
+      {...enter(0.1)}
+      className="liquid-glass-strong mx-auto flex max-w-md flex-col items-center gap-4 rounded-[1.5rem] p-10 text-center"
+    >
+      <motion.span
+        animate={{ opacity: [0.4, 1, 0.4] }}
+        transition={{ repeat: Infinity, duration: 1.4, ease: "easeInOut" }}
+        className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 text-white/50"
+      >
+        <Icons.Users className="h-5 w-5" />
+      </motion.span>
+      <p className="font-heading text-2xl italic text-white">Waiting for a peer…</p>
+      <p className="font-body text-sm font-light leading-relaxed text-white/60">
+        You're first in line for this fusion. We'll connect you the moment someone else matches it.
       </p>
     </motion.div>
   );
@@ -322,10 +462,14 @@ function ConnectPrivateRoom() {
   const peer = s.privatePeer;
   const [menuOpen, setMenuOpen] = useState(false);
 
-  function reportPeer() {
-    Store.reportPeer(peer.handle);
-    setMenuOpen(false);
-    window.Toast.show("Reported — conversation closed", "success");
+  async function doReportPeer() {
+    try {
+      await Store.reportPeer(peer.handle);
+      setMenuOpen(false);
+      window.Toast.show("Reported — conversation closed", "success");
+    } catch (e) {
+      window.Toast.show(e.message || "Couldn't report that peer", "error");
+    }
   }
 
   return (
@@ -340,9 +484,13 @@ function ConnectPrivateRoom() {
         </p>
       </div>
 
-      {!peer ? (
+      {s.matchStatus === "waiting" ? (
         <div className="mt-10">
-          <BlockedNote />
+          <WaitingForMatch />
+        </div>
+      ) : !peer ? (
+        <div className="mt-10">
+          <FindMatch />
         </div>
       ) : (
         <div className="mt-10">
@@ -374,7 +522,7 @@ function ConnectPrivateRoom() {
                   >
                     <button
                       type="button"
-                      onClick={reportPeer}
+                      onClick={doReportPeer}
                       className="tappable flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left font-body text-sm font-medium text-white/85 transition-colors hover:bg-white/10"
                     >
                       <Icons.Flag className="h-4 w-4 text-white/60" />
@@ -388,6 +536,7 @@ function ConnectPrivateRoom() {
               </AnimatePresence>
             </div>
           </div>
+          <PrivateChat matchId={s.connectMatchId} />
           <ExchangePanel peer={peer} />
         </div>
       )}
@@ -397,6 +546,10 @@ function ConnectPrivateRoom() {
 
 function Connect() {
   const [room, setRoom] = useState("open");
+
+  useEffect(() => {
+    Store.loadConnectProfile().catch(() => {});
+  }, []);
 
   return (
     <div className="mx-auto max-w-4xl">

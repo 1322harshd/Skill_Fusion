@@ -223,7 +223,11 @@ function buildSeed() {
     peers: [],
     presence: [],
     roomMessages: [],
+    connectProfile: null,
+    connectMatchId: null,
+    matchStatus: "none",
     privatePeer: null,
+    privateMessages: [],
     exchanges: [],
     blocked: [],
     reportedMessages: [],
@@ -441,55 +445,121 @@ window.Store = (function () {
     return { clarity, note: notes[seed % 3], suggestion: suggestions[(seed >> 3) % 3] };
   }
 
-  function sendRoomMessage(text) {
-    const msg = { id: "rm" + Date.now(), handle: state.user.handle, text: text.trim(), ts: "now", self: true };
+  // ---- Connect (FR-9/FR-11): all backend-wired via window.Api, polled from components.
+
+  async function loadConnectProfile() {
+    const data = await window.Api.connectMe();
+    set({ connectProfile: data });
+    return data;
+  }
+
+  async function sendHeartbeat(statusValue = "active", fusionLabel = "") {
+    await window.Api.connectHeartbeat(statusValue, fusionLabel);
+  }
+
+  async function loadPresence() {
+    const rows = await window.Api.connectPresence();
+    set({ presence: rows });
+    return rows;
+  }
+
+  async function loadRoomMessages() {
+    const rows = await window.Api.connectListRoomMessages();
+    set({ roomMessages: rows });
+    return rows;
+  }
+
+  async function sendRoomMessage(text) {
+    const trimmed = text.trim();
+    if (!trimmed) return null;
+    const msg = await window.Api.connectSendRoomMessage(trimmed);
     set({ roomMessages: [...state.roomMessages, msg] });
     return msg;
   }
 
-  function peerReplyTo() {
-    const pool = state.presence.filter((p) => p.status === "active" || p.status === "idle");
-    const peer = pool[Math.floor(Math.random() * pool.length)] || state.presence[0];
-    if (!peer) return;
-    const replies = [
-      "That is exactly the kind of note we trade in here.",
-      "Yes — and it changes how the rare-pair people read your work.",
-      "Keep going. The seam is where the interesting work is.",
-    ];
-    const text = replies[F.hash(String(Date.now())) % replies.length];
-    set({
-      roomMessages: [...state.roomMessages, { id: "rm" + Date.now() + "r", handle: peer.handle, text, ts: "now", self: false }],
-    });
-  }
-
-  function reportRoomMessage(id) {
+  async function reportRoomMessage(id) {
     if (state.reportedMessages.includes(id)) return;
     set({ reportedMessages: [...state.reportedMessages, id] });
+    await window.Api.connectReportMessage("room", id);
   }
 
-  function proposeExchange(handle) {
-    if (state.exchanges.some((x) => x.handle === handle)) return;
-    set({ exchanges: [...state.exchanges, { id: "x" + Date.now(), handle, status: "awaiting-peer" }] });
-  }
-
-  function peerConfirmsExchange(handle) {
+  function applyMatch(data) {
     set({
-      exchanges: state.exchanges.map((x) =>
-        x.handle === handle && x.status === "awaiting-peer" ? { ...x, status: "awaiting-you" } : x
-      ),
+      connectMatchId: data.matchId,
+      matchStatus: data.status,
+      privatePeer: data.status === "active" ? { handle: data.peerHandle, fusionLabel: data.fusionLabel } : null,
+      privateMessages: data.status === "active" ? state.privateMessages : [],
     });
   }
 
-  function finalizeExchange(handle) {
-    set({ exchanges: state.exchanges.map((x) => (x.handle === handle ? { ...x, status: "done" } : x)) });
+  async function joinMatch(fusionLabel) {
+    const data = await window.Api.connectJoinMatch(fusionLabel);
+    applyMatch(data);
+    return data;
   }
 
-  function reportPeer(handle) {
+  async function refreshMatch() {
+    if (!state.connectMatchId) return null;
+    const data = await window.Api.connectGetMatch(state.connectMatchId);
+    applyMatch(data);
+    return data;
+  }
+
+  async function loadMatchMessages() {
+    if (!state.connectMatchId) return;
+    const rows = await window.Api.connectListMatchMessages(state.connectMatchId);
+    set({ privateMessages: rows });
+  }
+
+  async function sendMatchMessage(text) {
+    const trimmed = text.trim();
+    if (!trimmed || !state.connectMatchId) return null;
+    const msg = await window.Api.connectSendMatchMessage(state.connectMatchId, trimmed);
+    set({ privateMessages: [...state.privateMessages, msg] });
+    return msg;
+  }
+
+  async function reportMatchMessage(id) {
+    if (state.reportedMessages.includes(id)) return;
+    set({ reportedMessages: [...state.reportedMessages, id] });
+    await window.Api.connectReportMessage("private", id);
+  }
+
+  function setExchangeFor(handle, data) {
+    if (!handle) return;
+    const next = { handle, status: data.status, peer: data.peer || null };
+    const existing = state.exchanges.find((x) => x.handle === handle);
+    set({
+      exchanges: existing
+        ? state.exchanges.map((x) => (x.handle === handle ? next : x))
+        : [...state.exchanges, next],
+    });
+  }
+
+  async function loadExchange() {
+    if (!state.connectMatchId || !state.privatePeer) return;
+    const data = await window.Api.connectGetExchange(state.connectMatchId);
+    setExchangeFor(state.privatePeer.handle, data);
+  }
+
+  async function proposeExchange(handle) {
+    const data = await window.Api.connectProposeExchange(state.connectMatchId);
+    setExchangeFor(handle, data);
+  }
+
+  async function finalizeExchange(handle) {
+    const data = await window.Api.connectConfirmExchange(state.connectMatchId);
+    setExchangeFor(handle, data);
+  }
+
+  async function reportPeer(handle) {
+    await window.Api.connectReportPeer(handle);
     set({
       blocked: [...state.blocked, handle],
-      peers: state.peers.filter((p) => p.handle !== handle),
-      presence: state.presence.filter((p) => p.handle !== handle),
-      privatePeer: state.privatePeer && state.privatePeer.handle === handle ? null : state.privatePeer,
+      privatePeer: null,
+      connectMatchId: null,
+      matchStatus: "closed",
+      privateMessages: [],
       exchanges: state.exchanges.filter((x) => x.handle !== handle),
     });
   }
@@ -564,11 +634,19 @@ window.Store = (function () {
     chooseRoadmap,
     completeWeek,
     explainFeedback,
+    loadConnectProfile,
+    sendHeartbeat,
+    loadPresence,
+    loadRoomMessages,
     sendRoomMessage,
-    peerReplyTo,
     reportRoomMessage,
+    joinMatch,
+    refreshMatch,
+    loadMatchMessages,
+    sendMatchMessage,
+    reportMatchMessage,
+    loadExchange,
     proposeExchange,
-    peerConfirmsExchange,
     finalizeExchange,
     reportPeer,
     syncGithub,

@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'growthlog',
     'resume',
     'posts',
+    'connect',
     'explain',
     'fusion_engine',
     'infra',

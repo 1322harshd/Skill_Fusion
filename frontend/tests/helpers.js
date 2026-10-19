@@ -11,6 +11,11 @@ async function mockApi(
     verifyResult = "verified",
     postDraft = null,
     postHistory = [],
+    connectHandle = "swift.fox42",
+    connectBanned = false,
+    connectWarnCount = 0,
+    presence = [],
+    roomMessages = [],
   } = {}
 ) {
   const baseUser = {
@@ -104,6 +109,20 @@ async function mockApi(
         return json(200, { ...existing, ...body });
       }
       return json(200, postHistory);
+    }
+    if (url.includes("/api/connect/me")) {
+      return json(200, { handle: connectHandle, isBanned: connectBanned, warnCount: connectWarnCount });
+    }
+    if (url.includes("/api/connect/presence")) {
+      if (route.request().method() === "POST") return json(204, {});
+      return json(200, presence);
+    }
+    if (url.includes("/api/connect/room/messages")) {
+      if (route.request().method() === "POST") {
+        const body = route.request().postDataJSON();
+        return json(201, { id: "rm-created", handle: connectHandle, text: body.text, ts: "now", self: true, hidden: false });
+      }
+      return json(200, roomMessages);
     }
     return json(200, {});
   });

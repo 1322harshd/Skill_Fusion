@@ -194,6 +194,79 @@ window.Api = (function () {
     return request("/posts/" + encodeURIComponent(postId), { method: "PATCH", body: patch });
   }
 
+  function connectMe() {
+    return request("/connect/me");
+  }
+
+  function connectPresence() {
+    return request("/connect/presence");
+  }
+
+  function connectHeartbeat(statusValue, fusionLabel) {
+    return request("/connect/presence", { method: "POST", body: { status: statusValue, fusionLabel: fusionLabel || "" } });
+  }
+
+  function connectListRoomMessages() {
+    return request("/connect/room/messages");
+  }
+
+  function connectSendRoomMessage(text) {
+    return request("/connect/room/messages", { method: "POST", body: { text } });
+  }
+
+  function connectJoinMatch(fusionLabel) {
+    return request("/connect/match", { method: "POST", body: { fusionLabel } });
+  }
+
+  function connectGetMatch(matchId) {
+    return request("/connect/matches/" + encodeURIComponent(matchId));
+  }
+
+  function connectListMatchMessages(matchId) {
+    return request("/connect/matches/" + encodeURIComponent(matchId) + "/messages");
+  }
+
+  function connectSendMatchMessage(matchId, text) {
+    return request("/connect/matches/" + encodeURIComponent(matchId) + "/messages", { method: "POST", body: { text } });
+  }
+
+  function connectReportMessage(messageType, messageId, reason) {
+    return request("/connect/report", { method: "POST", body: { messageType, messageId, reason: reason || "" } });
+  }
+
+  function connectReportPeer(handle) {
+    return request("/connect/peers/" + encodeURIComponent(handle) + "/report", { method: "POST" });
+  }
+
+  function connectGetExchange(matchId) {
+    return request("/connect/matches/" + encodeURIComponent(matchId) + "/exchange");
+  }
+
+  function connectProposeExchange(matchId) {
+    return request("/connect/matches/" + encodeURIComponent(matchId) + "/exchange", {
+      method: "POST",
+      body: { action: "propose" },
+    });
+  }
+
+  function connectConfirmExchange(matchId) {
+    return request("/connect/matches/" + encodeURIComponent(matchId) + "/exchange", {
+      method: "POST",
+      body: { action: "confirm" },
+    });
+  }
+
+  function connectModerationReports() {
+    return request("/connect/moderation/reports");
+  }
+
+  function connectModerationAction(reportId, action) {
+    return request("/connect/moderation/reports/" + encodeURIComponent(reportId) + "/action", {
+      method: "POST",
+      body: { action },
+    });
+  }
+
   // PDF export returns a binary body, not JSON, so it can't go through request().
   // Reuses the same access token / single-retry-on-401 behavior as everything else.
   async function downloadResumeExport(documentId, doc, filename) {
@@ -260,6 +333,22 @@ window.Api = (function () {
     listPosts,
     updatePost,
     downloadResumeExport,
+    connectMe,
+    connectPresence,
+    connectHeartbeat,
+    connectListRoomMessages,
+    connectSendRoomMessage,
+    connectJoinMatch,
+    connectGetMatch,
+    connectListMatchMessages,
+    connectSendMatchMessage,
+    connectReportMessage,
+    connectReportPeer,
+    connectGetExchange,
+    connectProposeExchange,
+    connectConfirmExchange,
+    connectModerationReports,
+    connectModerationAction,
     // ---- Kunal: SF-backed AI endpoints ----
     fuse: (a, b) => request("/fusion/", { method: "POST", body: { a, b }, auth: false }),
     roadmapPreviews: (a, b, salt = 0) =>

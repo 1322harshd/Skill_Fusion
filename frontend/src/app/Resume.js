@@ -1,4 +1,4 @@
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
 const { motion, AnimatePresence } = window.Motion;
 const { Icons } = window;
 const Store = window.Store;
@@ -24,6 +24,9 @@ function Resume() {
   const [tab, setTab] = useState("resume");
   const [res, setRes] = useState(null);
   const [downloading, setDownloading] = useState(false);
+  const [resumeFilename, setResumeFilename] = useState(null);
+  const [resumeUploading, setResumeUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const f = Store.getSnapshot().fusions[0];
@@ -42,6 +45,29 @@ function Resume() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    window.Api
+      .getResumeUpload()
+      .then((data) => setResumeFilename((data && data.filename) || null))
+      .catch(() => {});
+  }, []);
+
+  async function handleResumeFile(e) {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    setResumeUploading(true);
+    try {
+      const data = await window.Api.uploadResume(file);
+      setResumeFilename(data.filename);
+      window.Toast.show("Resume uploaded — it'll be used alongside your Growth Log", "success");
+    } catch (err) {
+      window.Toast.show(err.message || "Couldn't upload that file", "error");
+    } finally {
+      setResumeUploading(false);
+    }
+  }
 
   async function generate() {
     setTab("resume");
@@ -85,7 +111,26 @@ function Resume() {
         </h1>
       </motion.div>
 
-      <div className="mt-10">
+      <div className="mt-6 liquid-glass flex flex-wrap items-center justify-between gap-3 rounded-2xl px-5 py-3.5">
+        <p className="font-body text-sm text-white/80">
+          {resumeUploading
+            ? "Uploading…"
+            : resumeFilename
+            ? <>Resume on file: <span className="text-white">{resumeFilename}</span> — used alongside your Growth Log.</>
+            : "No resume on file — upload one to ground your resume in what you've already written."}
+        </p>
+        <input ref={fileInputRef} type="file" accept=".pdf,.txt" onChange={handleResumeFile} className="hidden" />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current.click()}
+          disabled={resumeUploading}
+          className="shrink-0 rounded-full bg-white px-4 py-1.5 font-body text-xs font-medium text-black disabled:opacity-50"
+        >
+          {resumeFilename ? "Replace" : "Upload resume"}
+        </button>
+      </div>
+
+      <div className="mt-6">
         <AnimatePresence mode="wait">
           {phase === "input" && (
             <motion.div key="input" {...enter(0.05)} className="liquid-glass-strong rounded-[1.5rem] p-8 md:p-10">

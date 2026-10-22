@@ -16,6 +16,8 @@ async function mockApi(
     connectWarnCount = 0,
     presence = [],
     roomMessages = [],
+    resumeUpload = null,
+    uploadResult = "success",
   } = {}
 ) {
   const baseUser = {
@@ -91,6 +93,16 @@ async function mockApi(
       return resumeDocument
         ? json(201, resumeDocument)
         : json(502, { detail: "Could not reach the LLM service." });
+    }
+    if (url.includes("/api/resume/upload")) {
+      const method = route.request().method();
+      if (method === "POST") {
+        return uploadResult === "success"
+          ? json(201, { filename: "resume.pdf", uploadedAt: new Date().toISOString() })
+          : json(400, { detail: "Couldn't find any text in that file." });
+      }
+      if (method === "DELETE") return json(204, {});
+      return json(200, resumeUpload || { filename: null, uploadedAt: null });
     }
     if (url.includes("/api/resume/") && !url.includes("/export")) {
       return json(200, resumeHistory);

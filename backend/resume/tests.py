@@ -1,6 +1,9 @@
+from io import BytesIO
 from unittest.mock import MagicMock, patch
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+from pypdf import PdfWriter
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -8,7 +11,21 @@ from authentication.models import User
 from growthlog.models import GrowthLogEntry
 
 from .llm import LlmError, _extract_json_object, generate_resume_content
-from .models import ResumeDocument
+from .models import ResumeDocument, ResumeUpload
+from .pdf import render_pdf
+from .prompts import build_user_prompt
+
+
+def _pdf_bytes_with_text(text):
+    return render_pdf("Resume", [text])
+
+
+def _blank_pdf_bytes():
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+    buf = BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
 
 VALID_CONTENT = {
     "resumeSummary": "A builder who ships.",
@@ -150,3 +167,93 @@ class ResumeExportViewTests(TestCase):
         other_client.force_authenticate(user=self.other)
         response = other_client.get(f"/api/resume/{self.document.documentId}/export")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class ResumeUploadViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="ada@example.com", password="CorrectHorse1!", fullName="Ada", isEmailVerified=True
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+
+    def test_requires_authentication(self):
+        response = APIClient().post("/api/resume/upload", {}, format="multipart")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_returns_empty_when_nothing_uploaded(self):
+        response = self.client.get("/api/resume/upload")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.json()["filename"])
+
+    def test_uploads_a_txt_resume(self):
+        upload = SimpleUploadedFile("resume.txt", b"Ada Lovelace - Backend Engineer", content_type="text/plain")
+        response = self.client.post("/api/resume/upload", {"file": upload}, format="multipart")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.json()["filename"], "resume.txt")
+
+        stored = ResumeUpload.objects.get(user=self.user)
+        self.assertIn("Backend Engineer", stored.extractedText)
+
+    def test_uploads_a_pdf_resume(self):
+        pdf_bytes = _pdf_bytes_with_text("Ada Lovelace - mathematician and programmer")
+        upload = SimpleUploadedFile("resume.pdf", pdf_bytes, content_type="application/pdf")
+        response = self.client.post("/api/resume/upload", {"file": upload}, format="multipart")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        stored = ResumeUpload.objects.get(user=self.user)
+        self.assertIn("mathematician", stored.extractedText)
+
+    def test_get_reflects_the_uploaded_file(self):
+        upload = SimpleUploadedFile("resume.txt", b"some content", content_type="text/plain")
+        self.client.post("/api/resume/upload", {"file": upload}, format="multipart")
+
+        response = self.client.get("/api/resume/upload")
+        self.assertEqual(response.json()["filename"], "resume.txt")
+        self.assertNotIn("extractedText", response.json())
+
+    def test_rejects_unsupported_file_type(self):
+        upload = SimpleUploadedFile("resume.docx", b"not really a docx", content_type="application/msword")
+        response = self.client.post("/api/resume/upload", {"file": upload}, format="multipart")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(ResumeUpload.objects.filter(user=self.user).exists())
+
+    def test_rejects_a_pdf_with_no_extractable_text(self):
+        upload = SimpleUploadedFile("resume.pdf", _blank_pdf_bytes(), content_type="application/pdf")
+        response = self.client.post("/api/resume/upload", {"file": upload}, format="multipart")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_reuploading_replaces_the_previous_file(self):
+        first = SimpleUploadedFile("v1.txt", b"first version", content_type="text/plain")
+        self.client.post("/api/resume/upload", {"file": first}, format="multipart")
+        second = SimpleUploadedFile("v2.txt", b"second version", content_type="text/plain")
+        self.client.post("/api/resume/upload", {"file": second}, format="multipart")
+
+        self.assertEqual(ResumeUpload.objects.filter(user=self.user).count(), 1)
+        stored = ResumeUpload.objects.get(user=self.user)
+        self.assertEqual(stored.filename, "v2.txt")
+        self.assertIn("second version", stored.extractedText)
+
+    def test_delete_clears_the_upload(self):
+        upload = SimpleUploadedFile("resume.txt", b"content", content_type="text/plain")
+        self.client.post("/api/resume/upload", {"file": upload}, format="multipart")
+        response = self.client.delete("/api/resume/upload")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(ResumeUpload.objects.filter(user=self.user).exists())
+
+
+class BuildUserPromptTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="ada@example.com", password="CorrectHorse1!", fullName="Ada", isEmailVerified=True
+        )
+
+    def test_includes_uploaded_resume_text_when_present(self):
+        ResumeUpload.objects.create(user=self.user, filename="resume.txt", extractedText="Led the backend rewrite.")
+        prompt = build_user_prompt(self.user, "")
+        self.assertIn("Led the backend rewrite.", prompt)
+        self.assertIn("resume the learner already has", prompt)
+
+    def test_omits_the_section_when_no_upload_exists(self):
+        prompt = build_user_prompt(self.user, "")
+        self.assertNotIn("resume the learner already has", prompt)

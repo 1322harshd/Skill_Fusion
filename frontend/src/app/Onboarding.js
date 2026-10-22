@@ -1,4 +1,4 @@
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
 const { AnimatePresence, motion } = window.Motion;
 const { Icons } = window;
 const Store = window.Store;
@@ -29,9 +29,14 @@ function StepDots({ step }) {
 }
 
 function Onboarding() {
+  const s = Store.useStore();
   const [step, setStep] = useState(1);
   const [personas, setPersonas] = useState([]);
   const [baseline, setBaseline] = useState(null);
+  const [resumeFilename, setResumeFilename] = useState(null);
+  const [resumeUploading, setResumeUploading] = useState(false);
+  const [resumeError, setResumeError] = useState("");
+  const fileInputRef = useRef(null);
 
   // auth state
   const [authMode, setAuthMode] = useState("signup"); // signup | login
@@ -44,10 +49,12 @@ function Onboarding() {
   const isSignup = authMode === "signup";
 
   // Landing here already signed in (e.g. redirected back after verifying
-  // email) should resume wherever onboarding left off, not restart at the
-  // sign-up form.
+  // email, or a direct reload) should resume wherever onboarding left off,
+  // not restart at the sign-up form. Keyed on userId rather than read once
+  // at mount, since the app's background bootstrap() may not have resolved
+  // yet on a fresh page load — this re-runs once it does.
   useEffect(() => {
-    const user = Store.getSnapshot().user;
+    const user = s.user;
     if (!user.userId) return;
     const hasPersonas = !!(user.personaTypes && user.personaTypes.length);
     const hasBaseline = !!(user.baseline && user.baseline.method);
@@ -57,12 +64,37 @@ function Onboarding() {
     }
     if (hasPersonas) {
       setPersonas(user.personaTypes);
-      if (hasBaseline) setBaseline(user.baseline.method);
       setStep(3);
     } else {
       setStep(2);
     }
+  }, [s.user.userId]);
+
+  useEffect(() => {
+    window.Api
+      .getResumeUpload()
+      .then((data) => setResumeFilename((data && data.filename) || null))
+      .catch(() => {});
   }, []);
+
+  async function handleResumeFile(e) {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    setResumeError("");
+    setResumeUploading(true);
+    try {
+      const data = await window.Api.uploadResume(file);
+      setResumeFilename(data.filename);
+      setBaseline("resume");
+      window.Toast.show("Resume uploaded", "success");
+    } catch (err) {
+      setResumeError(err.message || "Couldn't upload that file — try again");
+      window.Toast.show(err.message || "Couldn't upload that file", "error");
+    } finally {
+      setResumeUploading(false);
+    }
+  }
 
   function validateAuth() {
     if (isSignup && !name.trim()) return "Please enter your full name";
@@ -296,9 +328,24 @@ function Onboarding() {
                 <p className="mt-4 text-center font-body text-sm font-light text-white/60">
                   Upload a resume — or skip it and prove each skill with a quick quiz instead.
                 </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.txt"
+                  onChange={handleResumeFile}
+                  className="hidden"
+                />
                 <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
                   {[
-                    { key: "resume", title: "Upload a resume", desc: "We read what you've already built and done." },
+                    {
+                      key: "resume",
+                      title: resumeFilename ? resumeFilename : "Upload a resume",
+                      desc: resumeUploading
+                        ? "Uploading…"
+                        : resumeFilename
+                        ? "Uploaded — tap to replace it."
+                        : "We read what you've already built and done.",
+                    },
                     { key: "quiz", title: "No resume, quiz instead", desc: "Quick 5-minute check per skill — no files needed." },
                   ].map((opt) => {
                     const on = baseline === opt.key;
@@ -306,16 +353,17 @@ function Onboarding() {
                       <button
                         key={opt.key}
                         type="button"
-                        onClick={() => setBaseline(opt.key)}
+                        disabled={opt.key === "resume" && resumeUploading}
+                        onClick={() => (opt.key === "resume" ? fileInputRef.current.click() : setBaseline(opt.key))}
                         className={
                           (on ? "bg-white text-black" : "liquid-glass text-white/85 hover:text-white") +
-                          " rounded-2xl px-6 py-6 text-left transition-colors"
+                          " rounded-2xl px-6 py-6 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                         }
                         style={on ? { boxShadow: "0 0 0 1px rgba(255,255,255,0.9), 0 0 24px rgba(255,255,255,0.18)" } : undefined}
                       >
                         <span className="flex items-center justify-between font-body text-base font-medium">
-                          {opt.title}
-                          {on && <Icons.Check className="h-5 w-5" />}
+                          <span className="truncate">{opt.title}</span>
+                          {on && <Icons.Check className="h-5 w-5 shrink-0" />}
                         </span>
                         <span className={"mt-2 block font-body text-sm font-light " + (on ? "text-black/60" : "text-white/60")}>
                           {opt.desc}
@@ -324,6 +372,9 @@ function Onboarding() {
                     );
                   })}
                 </div>
+                {resumeError && (
+                  <p className="mt-3 text-center font-body text-xs text-red-300">{resumeError}</p>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -346,7 +397,13 @@ function Onboarding() {
           </motion.button>
           {!stepValid && !authLoading && (
             <p className="font-body text-xs font-light text-white/50">
-              {step === 1 ? "Fill in all fields to continue" : step === 2 ? "Select at least one option to continue" : "Choose how we learn your skills"}
+              {step === 1
+                ? "Fill in all fields to continue"
+                : step === 2
+                ? "Select at least one option to continue"
+                : resumeUploading
+                ? "Uploading your resume…"
+                : "Choose how we learn your skills"}
             </p>
           )}
         </div>

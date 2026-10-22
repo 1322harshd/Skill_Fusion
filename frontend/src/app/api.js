@@ -182,6 +182,43 @@ window.Api = (function () {
     return request("/resume/");
   }
 
+  function getResumeUpload() {
+    return request("/resume/upload");
+  }
+
+  // Multipart upload can't go through request() (it always JSON-encodes the
+  // body) — reuses the same access-token / single-retry-on-401 behavior.
+  async function uploadResume(file) {
+    async function postOnce(token) {
+      const form = new FormData();
+      form.append("file", file);
+      return fetch(BASE_URL + "/resume/upload", {
+        method: "POST",
+        headers: token ? { Authorization: "Bearer " + token } : {},
+        credentials: "include",
+        body: form,
+      });
+    }
+
+    let res = await postOnce(accessToken);
+    if (res.status === 401) {
+      const refreshed = await refresh();
+      if (refreshed) res = await postOnce(accessToken);
+    }
+
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      const err = new Error((data && data.detail) || "Couldn't upload that file — try again");
+      err.status = res.status;
+      throw err;
+    }
+    return data;
+  }
+
+  function deleteResumeUpload() {
+    return request("/resume/upload", { method: "DELETE" });
+  }
+
   function generatePost(entryId, tone, salt) {
     return request("/posts/generate", { method: "POST", body: { entryId, tone, salt } });
   }
@@ -329,6 +366,9 @@ window.Api = (function () {
     growthLogStats,
     generateResume,
     listResumeDocuments,
+    getResumeUpload,
+    uploadResume,
+    deleteResumeUpload,
     generatePost,
     listPosts,
     updatePost,

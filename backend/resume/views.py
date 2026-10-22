@@ -5,11 +5,17 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
+from .extract import ExtractionError, extract_text
 from .llm import LlmError, generate_resume_content
-from .models import ResumeDocument
+from .models import ResumeDocument, ResumeUpload
 from .pdf import render_pdf
 from .prompts import build_user_prompt
-from .serializers import GenerateResumeSerializer, ResumeDocumentSerializer
+from .serializers import (
+    GenerateResumeSerializer,
+    ResumeDocumentSerializer,
+    ResumeUploadSerializer,
+    UploadResumeSerializer,
+)
 
 
 class GenerateResumeView(APIView):
@@ -35,6 +41,34 @@ class GenerateResumeView(APIView):
             coverLetter=content["coverLetter"],
         )
         return Response(ResumeDocumentSerializer(document).data, status=status.HTTP_201_CREATED)
+
+
+class ResumeUploadView(APIView):
+    def get(self, request):
+        upload = ResumeUpload.objects.filter(user=request.user).first()
+        if not upload:
+            return Response({"filename": None, "uploadedAt": None})
+        return Response(ResumeUploadSerializer(upload).data)
+
+    def post(self, request):
+        serializer = UploadResumeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        uploaded_file = serializer.validated_data["file"]
+
+        try:
+            text = extract_text(uploaded_file)
+        except ExtractionError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        upload, _ = ResumeUpload.objects.update_or_create(
+            user=request.user,
+            defaults={"filename": uploaded_file.name, "extractedText": text},
+        )
+        return Response(ResumeUploadSerializer(upload).data, status=status.HTTP_201_CREATED)
+
+    def delete(self, request):
+        ResumeUpload.objects.filter(user=request.user).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ResumeDocumentListView(APIView):

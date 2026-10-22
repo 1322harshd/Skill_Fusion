@@ -1,6 +1,17 @@
 from rest_framework import serializers
 
-from .models import ResumeDocument
+from .models import ResumeDocument, ResumeUpload
+
+
+class ResumeUploadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResumeUpload
+        fields = ["filename", "uploadedAt"]
+        read_only_fields = fields
+
+
+class UploadResumeSerializer(serializers.Serializer):
+    file = serializers.FileField()
 
 
 class ResumeDocumentSerializer(serializers.ModelSerializer):

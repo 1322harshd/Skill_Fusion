@@ -1,6 +1,9 @@
 from growthlog.models import GrowthLogEntry
 
+from .models import ResumeUpload
+
 MAX_ENTRIES = 15
+MAX_UPLOADED_TEXT_CHARS = 6000
 
 
 def _skill_labels(skills):
@@ -21,6 +24,12 @@ def build_user_prompt(user, job_listing: str) -> str:
     skills = _skill_labels(user.skills)
     if skills:
         lines.append(f"Declared skills: {', '.join(skills)}")
+
+    upload = ResumeUpload.objects.filter(user=user).first()
+    if upload and upload.extractedText:
+        lines.append("")
+        lines.append("Text of a resume the learner already has (use this as evidence too):")
+        lines.append(upload.extractedText.strip()[:MAX_UPLOADED_TEXT_CHARS])
 
     lines.append("")
     lines.append("Growth Log evidence (most recent first):")

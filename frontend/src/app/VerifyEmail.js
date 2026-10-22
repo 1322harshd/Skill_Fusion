@@ -51,10 +51,16 @@ function VerifyEmail() {
             </p>
             <button
               type="button"
-              onClick={() => window.Router.go("/dashboard")}
+              onClick={() => {
+                const user = window.Store.getSnapshot().user;
+                const onboarded = !!(
+                  user.personaTypes && user.personaTypes.length && user.baseline && user.baseline.method
+                );
+                window.Router.go(onboarded ? "/dashboard" : "/onboarding");
+              }}
               className="mt-8 rounded-full bg-white px-7 py-3.5 font-body text-sm font-medium text-black"
             >
-              Go to dashboard
+              Continue
             </button>
           </>
         )}

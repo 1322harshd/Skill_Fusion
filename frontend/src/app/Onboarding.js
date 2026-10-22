@@ -1,4 +1,4 @@
-const { useState } = React;
+const { useState, useEffect } = React;
 const { AnimatePresence, motion } = window.Motion;
 const { Icons } = window;
 const Store = window.Store;
@@ -42,6 +42,27 @@ function Onboarding() {
   const [authLoading, setAuthLoading] = useState(false);
 
   const isSignup = authMode === "signup";
+
+  // Landing here already signed in (e.g. redirected back after verifying
+  // email) should resume wherever onboarding left off, not restart at the
+  // sign-up form.
+  useEffect(() => {
+    const user = Store.getSnapshot().user;
+    if (!user.userId) return;
+    const hasPersonas = !!(user.personaTypes && user.personaTypes.length);
+    const hasBaseline = !!(user.baseline && user.baseline.method);
+    if (hasPersonas && hasBaseline) {
+      window.Router.go("/dashboard");
+      return;
+    }
+    if (hasPersonas) {
+      setPersonas(user.personaTypes);
+      if (hasBaseline) setBaseline(user.baseline.method);
+      setStep(3);
+    } else {
+      setStep(2);
+    }
+  }, []);
 
   function validateAuth() {
     if (isSignup && !name.trim()) return "Please enter your full name";

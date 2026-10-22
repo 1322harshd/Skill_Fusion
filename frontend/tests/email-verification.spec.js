@@ -38,3 +38,27 @@ test("a verified user sees the dashboard normally", async ({ page }) => {
 
   await expect(page.getByText("Verify your email")).not.toBeVisible();
 });
+
+test("after verifying, continuing resumes onboarding at persona selection, not the sign-up form", async ({ page }) => {
+  await mockApi(page, { signedIn: true, user: { isEmailVerified: false, personaTypes: [], baseline: null } });
+  await page.goto("/index.html#/verify-email?token=abc123");
+
+  await expect(page.getByRole("heading", { name: "Email verified" })).toBeVisible();
+  await page.getByRole("button", { name: "Continue" }).click();
+
+  await expect(page.getByText("Select all that apply — you can pick more than one")).toBeVisible();
+});
+
+test("a user who already picked personas resumes straight at the resume/quiz step", async ({ page }) => {
+  await mockApi(page, {
+    signedIn: true,
+    user: { isEmailVerified: false, personaTypes: ["Self Learner"], baseline: null },
+  });
+  await page.goto("/index.html#/verify-email?token=abc123");
+
+  await page.getByRole("button", { name: "Continue" }).click();
+
+  await expect(page.getByText("Upload a resume — or skip it and prove each skill with a quick quiz instead.")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Upload a resume/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /No resume, quiz instead/ })).toBeVisible();
+});

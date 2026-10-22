@@ -262,7 +262,15 @@ window.Store = (function () {
   }
 
   function updateUser(patch) {
-    set({ user: { ...state.user, ...patch } });
+    // isEmailVerified only ever goes false -> true for a real account, never back.
+    // On the verify-email page, the page's own verify call and the app's background
+    // bootstrap() both race to update this; whichever resolves last must not be able
+    // to stomp a confirmed true with a stale false from the other.
+    const next = { ...state.user, ...patch };
+    if (state.user.isEmailVerified && patch.isEmailVerified === false) {
+      next.isEmailVerified = true;
+    }
+    set({ user: next });
   }
 
   function fuse(a, b) {

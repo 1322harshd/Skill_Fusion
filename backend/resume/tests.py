@@ -94,7 +94,7 @@ class GenerateResumeContentTests(TestCase):
 
 class GenerateResumeViewTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada")
+        self.user = User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada", isEmailVerified=True)
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
         GrowthLogEntry.objects.create(
@@ -123,8 +123,8 @@ class GenerateResumeViewTests(TestCase):
 
 class ResumeExportViewTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada")
-        self.other = User.objects.create_user(email="other@example.com", password="CorrectHorse1!", fullName="Other")
+        self.user = User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada", isEmailVerified=True)
+        self.other = User.objects.create_user(email="other@example.com", password="CorrectHorse1!", fullName="Other", isEmailVerified=True)
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
         self.document = ResumeDocument.objects.create(

@@ -360,7 +360,7 @@ function ProfileSheet({ open, onClose, user }) {
   );
 }
 
-function VerifyEmailBanner({ email }) {
+function VerifyGate({ email }) {
   const [sending, setSending] = React.useState(false);
   const [sent, setSent] = React.useState(false);
 
@@ -378,15 +378,20 @@ function VerifyEmailBanner({ email }) {
   }
 
   return (
-    <div className="liquid-glass mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl px-5 py-3.5">
-      <p className="font-body text-sm text-white/80">
-        Verify {email ? <span className="text-white">{email}</span> : "your email"} to unlock everything.
+    <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center gap-4 text-center">
+      <span className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 text-white/50">
+        <Icons.Lock className="h-5 w-5" />
+      </span>
+      <h1 className="font-heading text-3xl italic leading-none text-white">Verify your email</h1>
+      <p className="font-body text-sm font-light leading-relaxed text-white/60">
+        Confirm {email ? <span className="text-white">{email}</span> : "your email"} before anything else unlocks — check
+        your inbox for the link, then come back here.
       </p>
       <button
         type="button"
         onClick={resend}
         disabled={sending || sent}
-        className="shrink-0 rounded-full bg-white px-4 py-1.5 font-body text-xs font-medium text-black disabled:opacity-50"
+        className="mt-2 shrink-0 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black disabled:opacity-50"
       >
         {sent ? "Email sent" : sending ? "Sending…" : "Resend email"}
       </button>
@@ -398,7 +403,7 @@ function AppShell({ route, children }) {
   const s = window.Store.useStore();
   const user = s.user;
   const [profileOpen, setProfileOpen] = React.useState(false);
-  const needsVerification = !!user?.email && user?.isEmailVerified === false;
+  const needsVerification = !!user?.email && user?.isEmailVerified === false && route !== "/verify-email";
 
   return (
     <div className="relative min-h-screen text-white">
@@ -453,8 +458,7 @@ function AppShell({ route, children }) {
       </header>
 
       <main className="px-6 pb-28 pt-24 md:px-12 md:pb-20 lg:px-16">
-        {needsVerification && <VerifyEmailBanner email={user.email} />}
-        {children}
+        {needsVerification ? <VerifyGate email={user.email} /> : children}
       </main>
 
       <nav

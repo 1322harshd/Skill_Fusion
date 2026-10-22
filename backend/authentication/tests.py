@@ -15,7 +15,7 @@ class AuthTests(TestCase):
         cache.clear()  # login is rate-limited; keep tests independent
         self.client = APIClient()
         self.user = User.objects.create_user(
-            email="ada@example.com", password=PASSWORD, fullName="Ada Lovelace"
+            email="ada@example.com", password=PASSWORD, fullName="Ada Lovelace", isEmailVerified=True
         )
 
     def test_register_creates_user_and_returns_access_token(self):
@@ -100,3 +100,39 @@ class AuthTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.user.refresh_from_db()
         self.assertEqual(self.user.githubAccessToken, "")
+
+
+class EmailVerificationGateTests(TestCase):
+    """An authenticated-but-unverified user can reach the handful of
+    account-bootstrap endpoints needed to get verified, and nothing else."""
+
+    def setUp(self):
+        cache.clear()
+        self.client = APIClient()
+        self.unverified = User.objects.create_user(
+            email="new@example.com", password=PASSWORD, fullName="New User", isEmailVerified=False
+        )
+        self.client.force_authenticate(user=self.unverified)
+
+    def test_unverified_user_is_blocked_from_a_feature_endpoint(self):
+        response = self.client.get("/api/growth-log/entries")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.json()["detail"], "Please verify your email before continuing.")
+
+    def test_unverified_user_can_still_check_their_own_profile(self):
+        response = self.client.get("/api/auth/me")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_unverified_user_can_still_resend_verification(self):
+        response = self.client.post("/api/auth/resend-verification")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_unverified_user_can_still_log_out(self):
+        response = self.client.post("/api/auth/logout")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_verified_user_can_reach_a_feature_endpoint(self):
+        self.unverified.isEmailVerified = True
+        self.unverified.save(update_fields=["isEmailVerified"])
+        response = self.client.get("/api/growth-log/entries")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

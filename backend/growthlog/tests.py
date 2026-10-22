@@ -13,8 +13,8 @@ from .models import GrowthLogEntry
 class GrowthLogOwnershipTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.owner = User.objects.create_user(email="owner@example.com", password="CorrectHorse1!", fullName="Owner")
-        self.other = User.objects.create_user(email="other@example.com", password="CorrectHorse1!", fullName="Other")
+        self.owner = User.objects.create_user(email="owner@example.com", password="CorrectHorse1!", fullName="Owner", isEmailVerified=True)
+        self.other = User.objects.create_user(email="other@example.com", password="CorrectHorse1!", fullName="Other", isEmailVerified=True)
         self.entry = GrowthLogEntry.objects.create(user=self.owner, title="Owner's entry")
 
     def test_users_only_see_their_own_entries(self):
@@ -47,7 +47,7 @@ class GrowthLogOwnershipTests(TestCase):
 
 class GithubImportTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada")
+        self.user = User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada", isEmailVerified=True)
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
 
@@ -104,7 +104,7 @@ class GithubImportTests(TestCase):
 
 class VerifyCredentialTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada")
+        self.user = User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada", isEmailVerified=True)
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
         self.entry = GrowthLogEntry.objects.create(user=self.user, title="A certificate")
@@ -146,7 +146,7 @@ class ContributionsTests(TestCase):
         self.client = APIClient()
 
     def test_contributions_requires_github_url(self):
-        user = User.objects.create_user(email="nogh@example.com", password="CorrectHorse1!", fullName="No GH")
+        user = User.objects.create_user(email="nogh@example.com", password="CorrectHorse1!", fullName="No GH", isEmailVerified=True)
         self.client.force_authenticate(user=user)
         response = self.client.get("/api/growth-log/github-contributions")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

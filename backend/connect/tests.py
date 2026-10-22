@@ -9,7 +9,9 @@ from .services import find_or_create_match, get_or_create_chat_profile
 
 
 def make_user(email):
-    return User.objects.create_user(email=email, password="CorrectHorse1!", fullName=email.split("@")[0].title())
+    return User.objects.create_user(
+        email=email, password="CorrectHorse1!", fullName=email.split("@")[0].title(), isEmailVerified=True
+    )
 
 
 class ChatProfileTests(TestCase):

@@ -1,7 +1,7 @@
 import requests
 from django.conf import settings
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
@@ -122,6 +122,8 @@ class RefreshView(APIView):
 
 
 class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         raw_token = request.COOKIES.get(settings.REFRESH_TOKEN_COOKIE_NAME)
         if raw_token:
@@ -135,6 +137,8 @@ class LogoutView(APIView):
 
 
 class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         return Response({"user": UserSerializer(request.user).data})
 
@@ -150,6 +154,8 @@ class MeView(APIView):
 
 
 class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         serializer = ChangePasswordSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
@@ -199,6 +205,7 @@ class VerifyEmailView(APIView):
 
 
 class ResendVerificationEmailView(APIView):
+    permission_classes = [IsAuthenticated]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "resend-verification"
 

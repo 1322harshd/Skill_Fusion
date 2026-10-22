@@ -12,8 +12,8 @@ from .models import PostDraft
 
 class GeneratePostViewTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada")
-        self.other = User.objects.create_user(email="other@example.com", password="CorrectHorse1!", fullName="Other")
+        self.user = User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada", isEmailVerified=True)
+        self.other = User.objects.create_user(email="other@example.com", password="CorrectHorse1!", fullName="Other", isEmailVerified=True)
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
         self.entry = GrowthLogEntry.objects.create(
@@ -69,8 +69,8 @@ class GeneratePostViewTests(TestCase):
 
 class PostDraftListAndUpdateTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada")
-        self.other = User.objects.create_user(email="other@example.com", password="CorrectHorse1!", fullName="Other")
+        self.user = User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada", isEmailVerified=True)
+        self.other = User.objects.create_user(email="other@example.com", password="CorrectHorse1!", fullName="Other", isEmailVerified=True)
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
         self.entry = GrowthLogEntry.objects.create(user=self.user, title="Shipped the Growth Log")

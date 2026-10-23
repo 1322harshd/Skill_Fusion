@@ -31,7 +31,7 @@ window.Api = (function () {
       method,
       headers,
       credentials: "include",
-      body: body !== undefined ? body : undefined,
+      body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body),
     });
 
     if (res.status === 401 && auth && retry) {

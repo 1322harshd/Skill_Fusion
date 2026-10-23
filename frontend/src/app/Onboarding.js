@@ -193,25 +193,6 @@ function Onboarding() {
     window.Router.go("/fuse");
   }
 
-  async function handleResumeFile(e) {
-    const file = e.target.files && e.target.files[0];
-    e.target.value = "";
-    if (!file) return;
-    setResumeError("");
-    setResumeUploading(true);
-    try {
-      const data = await window.Api.uploadResume(file);
-      setResumeFilename(data.filename);
-      setBaseline("resume");
-      window.Toast.show("Resume uploaded", "success");
-    } catch (err) {
-      setResumeError(err.message || "Couldn't upload that file — try again");
-      window.Toast.show(err.message || "Couldn't upload that file", "error");
-    } finally {
-      setResumeUploading(false);
-    }
-  }
-
   function next() {
     if (step === 1) handleAuthNext();
     else if (step === 2) handlePersonaNext();

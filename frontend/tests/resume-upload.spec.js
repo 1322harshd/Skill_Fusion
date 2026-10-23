@@ -7,7 +7,7 @@ test("uploading a resume in onboarding step 3 unlocks continue", async ({ page }
 
   await expect(page.getByText("Upload a resume — or skip it and prove each skill with a quick quiz instead.")).toBeVisible();
 
-  const continueButton = page.getByRole("button", { name: "Go to dashboard" });
+  const continueButton = page.getByRole("button", { name: "Go to Fuse" });
   await expect(continueButton).toBeDisabled();
 
   await page.getByRole("button", { name: /Upload a resume/ }).click();
@@ -37,7 +37,7 @@ test("a failed upload shows an error and continue stays disabled", async ({ page
   });
 
   await expect(page.locator("p.text-red-300", { hasText: "Couldn't find any text in that file." })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Go to dashboard" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Go to Fuse" })).toBeDisabled();
 });
 
 test("the quiz option still works without uploading anything", async ({ page }) => {
@@ -45,7 +45,7 @@ test("the quiz option still works without uploading anything", async ({ page }) 
   await page.goto("/index.html#/onboarding");
 
   await page.getByRole("button", { name: /No resume, quiz instead/ }).click();
-  await expect(page.getByRole("button", { name: "Go to dashboard" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Go to Fuse" })).toBeEnabled();
 });
 
 test("the Resume generator page shows upload status and lets you upload", async ({ page }) => {

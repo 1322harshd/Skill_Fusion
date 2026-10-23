@@ -126,6 +126,117 @@ function MiniWeeks({ weeks, total }) {
   );
 }
 
+function TweakPanel({ fusion, pv }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState(null);
+  if (!pv.roadmapId) return null; // anon/local fusions have no persisted row
+
+  async function submit() {
+    if (!text.trim() || busy) return;
+    setBusy(true);
+    try {
+      const res = await Store.tweakRoadmap(fusion, pv, text.trim());
+      setResult(res);
+      if (res.classification === "acceptable") {
+        window.Toast.show("Change applied to this plan — tweak again or start it", "success");
+      } else {
+        window.Toast.show("Rejected — the change would drop one of your skills", "error");
+      }
+      setText("");
+    } catch (e) {
+      window.Toast.show((e && e.message) || "Tweak unavailable — is the SF model running?", "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-4">
+      {!open ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-2 rounded-full px-4 py-2 font-body text-xs text-white/55 transition-colors hover:text-white"
+        >
+          <Icons.Settings className="h-3.5 w-3.5" />
+          Make it fit you — tweak this plan
+        </button>
+      ) : (
+        <div className="rounded-xl border border-white/15 bg-black/30 p-4">
+          <label htmlFor={"tweak-" + pv.id} className="font-body text-[11px] font-medium text-white/50">
+            One change at a time — both skills must survive the edit
+          </label>
+          <textarea
+            id={"tweak-" + pv.id}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={2}
+            autoFocus
+            placeholder={"e.g. swap " + fusion.b + " week 2 for a portfolio sprint"}
+            className="mt-2 w-full rounded-lg bg-black/40 px-3 py-2 font-body text-sm text-white outline-none ring-1 ring-white/15 transition-shadow focus:ring-white/40"
+          />
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              onClick={submit}
+              disabled={!text.trim() || busy}
+              className={
+                (text.trim() && !busy ? "bg-white text-black" : "liquid-glass text-white/50") +
+                " rounded-full px-4 py-1.5 font-body text-xs font-medium disabled:cursor-not-allowed"
+              }
+            >
+              {busy ? "Checking…" : "Apply change"}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setOpen(false); setText(""); }}
+              className="rounded-full px-4 py-1.5 font-body text-xs text-white/55 hover:text-white"
+            >
+              Cancel
+            </button>
+          </div>
+          <AnimatePresence>
+            {result && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                role="status"
+                className={
+                  "mt-3 rounded-lg border p-3 " +
+                  (result.classification === "acceptable" ? "border-white/20" : "border-red-400/30")
+                }
+              >
+                <span
+                  className={
+                    "inline-flex rounded-full px-2.5 py-0.5 font-body text-[10px] font-semibold " +
+                    (result.classification === "acceptable" ? "bg-white text-black" : "bg-red-400/90 text-black")
+                  }
+                >
+                  {result.classification === "acceptable" ? "Applied" : "Rejected"}
+                </span>
+                {(result.diff || []).length ? (
+                  <ul className="mt-2 flex flex-col gap-1">
+                    {result.diff.map((d, i) => (
+                      <li key={i} className="font-body text-[12px] font-light text-white/70">
+                        <span className="text-white/40 line-through">{d.before || "—"}</span>
+                        {" → "}
+                        <span className="text-white/85">{d.after || "—"}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : result.reasoning ? (
+                  <p className="mt-2 font-body text-[12px] font-light text-white/65">{result.reasoning}</p>
+                ) : null}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Roadmaps() {
   const s = Store.useStore();
   const [fusionId, setFusionId] = useState(s.fusions[0]?.id || null);
@@ -267,6 +378,7 @@ function Roadmaps() {
                           <ForestTopView a={fusion.a} b={fusion.b} />
                         </div>
                         <MiniWeeks weeks={previewWeeks} total={expandedPv.weeks} />
+                        <TweakPanel fusion={fusion} pv={expandedPv} />
                         <div className="mt-6 flex gap-3">
                           <button type="button" onClick={()=> choose(expandedPv)} className="flex-1 flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black"><Icons.ArrowUpRight className="h-4 w-4" />Start this roadmap</button>
                           <button type="button" onClick={()=> setExpandedId(null)} className="rounded-full bg-white/10 px-6 py-3 font-body text-sm text-white/70 hover:bg-white/15 hover:text-white">Close</button>

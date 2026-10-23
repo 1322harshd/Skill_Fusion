@@ -1,4 +1,4 @@
-const { useState } = React;
+const { useState, useEffect } = React;
 const { motion, AnimatePresence } = window.Motion;
 const { Icons } = window;
 const F = window.Fusion;
@@ -46,7 +46,24 @@ function Sparkline({ history }) {
 function ScoreScreen({ fusionId }) {
   const s = Store.useStore();
   const [selected, setSelected] = useState(fusionId || s.fusions[0]?.id || null);
+  const [scoreSource, setScoreSource] = useState(null); // {source, listings} from /api/score/
   const fusion = s.fusions.find((f) => f.id === selected) || s.fusions[0] || null;
+  const fusionKey = fusion ? fusion.id : "";
+
+  // Pull the live score for this pair — jobdata when listings exist
+  // (rare/demand from real postings), else the labeled heuristic.
+  useEffect(() => {
+    if (!fusionKey) return undefined;
+    let live = true;
+    window.Api.fusionScore(fusion.a, fusion.b)
+      .then((res) => {
+        if (!live || !res || !res.score) return;
+        setScoreSource({ source: res.score.source, listings: res.score.listings });
+        Store.refreshFusionScore(fusionKey, res.score);
+      })
+      .catch(() => {}); // keep the fusion's bundled score on failure
+    return () => { live = false; };
+  }, [fusionKey]);
 
   if (!fusion) {
     return (
@@ -111,6 +128,13 @@ function ScoreScreen({ fusionId }) {
               ?
             </span>
           </p>
+          {scoreSource && (
+            <p role="status" className="mt-2 font-body text-[11px] font-light text-white/45">
+              {scoreSource.source === "jobdata"
+                ? `computed live from ${scoreSource.listings} real job listings`
+                : "estimate — live job data will refine this pair"}
+            </p>
+          )}
           <p className="mt-1 max-w-sm text-center font-body text-xs font-light leading-relaxed text-white/55">
             Top 15% is Exceptional · higher = more defensible
           </p>

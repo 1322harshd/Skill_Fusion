@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from pgvector.django import VectorField
 
 
@@ -20,7 +21,9 @@ class FusionScoreCache(models.Model):
     skill_a = models.CharField(max_length=100)
     skill_b = models.CharField(max_length=100)
     score_json = models.JSONField(default=dict)
-    computed_at = models.DateTimeField(auto_now=True)
+    # NOT auto_now: put_cached_score stamps updates explicitly (services.py),
+    # so the weekly recompute can see rows aging past SCORE_CACHE_TTL.
+    computed_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         unique_together = [("skill_a", "skill_b")]

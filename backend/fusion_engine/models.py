@@ -20,8 +20,12 @@ class Fusion(models.Model):
 
 
 class QuizSession(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="quiz_sessions", null=True)
     skills = models.JSONField(default=list)
     questions = models.JSONField(default=list)
     answers = models.JSONField(default=list)
     levels = models.JSONField(default=list)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]

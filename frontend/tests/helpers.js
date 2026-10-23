@@ -18,6 +18,9 @@ async function mockApi(
     roomMessages = [],
     resumeUpload = null,
     uploadResult = "success",
+    skillsKnown = null,
+    quizSession = null,
+    quizLevels = [],
   } = {}
 ) {
   const baseUser = {
@@ -66,6 +69,15 @@ async function mockApi(
           verificationStatus: verifyResult,
         },
       });
+    }
+    if (url.includes("/api/fusion/skills/known/")) {
+      return skillsKnown ? json(200, { verdicts: skillsKnown }) : json(200, {});
+    }
+    if (url.includes("/api/fusion/quiz/generate")) {
+      return quizSession ? json(200, quizSession) : json(502, { detail: "LLM server unreachable" });
+    }
+    if (url.includes("/api/fusion/quiz/submit")) {
+      return json(200, { levels: quizLevels });
     }
     if (url.includes("/api/growth-log/entries")) {
       if (route.request().method() === "POST") {

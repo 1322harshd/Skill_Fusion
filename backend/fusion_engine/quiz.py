@@ -23,7 +23,7 @@ def _gen_skill(skill):
     return qs
 
 
-def generate_quiz(skills):
+def generate_quiz(skills, user=None):
     """5 questions per skill (2 hard, 2 medium, 1 easy). Returns session with
     questions STRIPPED of answers; keys stay server-side in QuizSession."""
     from .models import QuizSession
@@ -34,6 +34,7 @@ def generate_quiz(skills):
             q["id"] = f"{skill}-{i}"
             qs.append(q)
     session = QuizSession.objects.create(
+        user=user,
         skills=skills,
         questions=[{**q} for q in qs],
     )

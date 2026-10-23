@@ -87,7 +87,11 @@ function isActive(to, route) {
 function ToastHost() {
   const toasts = window.Toast.use();
   return (
-    <div className="pointer-events-none fixed bottom-24 left-1/2 z-[70] flex -translate-x-1/2 flex-col items-center gap-2 md:bottom-8">
+    <div
+      role="status"
+      aria-live="polite"
+      className="pointer-events-none fixed bottom-24 left-1/2 z-[70] flex -translate-x-1/2 flex-col items-center gap-2 md:bottom-8"
+    >
       <AnimatePresence>
         {toasts.map((t) => (
           <motion.div
@@ -457,7 +461,14 @@ function AppShell({ route, children }) {
         </button>
       </header>
 
-      <main className="px-6 pb-28 pt-24 md:px-12 md:pb-20 lg:px-16">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[80] focus:rounded-full focus:bg-white focus:px-5 focus:py-2 focus:font-body focus:text-sm focus:font-medium focus:text-black"
+      >
+        Skip to content
+      </a>
+
+      <main id="main-content" tabIndex={-1} className="px-6 pb-28 pt-24 md:px-12 md:pb-20 lg:px-16">
         {needsVerification ? <VerifyGate email={user.email} /> : children}
       </main>
 

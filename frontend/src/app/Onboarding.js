@@ -187,9 +187,29 @@ function Onboarding() {
 
   function handleFinish() {
     if (!baseline) return;
+    if (baseline === "resume" && !resumeFilename) return;
     Store.updateUser({ baseline });
     window.Api.updateMe({ baseline: { method: baseline } }).catch(() => {});
-    window.Router.go("/dashboard");
+    window.Router.go("/fuse");
+  }
+
+  async function handleResumeFile(e) {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    setResumeError("");
+    setResumeUploading(true);
+    try {
+      const data = await window.Api.uploadResume(file);
+      setResumeFilename(data.filename);
+      setBaseline("resume");
+      window.Toast.show("Resume uploaded", "success");
+    } catch (err) {
+      setResumeError(err.message || "Couldn't upload that file — try again");
+      window.Toast.show(err.message || "Couldn't upload that file", "error");
+    } finally {
+      setResumeUploading(false);
+    }
   }
 
   function next() {
@@ -392,7 +412,7 @@ function Onboarding() {
               " flex items-center gap-2 rounded-full px-7 py-3.5 font-body text-sm font-medium disabled:cursor-not-allowed"
             }
           >
-            {step === 1 && authLoading ? (isSignup ? "Creating account…" : "Signing in…") : step === 3 ? "Go to dashboard" : "Continue"}
+            {step === 1 && authLoading ? (isSignup ? "Creating account…" : "Signing in…") : step === 3 ? "Go to Fuse" : "Continue"}
             <Icons.ArrowUpRight className="h-4 w-4" />
           </motion.button>
           {!stepValid && !authLoading && (

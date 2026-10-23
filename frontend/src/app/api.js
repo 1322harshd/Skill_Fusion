@@ -22,14 +22,16 @@ window.Api = (function () {
 
   async function request(path, { method = "GET", body, auth = true, retry = true } = {}) {
     const headers = {};
-    if (body !== undefined) headers["Content-Type"] = "application/json";
+    if (body instanceof FormData) {
+      // Let the browser set the multipart boundary header
+    } else if (body !== undefined) headers["Content-Type"] = "application/json";
     if (auth && accessToken) headers["Authorization"] = "Bearer " + accessToken;
 
     const res = await fetch(BASE_URL + path, {
       method,
       headers,
       credentials: "include",
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body !== undefined ? body : undefined,
     });
 
     if (res.status === 401 && auth && retry) {
@@ -176,6 +178,10 @@ window.Api = (function () {
 
   function generateResume(jobListing) {
     return request("/resume/generate", { method: "POST", body: { jobListing: jobListing || "" } });
+  }
+
+  function skillsKnown(skills) {
+    return request("/fusion/skills/known/", { method: "POST", body: { skills } });
   }
 
   function listResumeDocuments() {
@@ -365,6 +371,8 @@ window.Api = (function () {
     githubConnect,
     growthLogStats,
     generateResume,
+    uploadResume,
+    skillsKnown,
     listResumeDocuments,
     getResumeUpload,
     uploadResume,
@@ -390,20 +398,28 @@ window.Api = (function () {
     connectModerationReports,
     connectModerationAction,
     // ---- Kunal: SF-backed AI endpoints ----
-    fuse: (a, b) => request("/fusion/", { method: "POST", body: { a, b }, auth: false }),
-    roadmapPreviews: (a, b, salt = 0) =>
-      request("/roadmap/previews/", { method: "POST", body: { fusion: { a, b }, salt }, auth: false }),
+    fuse: (a, b) => request("/fusion/", { method: "POST", body: { a, b } }),
+    fusionHistory: () => request("/fusion/history"),
+    roadmapPreviews: (fusion, salt = 0) =>
+      request("/roadmap/previews/", { method: "POST", body: { fusion: { id: fusion.id, a: fusion.a, b: fusion.b }, salt } }),
+    roadmapChoose: (roadmapId) =>
+      request("/roadmap/choose/", { method: "POST", body: { roadmap_id: roadmapId } }),
     roadmapTweak: (payload) =>
-      request("/roadmap/tweak/", { method: "POST", body: payload, auth: false }),
+      request("/roadmap/tweak/", { method: "POST", body: payload }),
+    roadmapProgress: (roadmapId, progressWeeks) =>
+      request("/roadmap/progress/", { method: "POST", body: { roadmap_id: roadmapId, progress_weeks: progressWeeks } }),
+    roadmapChosen: (fusionId) =>
+      request("/roadmap/chosen/?fusion_id=" + encodeURIComponent(fusionId)),
     projectBrief: (a, b) =>
-      request("/project/", { method: "POST", body: { a, b }, auth: false }),
+      request("/project/", { method: "POST", body: { a, b } }),
     fusionScore: (a, b) =>
-      request("/score/", { method: "POST", body: { a, b }, auth: false }),
+      request("/score/", { method: "POST", body: { a, b } }),
     quizGenerate: (skills) =>
-      request("/fusion/quiz/generate/", { method: "POST", body: { skills }, auth: false }),
+      request("/fusion/quiz/generate/", { method: "POST", body: { skills } }),
     quizSubmit: (session_id, answers) =>
-      request("/fusion/quiz/submit/", { method: "POST", body: { session_id, answers }, auth: false }),
+      request("/fusion/quiz/submit/", { method: "POST", body: { session_id, answers } }),
+    skillsKnown: skillsKnown,
     explainFeedback: (a, b, text, context = "week") =>
-      request("/explain/", { method: "POST", body: { a, b, text, context }, auth: false }),
+      request("/explain/", { method: "POST", body: { a, b, text, context } }),
   };
 })();

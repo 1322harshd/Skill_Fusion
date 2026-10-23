@@ -8,12 +8,12 @@ function ExplainPanel({ a, b, fusionId, logTitle, logTags = [], placeholder, but
   const [fb, setFb] = useState(null);
   const [sending, setSending] = useState(false);
 
-  function submit() {
+  async function submit() {
     if (!text.trim() || sending) return;
     setSending(true);
-    setTimeout(() => {
-      const res = Store.explainFeedback(a, b, text);
-      setFb(res);
+    try {
+      const res = await Store.explainFeedback(a, b, text);
+      setFb(res || {});
       Store.addLog({
         fusionId,
         title: logTitle,
@@ -23,8 +23,11 @@ function ExplainPanel({ a, b, fusionId, logTitle, logTags = [], placeholder, but
         source: "self-reported",
       });
       window.Toast.show("Logged to your Growth Log", "success");
+    } catch {
+      window.Toast.show("Feedback unreachable — check the AI service and retry", "error");
+    } finally {
       setSending(false);
-    }, 700);
+    }
   }
 
   return (

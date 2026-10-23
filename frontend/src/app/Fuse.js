@@ -15,6 +15,7 @@ const FUSE_LOADING_STEPS = [
 const enter = window.MotionKit.enter;
 
 function Fuse() {
+  const s = Store.useStore();
   const [a, setA] = useState("");
   const [b, setB] = useState("");
   const [phase, setPhase] = useState("input");
@@ -33,6 +34,12 @@ function Fuse() {
     else if (ready) window.Ambient.setFusion(a.trim(), b.trim());
     else window.Ambient.clear();
   }, [a, b, phase]);
+
+  // Restore this user's persisted fusions once, on first signed-in mount.
+  // Fire-and-forget: a cold backend must never block the fuse input page.
+  useEffect(() => {
+    if (s.user.userId) Store.loadFusions().catch(() => {});
+  }, [s.user.userId]);
 
   async function fuse() {
     if (!ready) return;

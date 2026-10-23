@@ -1,163 +1,5 @@
 const F = window.Fusion;
 
-const THIRD_SKILLS = {
-  tech: ["AI", "Automation", "Data"],
-  creative: ["Motion", "Storytelling", "Illustration"],
-  business: ["Sales", "Strategy", "Pricing"],
-  science: ["Statistics", "Research", "Neuroscience"],
-  comm: ["Writing", "Public Speaking", "Community"],
-};
-
-const CURATED_OUTCOMES = {
-  "Design×Code": "Ship a product you designed end-to-end",
-  "Code×Design": "Ship a product you designed end-to-end",
-  "Marketing×Data": "Run campaigns you can prove worked",
-  "Data×Marketing": "Run campaigns you can prove worked",
-  "Content×Marketing": "Build a channel that grows itself",
-  "Sales×AI": "Sell with an AI copilot on your side",
-  "Writing×AI": "Publish with an AI writing partner",
-  "Design×AI": "Design AI-native products",
-  "Code×AI": "Build AI features that actually ship",
-};
-
-const GENERIC_OUTCOMES = [
-  (a, b) => `Do ${b} work that carries your ${a} edge`,
-  (a, b) => `Turn your ${a} instinct into ${b} results`,
-  (a, b) => `Become the rare ${a} + ${b} hire`,
-];
-
-function makeHistory(value, seed) {
-  // No fake past — history starts at creation.
-  // Wireframes show a 6-point preview for layout, but live data
-  // grows only from real verified / logged activity.
-  return [value];
-}
-
-function makeScore(a, b) {
-  const seed = F.hash(a + "×" + b);
-  const rarity = 0.55 + (seed % 400) / 1000;
-  const demand = 0.45 + ((seed >> 4) % 400) / 1000;
-  const value = Math.round((rarity * 0.45 + demand * 0.55) * 100);
-
-  const rarityLabel = rarity >= 0.8 ? "Exceptional" : rarity >= 0.65 ? "Rare" : rarity >= 0.5 ? "Uncommon" : "Common";
-  const demandLabel = demand >= 0.75 ? "In demand" : demand >= 0.6 ? "Steady" : demand >= 0.45 ? "Growing" : "Emerging";
-
-  const explanation = [
-    `Very few people lead with ${a} and ${b} together, so you stand out before you even talk to a recruiter.`,
-    `Jobs asking for this blend are ${demandLabel.toLowerCase()}; when one appears, competition is thinner than for either skill alone.`,
-    `The pair reads as a full capability — ${a} gives the depth, ${b} gives the proof — instead of two vague keywords.`,
-  ];
-
-  const cat = F.categoryOf((seed & 1) ? a : b);
-  const pool = THIRD_SKILLS[cat];
-  const pick = pool[(seed >> 6) % pool.length];
-  const skill = pick === a || pick === b ? pool[(seed >> 9) % pool.length] : pick;
-  const delta = 8 + ((seed >> 3) % 9);
-
-  return { value, rarity, demand, rarityLabel, demandLabel, explanation, recommendation: { skill, delta, category: cat }, history: makeHistory(value, seed) };
-}
-
-function makeRoadmap(a, b, opts = {}) {
-  const seed = F.hash(a + "×" + b + (opts.salt ? "-" + opts.salt : ""));
-  const n = opts.totalWeeks || 6 + (seed % 3); // 6-8 weeks
-  const title =
-    opts.title ||
-    CURATED_OUTCOMES[`${a}×${b}`] ||
-    GENERIC_OUTCOMES[seed % GENERIC_OUTCOMES.length](a, b);
-  const progressWeeks = 1;
-  const weeks = [];
-  const topics = [
-    (i) => `Get fluent in ${b}, applied to ${a}`,
-    (i) => `First artifact — a small ${b} piece with your ${a} fingerprint`,
-    (i) => `Core skill — the ${b} patterns most ${a} people miss`,
-    (i) => `Your style — where ${a} meets ${b}`,
-    (i) => `The flagship project brief`,
-    (i) => `Ship it — build, refine, document`,
-    (i) => `Publish + sync to GitHub — earn the verified badge`,
-    (i) => `Positioning — portfolio, interviews, next moves`,
-  ];
-  for (let i = 0; i < n; i++) {
-    const wk = i + 1;
-    const status = wk < progressWeeks ? "done" : wk === progressWeeks ? "current" : "upcoming";
-    weeks.push({
-      n: wk,
-      title: topics[i % topics.length](i),
-      objectives: [
-        i === 0 ? `Name the three things ${a} gives ${b} work` : `Apply ${b} to one ${a} scenario you actually care about`,
-        i === 0 ? `Skim five real listings that want this blend` : `Collect one example from the field to study`,
-      ],
-      status,
-      tasks:
-        status === "current"
-          ? [
-              { id: `t${wk}a`, label: `Complete the ${a} piece for week ${wk}`, done: false },
-              { id: `t${wk}b`, label: "Reflect and log one note in your Growth Log", done: true },
-            ]
-          : [],
-    });
-  }
-  return { title, weeks, progressWeeks, totalWeeks: n, paused: false };
-}
-
-function makeBrief(a, b, score) {
-  const outcome = CURATED_OUTCOMES[`${a}×${b}`] || GENERIC_OUTCOMES[F.hash(a + b) % GENERIC_OUTCOMES.length](a, b);
-  return {
-    lede: `When ${a} and ${b} sit side by side they stop being two keywords and start being one capability — ${outcome}.`,
-    complementarity: [
-      `${a} points at the problem; ${b} is how you actually move it.`,
-      `Most people carry one or the other. Holding both makes you the person who ships the middle.`,
-    ],
-    applications: [
-      `A portfolio piece that pairs ${a} thinking with ${b} craft`,
-      `Interview stories built on a real ${a} × ${b} artifact`,
-      `A role or service that only this blend can fill`,
-    ],
-    industries: ["Product teams", "Studios & agencies", "Early-stage startups"],
-    insights: [
-      `Your rarity signal reads ${(score.rarityLabel || "rare").toLowerCase()} — this pair stands out before you say a word.`,
-      `Demand reads ${(score.demandLabel || "steady").toLowerCase()}, so the blend itself matters more than polishing either side alone.`,
-    ],
-  };
-}
-
-function makeProject(a, b) {
-  const seed = F.hash(a + "×" + b);
-  const formats = ["Portfolio artifact", "Product prototype", "Case study", "Launch piece"];
-  const format = formats[seed % formats.length];
-  const tools = [a, b, "GitHub", "Notion"];
-  if (F.categoryOf(a) === "tech") tools.push("API docs");
-  if (F.categoryOf(b) === "creative") tools.push("Figma");
-  return {
-    title: `${a} × ${b} — the flagship piece`,
-    client: "Modeled on hiring-manager needs",
-    timeline: `${4 + (seed % 3)} weeks`,
-    format,
-    audience: "Future teammates and hiring managers",
-    goal: `${a} meets ${b}: build the one piece that proves this combination earns a place on a team.`,
-    tools: [...new Set(tools)],
-    deliverables: ["Working artifact", "Short write-up", "Published link"],
-    expectedOutcome: "A piece you can open in interviews — and the verified badge that comes from shipping it.",
-  };
-}
-
-function makeFusion(a, b) {
-  const seed = F.hash(a + "×" + b);
-  const score = makeScore(a, b);
-  return {
-    id: "f" + seed,
-    a,
-    b,
-    categoryA: F.categoryOf(a),
-    categoryB: F.categoryOf(b),
-    createdAt: "2 days ago",
-    addedSkills: [],
-    score,
-    brief: makeBrief(a, b, score),
-    roadmap: makeRoadmap(a, b),
-    project: makeProject(a, b),
-  };
-}
-
 const SKILL_TAGS = ["Web Design", "Prototyping", "SQL", "Analytics", "Copywriting", "Prompting", "Framer Motion", "Public Speaking"];
 const COMPETENCIES = ["Time management", "Explaining complexity", "Business communication", "Iteration", "Collaboration"];
 function logTag(label, kind) {
@@ -273,13 +115,6 @@ window.Store = (function () {
     set({ user: next });
   }
 
-  function fuse(a, b) {
-    const fusion = makeFusion(a, b);
-    fusion.id = "f" + F.hash(a + "×" + b) + "-" + state.fusions.length;
-    set({ fusions: [fusion, ...state.fusions] });
-    return fusion;
-  }
-
   function getFusion(id) {
     return state.fusions.find((f) => f.id === id) || null;
   }
@@ -289,6 +124,12 @@ window.Store = (function () {
     if (!f || f.addedSkills.includes(skill)) return;
     const next = { ...f, addedSkills: [...f.addedSkills, skill], score: { ...f.score, value: f.score.value + (f.score.recommendation && f.score.recommendation.skill === skill ? f.score.recommendation.delta : 6) } };
     set({ fusions: state.fusions.map((x) => (x.id === fusionId ? next : x)) });
+  }
+
+  function refreshFusionScore(fusionId, score) {
+    // Backend (/api/score/) is the source of truth: replace the stale copy
+    // (e.g. pre-reload heuristic) with the live/cached server score.
+    set({ fusions: state.fusions.map((x) => (x.id === fusionId ? { ...x, score } : x)) });
   }
 
   async function loadGrowthLog() {
@@ -372,45 +213,23 @@ window.Store = (function () {
     set({ peers: state.peers.map((p) => (p.handle === handle ? { ...p, connection } : p)) });
   }
 
-  function getPreviews(fusion, salt = 0) {
-    const f = fusion;
-    const baseWeeks = f.roadmap.totalWeeks;
-    const variants = [
-      {
-        title: f.roadmap.title,
-        summary: "The flagship path — follow the brief to a shipped, verified artifact.",
-        weeks: baseWeeks,
-        outcomes: ["Ship one verified artifact from the brief", "Reach your first fusion-score milestone"],
-      },
-      {
-        title: `Become the ${f.a}-minded ${f.b} hire`,
-        summary: "Position for roles that want this exact blend on a team.",
-        weeks: 4 + ((F.hash(f.a + f.b) + salt) % 4),
-        outcomes: ["Build a role-ready portfolio story", "Get real replies in " + f.a + " × " + f.b + " roles"],
-      },
-      {
-        title: `Turn ${f.a} × ${f.b} into a service`,
-        summary: "Package the rare pair into an offering you can sell.",
-        weeks: 6 + ((F.hash(f.a + "x" + f.b) >> 2) % 3),
-        outcomes: ["Package the pair into a sellable offering", "Land your first paying project"],
-      },
-    ];
-    const rot = ((salt % 3) + 3) % 3;
-    const ordered = [...variants.slice(rot), ...variants.slice(0, rot)];
-    return ordered.map((v, i) => ({
-      id: `pv${i}-${salt}`,
-      title: v.title,
-      summary: v.summary,
-      weeks: v.weeks,
-      outcomes: v.outcomes || [],
-      roadmap: makeRoadmap(f.a, f.b, { title: v.title, totalWeeks: v.weeks, salt: salt + i }),
-    }));
-  }
-
   function chooseRoadmap(fusionId, preview) {
     const f = getFusion(fusionId);
     if (!f || !preview) return;
-    set({ fusions: state.fusions.map((x) => (x.id === fusionId ? { ...x, roadmap: preview.roadmap } : x)) });
+    set({
+      fusions: state.fusions.map((x) =>
+        x.id === fusionId
+          ? { ...x, roadmap: preview.roadmap, roadmapId: preview.roadmapId || null }
+          : x
+      ),
+    });
+    // Persist server-side (locks the row, blocks further tweaks). Fire-and-
+    // forget: the UI flow must not block on it, and the token rides along.
+    if (preview.roadmapId) {
+      window.Api.roadmapChoose(preview.roadmapId).catch((e) => {
+        console.warn("[Roadmaps] choose failed to persist —", e && e.message);
+      });
+    }
   }
 
   function tasksFor(n) {
@@ -435,22 +254,18 @@ window.Store = (function () {
         x.id === fusionId ? { ...x, roadmap: { ...x.roadmap, progressWeeks: pw + 1, weeks } } : x
       ),
     });
+    // Persist the check-off so it survives a reload (fire-and-forget).
+    if (f.roadmapId) {
+      window.Api.roadmapProgress(f.roadmapId, pw + 1).catch((e) => {
+        console.warn("[Roadmaps] progress failed to persist —", e && e.message);
+      });
+    }
   }
 
-  function explainFeedback(a, b, text) {
-    const seed = F.hash(a + "×" + b + (text || "").slice(0, 10));
-    const clarity = ["Clear", "Tight", "Specific"][seed % 3];
-    const notes = [
-      `You connected ${a} and ${b} in one line — that's the whole trick.`,
-      `Good instinct. Tightening it to one concrete sentence will land harder.`,
-      `That reads genuine, which beats polished. One example would seal it.`,
-    ];
-    const suggestions = [
-      `Add one small detail only someone with the ${a} × ${b} blend would know.`,
-      `Rewrite it as: "I did X using ${a}, and it changed how we do ${b}."`,
-      `End on the outcome — what changed because you shipped it.`,
-    ];
-    return { clarity, note: notes[seed % 3], suggestion: suggestions[(seed >> 3) % 3] };
+  async function explainFeedback(a, b, text) {
+    // SF-backed feedback via /api/explain/ (backend falls back to a local
+    // deterministic template when the model is unreachable).
+    return window.Api.explainFeedback(a, b, text);
   }
 
   // ---- Connect (FR-9/FR-11): all backend-wired via window.Api, polled from components.
@@ -588,35 +403,100 @@ window.Store = (function () {
     return fusion;
   }
 
-  function normalizeRoadmap(rm, a, b) {
-    const weeks = (rm.weeks || []).map((w, i) => ({
-      n: w.week || i + 1,
-      title: w.topic,
-      objectives: w.objectives || [],
-      status: i === 0 ? "current" : "upcoming",
-      tasks: i === 0 ? [
-        { id: `t${i + 1}a`, label: `Complete the ${a} piece for week ${i + 1}`, done: false },
-        { id: `t${i + 1}b`, label: "Reflect and log one note in your Growth Log", done: false },
-      ] : [],
-    }));
+  function normalizeRoadmap(rm, a, b, progressWeeks = 1) {
+    const total = (rm.weeks || []).length;
+    const weeks = (rm.weeks || []).map((w, i) => {
+      const n = w.week || i + 1;
+      const status = n < progressWeeks ? "done" : n === progressWeeks ? "current" : "upcoming";
+      return {
+        n,
+        title: w.topic,
+        objectives: w.objectives || [],
+        status,
+        tasks: status === "current" ? tasksFor(n) : [],
+      };
+    });
+    const over = progressWeeks > total;
+    if (over) weeks.forEach((w) => { w.status = "done"; w.tasks = []; });
     return {
-      title: rm.title, weeks, progressWeeks: 1,
-      totalWeeks: weeks.length, paused: false,
+      title: rm.title, weeks,
+      progressWeeks: over ? total + 1 : Math.min(Math.max(1, progressWeeks), Math.max(total, 1)),
+      totalWeeks: total, paused: false,
       outcome_statement: rm.outcome_statement,
+      roadmapId: rm.roadmap_id || null,
     };
   }
 
   // POST /api/roadmap/previews/ -> normalize previews + roadmaps to UI shape.
   async function getPreviewsRemote(fusion, salt = 0) {
-    const data = await window.Api.roadmapPreviews(fusion.a, fusion.b, salt);
+    const data = await window.Api.roadmapPreviews(fusion, salt);
     return (data.previews || []).map((p) => ({
       id: p.id,
       title: p.title,
       summary: p.summary,
       weeks: p.weeks,
       outcomes: p.outcomes || [],
+      roadmapId: p.roadmap_id || null,
       roadmap: normalizeRoadmap(p.roadmap, fusion.a, fusion.b),
     }));
+  }
+
+  function fromBackendFusion(r) {
+    return {
+      id: r.id,
+      a: r.a,
+      b: r.b,
+      categoryA: r.categoryA || F.categoryOf(r.a),
+      categoryB: r.categoryB || F.categoryOf(r.b),
+      createdAt: r.createdAt || "just now",
+      addedSkills: r.addedSkills || [],
+      score: r.score,
+      brief: r.brief,
+      project: r.project,
+      roadmap: null,
+    };
+  }
+
+  // GET /api/fusion/history/ -> restore the signed-in user's past fusions.
+  // Stored fusions (DB rows) must not clobber this session's live ones; merge
+  // by id and keep whichever already has a roadmap but drop duplicates.
+  async function loadFusions() {
+    const data = await window.Api.fusionHistory();
+    const merged = [...state.fusions];
+    for (const r of data.fusions || []) {
+      const mapped = fromBackendFusion(r);
+      const idx = merged.findIndex((f) => f.id === mapped.id);
+      // Session-fresh copy wins (it may carry a chosen roadmap from this flow)
+      if (idx === -1) merged.push(mapped);
+      else merged[idx] = merged[idx].roadmap ? merged[idx] : mapped;
+    }
+    set({ fusions: merged });
+    // Restore each fusion's chosen roadmap (with progress) after a reload —
+    // without this the chosen path only lived in memory.
+    const restorable = merged.filter((f) => !f.roadmap);
+    await Promise.allSettled(restorable.map(async (f) => {
+      const res = await window.Api.roadmapChosen(f.id);
+      if (res.roadmap) {
+        const rm = normalizeRoadmap(res.roadmap, f.a, f.b, res.roadmap.progress_weeks || 1);
+        set({
+          fusions: state.fusions.map((x) =>
+            x.id === f.id ? { ...x, roadmap: rm, roadmapId: rm.roadmapId, constraints: res.roadmap.constraints || [] } : x
+          ),
+        });
+      }
+    }));
+    return state.fusions;
+  }
+
+  async function tweakRoadmap(fusion, pv, newRequest) {
+    // Pre-commit change request — SF judges by ONE rule: both skills must
+    // survive. Returns {classification, reasoning, diff, updated_constraints}.
+    return window.Api.roadmapTweak({
+      roadmap_id: pv.roadmapId,
+      skill_a: fusion.a,
+      skill_b: fusion.b,
+      new_request: newRequest,
+    });
   }
 
   return {
@@ -625,10 +505,10 @@ window.Store = (function () {
     set,
     useStore,
     updateUser,
-    fuse,
     fuseRemote,
     getFusion,
     addSkillToFusion,
+    refreshFusionScore,
     addLog,
     verifyEntry,
     savePost,
@@ -637,10 +517,11 @@ window.Store = (function () {
     sendMessage,
     addPeer,
     setPeerConnection,
-    getPreviews,
     getPreviewsRemote,
+    loadFusions,
     chooseRoadmap,
     completeWeek,
+    tweakRoadmap,
     explainFeedback,
     loadConnectProfile,
     sendHeartbeat,

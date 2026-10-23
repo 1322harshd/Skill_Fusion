@@ -15,26 +15,49 @@ function Quiz() {
   }
   const [left, setLeft] = useState(300);
   const [levels, setLevels] = useState(null);
+  const knownLevels = useRef([]); // resume-evidenced levels, merged in at the end
   const [error, setError] = useState(null);
   const timer = useRef(null);
 
-  // Evidence rule: skills already evidenced (CV/GitHub/Growth Log) are NOT
-  // quizzed. Fail-open: if evidence can't be read, quiz everything.
+  // Evidence rule: SF reads the uploaded resume and decides per chosen skill
+  // whether it is already evidenced (with a 1-10 level) — those skills are NOT
+  // quizzed. Growth Log mentions are a secondary check. Fail-open: any error
+  // falls back to quizzing everything.
   useEffect(() => {
+    let dead = false;
     if (!urlSkills.length) { setChecking(false); return; }
-    window.Api.listGrowthLogEntries()
-      .then((entries) => {
-        const have = new Set();
-        (Array.isArray(entries) ? entries : entries.entries || []).forEach((e) => {
-          (e.tags || []).forEach((t) => have.add(String(t.label || t).toLowerCase()));
-          if (e.title) have.add(String(e.title).toLowerCase());
-        });
-        const need = urlSkills.filter((s) => ![...have].some((h) => h.includes(s.toLowerCase()) || s.toLowerCase().includes(h)));
-        setSkills(need.length ? need : []);
-        setChecking(false);
-        if (!need.length) setLevels([]);
-      })
-      .catch(() => { setSkills(urlSkills); setChecking(false); });
+    (async () => {
+      // Evidence check may race the auth bootstrap; always try — anon users
+      // just 401 here and the catch falls open to the quiz path.
+      let verdicts = null;
+      try { verdicts = (await window.Api.skillsKnown(urlSkills)).verdicts; } catch (e) { verdicts = null; }
+      if (dead) return;
+      window.Api.listGrowthLogEntries()
+        .then((entries) => {
+          if (dead) return;
+          const have = new Set();
+          (Array.isArray(entries) ? entries : entries.entries || []).forEach((entry) => {
+            (entry.tags || []).forEach((t) => have.add(String(t.label || t).toLowerCase()));
+            if (entry.title) have.add(String(entry.title).toLowerCase());
+          });
+          let need = urlSkills;
+          knownLevels.current = [];
+          if (verdicts) {
+            knownLevels.current = verdicts
+              .filter((v) => v.known && v.level != null)
+              .map((v) => ({ label: v.label, level: v.level, reason: v.reason, levelSource: "resume" }));
+            need = verdicts.filter((v) => !(v.known && v.level != null)).map((v) => v.label);
+          }
+          need = need.filter(
+            (s) => ![...have].some((h) => h.includes(s.toLowerCase()) || s.toLowerCase().includes(h)),
+          );
+          setSkills(need.length ? need : []);
+          setChecking(false);
+          if (!need.length && knownLevels.current.length) setLevels(knownLevels.current.slice());
+        })
+        .catch(() => { if (!dead) { setSkills(urlSkills); setChecking(false); } });
+    })();
+    return () => { dead = true; };
   }, []);
 
   useEffect(() => {
@@ -65,7 +88,7 @@ function Quiz() {
     const answers = (session.questions || []).map((qq) => ({ id: qq.id, choice: picks[qq.id] ?? -1 }));
     try {
       const d = await window.Api.quizSubmit(session.session_id, answers);
-      setLevels(d.levels);
+      setLevels(knownLevels.current.concat(d.levels));
     } catch (e) {
       setError("Couldn't submit — is the backend running?");
     }
@@ -89,6 +112,20 @@ function Quiz() {
       </div>
     );
   }
+  if (levels && levels.length) {
+    return (
+      <div className="mx-auto max-w-2xl py-16 text-center">
+        <p className="font-body text-[11px] uppercase tracking-[0.18em] text-white/50">{"// Your baseline"}</p>
+        {levels.map((l) => (
+          <div key={l.label} className="liquid-glass mt-4 rounded-[1rem] px-6 py-5">
+            <p className="font-heading text-2xl italic text-white">{l.label}: {l.level}/10</p>
+            <p className="mt-1 font-body text-xs text-white/60">{l.reason}</p>
+          </div>
+        ))}
+        <button type="button" onClick={() => window.Router.go("/roadmaps")} className="mt-8 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black">Continue to roadmaps</button>
+      </div>
+    );
+  }
   if (!skills.length) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center text-center">
@@ -103,20 +140,6 @@ function Quiz() {
       <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center text-center">
         <p className="font-heading text-2xl italic text-white">Quiz unreachable</p>
         <p className="mt-2 font-body text-sm text-white/70">{error}</p>
-      </div>
-    );
-  }
-  if (levels) {
-    return (
-      <div className="mx-auto max-w-2xl py-16 text-center">
-        <p className="font-body text-[11px] uppercase tracking-[0.18em] text-white/50">{"// Your baseline"}</p>
-        {levels.map((l) => (
-          <div key={l.label} className="liquid-glass mt-4 rounded-[1rem] px-6 py-5">
-            <p className="font-heading text-2xl italic text-white">{l.label}: {l.level}/10</p>
-            <p className="mt-1 font-body text-xs text-white/60">{l.reason}</p>
-          </div>
-        ))}
-        <button type="button" onClick={() => window.Router.go("/roadmaps")} className="mt-8 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black">Continue to roadmaps</button>
       </div>
     );
   }

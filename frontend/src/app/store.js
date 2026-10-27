@@ -396,7 +396,7 @@ window.Store = (function () {
       id: f.id, a: f.a, b: f.b,
       categoryA: F.categoryOf(a), categoryB: F.categoryOf(b),
       createdAt: "just now", addedSkills: [],
-      score: f.score, brief: f.brief, project: f.project,
+      score: f.score, brief: f.brief, project: normalizeProject(f.project, a, b),
       roadmap: null,
     };
     set({ fusions: [fusion, ...state.fusions] });
@@ -441,6 +441,41 @@ window.Store = (function () {
     }));
   }
 
+  // SF project briefs have drifted between shapes across versions this session
+  // (make_project now returns the full camelCase contract, but older rows hold
+  // snake_case scraps like key_deliverables) — normalize once at the store
+  // boundary so Project.js can always render.
+  function normalizeProject(p, a, b) {
+    p = p && typeof p === "object" ? p : {};
+    const pick = (...keys) => {
+      for (const k of keys) {
+        const v = p[k];
+        if (typeof v === "string" && v.trim()) return v.trim();
+        if (Array.isArray(v) && v.length) return v;
+      }
+      return null;
+    };
+    const arr = (...keys) => {
+      for (const k of keys) {
+        const v = p[k];
+        if (Array.isArray(v) && v.length) return v.map(String);
+      }
+      return null;
+    };
+    return {
+      title: pick("title") || `${a} × ${b} flagship project`,
+      client: pick("client", "client_type") || "Self-directed",
+      timeline: pick("timeline", "duration") || "2-4 weeks",
+      format: pick("format", "format_type") || "Web experience",
+      audience: pick("audience") || "Early adopters and reviewers",
+      goal: pick("goal", "goal_statement") || (typeof p.expected_outcome === "string" && p.expected_outcome) || `One flagship artifact that proves ${a} × ${b}.`,
+      tools: arr("tools") || ["Tools of your trade"],
+      deliverables: arr("deliverables", "key_deliverables") || ["A shipped, shareable artifact"],
+      expectedOutcome: pick("expectedOutcome") || (typeof p.expected_outcome === "string" && p.expected_outcome) || "Hireable proof of the fusion, not just a certificate.",
+      status: p.status || "brief",
+    };
+  }
+
   function fromBackendFusion(r) {
     return {
       id: r.id,
@@ -452,7 +487,7 @@ window.Store = (function () {
       addedSkills: r.addedSkills || [],
       score: r.score,
       brief: r.brief,
-      project: r.project,
+      project: normalizeProject(r.project, r.a, r.b),
       roadmap: null,
     };
   }

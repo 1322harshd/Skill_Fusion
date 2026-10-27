@@ -79,7 +79,7 @@ function Project({ id }) {
         <motion.div {...enter(0.1)} className="liquid-glass rounded-2xl p-6">
           <p className="font-body text-[11px] uppercase tracking-[0.18em] text-white/50">Tools & materials</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            {p.tools.map((t) => (
+            {(p.tools || []).map((t) => (
               <span key={t} className="liquid-glass rounded-full px-3 py-1.5 font-body text-xs font-medium text-white/85">
                 {t}
               </span>
@@ -89,7 +89,7 @@ function Project({ id }) {
         <motion.div {...enter(0.15)} className="liquid-glass rounded-2xl p-6">
           <p className="font-body text-[11px] uppercase tracking-[0.18em] text-white/50">Deliverable</p>
           <ul className="mt-3 flex flex-col gap-2.5">
-            {p.deliverables.map((d) => (
+            {(p.deliverables || []).map((d) => (
               <li key={d} className="flex gap-3 font-body text-sm font-light text-white/85">
                 <Icons.Check className="mt-0.5 h-4 w-4 shrink-0 text-white/60" />
                 {d}

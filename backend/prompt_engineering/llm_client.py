@@ -38,7 +38,15 @@ async def call_sf14b(adapter, prompt, retries=2, max_tokens=3000):
     body = {"model": SF_MODEL,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.1, "max_tokens": max_tokens,
-            "stream": False, "enable_thinking": False}
+            "stream": False,
+            # Disable gemma4's hidden reasoning pass. NOTE: this must be
+            # nested under chat_template_kwargs — a top-level enable_thinking
+            # key is silently ignored by mlx_lm.server, and the generation task
+            # family then spirals to 12-20k reasoning tokens and dies at the
+            # cap (the "re-thinking forever" failure). Measured: identical
+            # roadmap prompt with the kwarg off = 20k tokens/no output; with
+            # it on = ~9s, zero reasoning tokens, clean JSON.
+            "chat_template_kwargs": {"enable_thinking": False}}
     for attempt in range(retries+1):
         try:
             # sync requests in async wrapper for scaffold
@@ -46,10 +54,10 @@ async def call_sf14b(adapter, prompt, retries=2, max_tokens=3000):
             data=r.json()
             choice=data["choices"][0]
             msg=choice["message"]
-            # SF spends ~2000 tokens on a hidden reasoning pass before writing
-            # the actual answer (true regardless of enable_thinking). Too low
-            # a max_tokens cuts it off mid-thought with no answer at all —
-            # that reads as a JSONDecodeError below instead of what it is.
+            # Even with thinking disabled the model can occasionally emit a
+            # scratchpad (the template toggle is best-effort server-side); a
+            # length cutoff reads as a JSONDecodeError below instead of what
+            # it is, so surface it clearly.
             if choice.get("finish_reason") == "length":
                 raise ValueError(f"SF response cut off before completing (max_tokens={max_tokens} too low)")
             text=((msg.get("content") or "") + (msg.get("reasoning") or "")).strip().replace("```json","").replace("```","").strip()

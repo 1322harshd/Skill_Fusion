@@ -47,3 +47,47 @@ def make_project(a, b):
               f'Return ONLY valid JSON, no markdown fencing, no extra text, matching exactly: {BRIEF_SHAPE}')
     raw = asyncio.run(call_sf14b_json("sf-project", prompt))
     return normalize_brief(raw, a, b)
+
+
+# ---- milestone submission assessment --------------------------------------
+ASSESS_SHAPE = ('{"matchScore": integer 0-100, "closeness": "strong | partial | weak", '
+    '"strengths": [string, string], "gaps": [string, string], "verdict": string}')
+
+def assess_submission(brief, explanation, artifact_text, source_link=""):
+    """Grade the submitted work against the project brief like an assessor:
+    how much of the briefed deliverable actually exists in the artifact."""
+    prompt = (
+        "You are assessing a submitted project like a strict but fair college "
+        "assessor. Below are the PROJECT BRIEF (what was supposed to be built), "
+        "the student's own explanation, and the submitted artifact text.\n"
+        "Compare the artifact against the brief: does the described work exist, "
+        "is it real and complete, does it use BOTH skills of the fusion?\n"
+        "grade matchScore 0-100 (0 = nothing in the artifact matches the brief, "
+        "100 = all briefed deliverables clearly present and complete); closeness "
+        "strong (75+) / partial (35-74) / weak (<35); strengths: 2 things done "
+        "well; gaps: 2 concrete things missing or unproven; verdict: 1-2 sentence "
+        "assessment in plain words.\n"
+        f'Return ONLY valid JSON, no markdown fencing, matching exactly: {ASSESS_SHAPE}\n\n'
+        "PROJECT BRIEF:\n" + str(brief)[:1500] + "\n\n"
+        "STUDENT EXPLANATION:\n" + str(explanation)[:1500] + "\n\n"
+        "SUBMITTED ARTIFACT TEXT:\n" + str(artifact_text)[:6000]
+        + ("\n\nSOURCE LINK: " + source_link if source_link else "")
+    )
+    raw = asyncio.run(call_sf14b_json("sf-assess", prompt, retries=1))
+
+    if not isinstance(raw, dict):
+        raw = {}
+    try:
+        score = max(0, min(100, int(raw.get("matchScore"))))
+    except (TypeError, ValueError):
+        score = None
+    closeness = str(raw.get("closeness", "")).lower()
+    if closeness not in ("strong", "partial", "weak"):
+        closeness = "weak" if (score is None or score < 35) else "partial" if score < 75 else "strong"
+    return {
+        "matchScore": score,
+        "closeness": closeness,
+        "strengths": [str(s) for s in (raw.get("strengths") or [])[:3]],
+        "gaps": [str(s) for s in (raw.get("gaps") or [])[:3]],
+        "verdict": str(raw.get("verdict", "")).strip() or "Assessed against the project brief.",
+    }

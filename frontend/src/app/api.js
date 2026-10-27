@@ -421,5 +421,9 @@ window.Api = (function () {
     skillsKnown: skillsKnown,
     explainFeedback: (a, b, text, context = "week") =>
       request("/explain/", { method: "POST", body: { a, b, text, context } }),
+    // Multipart project submission: FormData with fusion_id, explanation,
+    // brief (JSON string), source_link and/or file. Returns {submission}.
+    submitProjectWork: (formData) =>
+      request("/projects/submit", { method: "POST", body: formData, retry: false }),
   };
 })();

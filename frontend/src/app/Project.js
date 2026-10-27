@@ -113,7 +113,7 @@ function Project({ id }) {
           }
         >
           <Icons.Bolt className="h-4 w-4" />
-          {milestone ? "Close milestone log" : "Log a milestone"}
+          {milestone ? "Close submission" : "Submit work"}
         </button>
         <div className="flex gap-4">
           <a href={"#/log"} className="font-body text-sm text-white/60 transition-colors hover:text-white">
@@ -137,13 +137,15 @@ function Project({ id }) {
               a={fusion.a}
               b={fusion.b}
               fusionId={fusion.id}
-              logTitle={`Milestone — ${p.format}`}
+              submitMode={true}
+              projectBrief={p}
+              logTitle={`Project submission — ${p.title}`}
               logTags={[
                 { label: p.format, kind: "skill", color: F.colorOf(p.format) },
                 { label: "Project delivery", kind: "competency", color: null },
               ]}
-              placeholder={`What did you ship for this brief?`}
-              buttonLabel="Log milestone"
+              placeholder={`How did what you built use ${fusion.a} and ${fusion.b}?`}
+              buttonLabel="Submit & assess"
             />
           </motion.div>
         )}

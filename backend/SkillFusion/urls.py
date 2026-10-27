@@ -27,6 +27,7 @@ urlpatterns = [
     path('api/fusion/', include('fusion_engine.urls')),
     path('api/roadmap/', include('roadmaps.urls')),
     path('api/project/', include('projects.urls')),
+    path('api/projects/', include('projects.urls')),
     path('api/score/', include('scores.urls')),
     path('api/explain/', include('explain.urls')),
     path('api/llm/', include('prompt_engineering.urls')),

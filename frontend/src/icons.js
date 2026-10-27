@@ -156,6 +156,10 @@ const Icons = {
     </svg>
   ),
 
+  UploadCloud: (props) => (
+    <ArrowPath d="M7 16a4.5 4.5 0 1 1 .9-8.9 6 6 0 0 1 11.6 1.9 4 4 0 0 1-.5 7M12 12v9M8.5 15.5 12 12l3.5 3.5" strokeWidth={1.5} {...props} />
+  ),
+
   Glass: (props) => (
     <ArrowPath d="M8 2h8l4 8-8 12L4 10l4-8Z M4 10h16" strokeWidth={1.5} {...props} />
   ),

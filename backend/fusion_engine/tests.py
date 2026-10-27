@@ -138,21 +138,21 @@ class FusionHistoryTests(TestCase):
 
 
 # ---- quiz ----------------------------------------------------------------
-# _gen_skill slices [:count] per difficulty split (2 hard, 2 medium, 1 easy)
-# from each SF call, so the mock must return questions matching the diff the
-# prompt asked for.
-
+# One SF call for the whole quiz: the mock parses "SKILLS:" from the prompt and
+# returns 5 questions per skill (2 hard, 2 medium, 1 easy), skill-tagged.
 import re
 
 
 def _fake_quiz_call(adapter, prompt):
-    m = re.search(r"Write (\d+) (\w+) multiple-choice", prompt)
-    diff = m.group(2)
-    return {"questions": [
-        {"q": f"{diff} question {i}", "options": ["a", "b", "c", "d"],
-         "answer_index": i % 4, "difficulty": diff}
-        for i in range(5)
-    ]}
+    m = re.search(r"SKILLS: (.+)", prompt)
+    skills = [s.strip() for s in m.group(1).split(",")]
+    qs = []
+    for skill in skills:
+        for diff, count in (("hard", 2), ("medium", 2), ("easy", 1)):
+            qs += [{"skill": skill, "q": f"{skill} {diff} question {i}",
+                    "options": ["a", "b", "c", "d"], "answer_index": i % 4,
+                    "difficulty": diff} for i in range(count)]
+    return {"questions": qs}
 
 
 class QuizSessionTests(TestCase):

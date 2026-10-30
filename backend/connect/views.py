@@ -16,7 +16,8 @@ from .serializers import (
     report_dict,
     room_message_dict,
 )
-from .services import find_or_create_match, get_or_create_chat_profile
+from .services import PeerBusyError, find_or_create_match, get_or_create_chat_profile, start_direct_match
+from .streak import compute_streak
 
 PRESENCE_WINDOW_SECONDS = 90
 REPORT_AUTO_HIDE_THRESHOLD = 2
@@ -56,7 +57,12 @@ class PresenceView(APIView):
         out = []
         for p in rows:
             profile = get_or_create_chat_profile(p.user)
-            out.append({"handle": profile.handle, "status": p.status, "fusionLabel": p.fusionLabel})
+            out.append({
+                "handle": profile.handle,
+                "status": p.status,
+                "fusionLabel": p.fusionLabel,
+                "streak": compute_streak(p.user),
+            })
         return Response(out)
 
     def post(self, request):
@@ -111,6 +117,29 @@ class MatchView(APIView):
         serializer = JoinMatchSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         match = find_or_create_match(request.user, serializer.validated_data["fusionLabel"])
+        return Response(_match_payload(match, request.user), status=status.HTTP_201_CREATED)
+
+
+class MatchWithPeerView(APIView):
+    """Click-to-message a specific online peer from the open room, instead
+    of waiting on the anonymous fusion-label queue."""
+
+    def post(self, request, handle):
+        ban = _ban_check(request.user)
+        if ban:
+            return ban
+        target_profile = get_object_or_404(ChatProfile, handle=handle)
+        target_user = target_profile.user
+        if target_user.pk == request.user.pk:
+            return Response({"detail": "That's you."}, status=status.HTTP_400_BAD_REQUEST)
+
+        presence = Presence.objects.filter(user=target_user).first()
+        fusion_label = presence.fusionLabel if presence else ""
+
+        try:
+            match = start_direct_match(request.user, target_user, fusion_label)
+        except PeerBusyError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_409_CONFLICT)
         return Response(_match_payload(match, request.user), status=status.HTTP_201_CREATED)
 
 

@@ -80,6 +80,45 @@ class SubmitWorkTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn(".pdf", response.json()["error"])
 
+    def test_docx_attachment_text_is_extracted(self):
+        import io, zipfile
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w") as z:
+            z.writestr("word/document.xml",
+                       '<w:document xmlns:w="http://w"><w:body><w:p><w:r><w:t>'
+                       "Deployed the dashboard and measured latency.</w:t></w:r></w:p>"
+                       "</w:body></w:document>")
+        with patch("projects.services.call_sf14b_json", return_value=VERDICT_PAYLOAD):
+            response = self.client.post("/api/projects/submit", {
+                "fusion_id": "f-demo", "explanation": "docx work",
+                "file": SimpleUploadedFile("work.docx", buf.getvalue(), content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+            }, format="multipart")
+        self.assertEqual(response.status_code, 201)
+        from projects.models import ProjectSubmission
+        self.assertIn("dashboard", ProjectSubmission.objects.latest("id").file_text)
+
+    def test_image_attachment_kept_as_visual_proof(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        with patch("projects.services.call_sf14b_json", return_value=VERDICT_PAYLOAD):
+            response = self.client.post("/api/projects/submit", {
+                "fusion_id": "f-demo", "explanation": "screenshot proof attached",
+                "file": SimpleUploadedFile("proof.png", b"\x89PNG pretend", content_type="image/png"),
+            }, format="multipart")
+        self.assertEqual(response.status_code, 201)
+        sub = response.json()["submission"]
+        self.assertEqual(sub["filename"], "proof.png")
+        self.assertIn("Image attached as proof", sub["attachmentNote"])
+
+    def test_oversized_attachment_rejected(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        response = self.client.post("/api/projects/submit", {
+            "fusion_id": "f-demo", "explanation": "big",
+            "file": SimpleUploadedFile("big.zip", b"x" * (10 * 1024 * 1024 + 1), content_type="application/zip"),
+        }, format="multipart")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("10MB", response.json()["error"])
+
     def test_link_only_submission_assesses_without_artifact_text(self):
         with patch("projects.services.call_sf14b_json", return_value=VERDICT_PAYLOAD):
             response = self.client.post("/api/projects/submit", {

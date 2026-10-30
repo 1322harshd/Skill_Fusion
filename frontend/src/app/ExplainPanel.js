@@ -70,7 +70,6 @@ function ExplainPanel({ a, b, fusionId, logTitle, logTags = [], placeholder, but
             <input
               ref={fileInput}
               type="file"
-              accept=".pdf,.txt,.md"
               className="sr-only"
               onChange={(e) => setFile(e.target.files && e.target.files[0] || null)}
             />
@@ -80,14 +79,16 @@ function ExplainPanel({ a, b, fusionId, logTitle, logTags = [], placeholder, but
               className="liquid-glass flex w-full items-center gap-2 rounded-xl px-4 py-2.5 font-body text-sm text-white/85 transition-colors hover:text-white"
             >
               <Icons.UploadCloud className="h-4 w-4" />
-              {file ? file.name : "Upload work (.pdf, .txt, .md)"}
+              {(file ? file.name : "Add proof or attachment").length > 34
+                ? (file ? file.name : "Add proof or attachment").slice(0, 32) + "…" : (file ? file.name : "Add proof or attachment")}
             </button>
+            <p className="mt-1 font-body text-[10px] text-white/40">Any document (PDF, docx, code, images, zip) · max 10MB</p>
           </div>
           <input
             type="url"
             value={sourceLink}
             onChange={(e) => setSourceLink(e.target.value)}
-            placeholder="Or a source link — GitHub, Figma, deployed URL…"
+            placeholder="Or a link — website, Drive, GitHub, live app…"
             className="w-full rounded-xl bg-black/40 px-4 py-2.5 font-body text-sm text-white outline-none ring-1 ring-white/15 transition-shadow focus:ring-white/40"
           />
         </div>
@@ -129,6 +130,9 @@ function ExplainPanel({ a, b, fusionId, logTitle, logTags = [], placeholder, but
                 {assessment.verdict.closeness}
               </span>
             </div>
+            {assessment.attachmentNote && (
+              <p className="mt-2 font-body text-[11px] text-white/55">📎 {assessment.attachmentNote}</p>
+            )}
             <p className="mt-3 font-body text-sm font-light text-white/85">{assessment.verdict.verdict}</p>
             {assessment.verdict.strengths && assessment.verdict.strengths.length > 0 && (
               <div className="mt-3">

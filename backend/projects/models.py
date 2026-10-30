@@ -14,6 +14,7 @@ class ProjectSubmission(models.Model):
     filename = models.CharField(max_length=200, blank=True)
     file_text = models.TextField(blank=True)  # extracted for SF; not re-served
     source_link = models.URLField(blank=True)
+    attachment_note = models.CharField(max_length=300, blank=True)  # e.g. image kept as visual proof
     verdict = models.JSONField(default=dict, blank=True)  # {matchScore, closeness, strengths, gaps, verdict}
     match_score = models.IntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

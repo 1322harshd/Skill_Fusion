@@ -7,6 +7,7 @@ connect_urlpatterns = [
     path("presence", views.PresenceView.as_view()),
     path("room/messages", views.RoomMessagesView.as_view()),
     path("match", views.MatchView.as_view()),
+    path("peers/<str:handle>/match", views.MatchWithPeerView.as_view()),
     path("matches/<uuid:match_id>", views.MatchDetailView.as_view()),
     path("matches/<uuid:match_id>/messages", views.MatchMessagesView.as_view()),
     path("matches/<uuid:match_id>/exchange", views.ExchangeView.as_view()),

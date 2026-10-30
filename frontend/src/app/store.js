@@ -311,6 +311,12 @@ window.Store = (function () {
     return data;
   }
 
+  async function messagePeer(handle) {
+    const data = await window.Api.connectMatchWithPeer(handle);
+    applyMatch(data);
+    return data;
+  }
+
   async function refreshMatch() {
     if (!state.connectMatchId) return null;
     const data = await window.Api.connectGetMatch(state.connectMatchId);
@@ -553,6 +559,7 @@ window.Store = (function () {
     sendRoomMessage,
     reportRoomMessage,
     joinMatch,
+    messagePeer,
     refreshMatch,
     loadMatchMessages,
     sendMatchMessage,

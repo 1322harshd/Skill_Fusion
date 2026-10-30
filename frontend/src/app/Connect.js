@@ -3,6 +3,7 @@ const { motion, AnimatePresence } = window.Motion;
 const { Icons } = window;
 const { Avatar } = window;
 const { FadingVideo } = window;
+const F = window.Fusion;
 const Store = window.Store;
 
 const enter = window.MotionKit.enter;
@@ -18,16 +19,94 @@ const EXCHANGE_POLL_MS = 3000;
 
 const STATUS_DOT = { active: "bg-[var(--color-status-active)]", typing: "bg-[var(--color-status-typing)]", idle: "bg-white/50", away: "bg-white/15" };
 
-function PresenceAvatar({ p }) {
+function PresenceAvatar({ p, onClick }) {
   return (
-    <div className="flex flex-col items-center gap-1.5">
+    <button type="button" onClick={onClick} className="tappable flex flex-col items-center gap-1.5">
       <div className="relative">
         <Avatar handle={p.handle} name={p.handle.split(".")[0]} size="lg" />
         <span className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-black ${STATUS_DOT[p.status] || "bg-white/30"}`} />
       </div>
       <span className="max-w-[72px] truncate font-body text-[11px] font-medium text-white/80">{p.handle}</span>
       <span className="max-w-[72px] truncate font-body text-[9px] font-light text-white/40">{p.fusionLabel}</span>
-    </div>
+    </button>
+  );
+}
+
+function PeerProfileModal({ peer, onClose, onMessage }) {
+  const [sending, setSending] = useState(false);
+  if (!peer) return null;
+
+  const parts = String(peer.fusionLabel || "").split("×").map((x) => x.trim());
+  const hasFusion = parts.length === 2 && parts[0] && parts[1];
+
+  async function handleMessage() {
+    setSending(true);
+    await onMessage(peer.handle);
+    setSending(false);
+  }
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 12, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 12, scale: 0.98 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="liquid-glass-strong w-full max-w-sm rounded-[1.5rem] p-8"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center gap-4">
+            <Avatar handle={peer.handle} name={peer.handle.split(".")[0]} size="lg" />
+            <div>
+              <p className="font-heading text-xl italic leading-none text-white">{peer.handle}</p>
+              <p className="mt-1 font-body text-xs font-light text-white/50">
+                {peer.status === "active" ? "Active now" : peer.status === "idle" ? "Idle" : "Here"}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 border-t border-white/10 pt-5">
+            <p className="font-body text-[11px] uppercase tracking-[0.18em] text-white/40">Fusing</p>
+            <div className="mt-2">
+              {hasFusion ? (
+                <F.FusionChip a={parts[0]} b={parts[1]} size="md" />
+              ) : (
+                <span className="font-body text-sm font-light text-white/50">Not fusing right now</span>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-5 flex items-center gap-2">
+            <Icons.Activity className="h-4 w-4 text-white/50" />
+            <p className="font-body text-sm font-light text-white/70">
+              {peer.streak == null
+                ? "Streak unknown"
+                : peer.streak > 0
+                ? `${peer.streak}-day streak`
+                : "No active streak"}
+            </p>
+          </div>
+
+          <motion.button
+            type="button"
+            onClick={handleMessage}
+            disabled={sending}
+            whileTap={{ scale: 0.97 }}
+            className="tappable mt-7 flex w-full items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Icons.Lock className="h-4 w-4" />
+            {sending ? "Starting…" : "Message privately"}
+          </motion.button>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
@@ -47,7 +126,7 @@ function ModBanner() {
   );
 }
 
-function ChatBubble({ msg, reported, onReport }) {
+function ChatBubble({ msg, reported, onReport, onAvatarClick }) {
   if (reported) {
     return (
       <div className="flex justify-start">
@@ -59,7 +138,11 @@ function ChatBubble({ msg, reported, onReport }) {
   }
   return (
     <div className={"group flex items-start gap-3 " + (msg.self ? "justify-end" : "justify-start")}>
-      {!msg.self && <Avatar handle={msg.handle} name={msg.handle.split(".")[0]} size="sm" />}
+      {!msg.self && (
+        <button type="button" onClick={onAvatarClick} aria-label={"View " + msg.handle} className="tappable shrink-0">
+          <Avatar handle={msg.handle} name={msg.handle.split(".")[0]} size="sm" />
+        </button>
+      )}
       <div className={msg.self ? "flex max-w-[75%] flex-col items-end gap-1" : "flex max-w-[75%] flex-col items-start gap-1"}>
         <div className={"rounded-2xl px-4 py-2.5 font-body text-sm font-light leading-relaxed " + (msg.self ? "bg-white text-black" : "liquid-glass text-white/90")}>
           {msg.text}
@@ -84,9 +167,25 @@ function ChatBubble({ msg, reported, onReport }) {
   );
 }
 
-function ConnectOpenRoom() {
+function ConnectOpenRoom({ onOpenPrivate }) {
   const s = Store.useStore();
   const [draft, setDraft] = useState("");
+  const [profilePeer, setProfilePeer] = useState(null);
+
+  function openProfile(handle) {
+    const peer = s.presence.find((p) => p.handle === handle);
+    setProfilePeer(peer || { handle, fusionLabel: null, streak: null, status: null });
+  }
+
+  async function handleMessagePrivately(handle) {
+    try {
+      await Store.messagePeer(handle);
+      setProfilePeer(null);
+      onOpenPrivate();
+    } catch (e) {
+      window.Toast.show(e.message || "Couldn't start that chat", "error");
+    }
+  }
 
   useEffect(() => {
     Store.loadRoomMessages().catch(() => {});
@@ -115,6 +214,7 @@ function ConnectOpenRoom() {
   }
 
   return (
+    <>
     <div className="overflow-hidden rounded-[1.5rem] border border-white/10">
       <div className="relative">
         <FadingVideo src={window.VIDEOS.HERO} className="absolute inset-0 h-48 w-full object-cover opacity-[0.18]" />
@@ -134,7 +234,7 @@ function ConnectOpenRoom() {
       <div className="border-b border-white/10 px-6 py-4">
         <div className="flex flex-wrap items-center gap-5">
           {s.presence.map((p) => (
-            <PresenceAvatar key={p.handle} p={p} />
+            <PresenceAvatar key={p.handle} p={p} onClick={() => setProfilePeer(p)} />
           ))}
           {s.presence.length === 0 && (
             <p className="font-body text-[12px] font-light text-white/40">No one else is here right now — be the first to say something.</p>
@@ -150,6 +250,7 @@ function ConnectOpenRoom() {
             msg={m}
             reported={reported.has(m.id)}
             onReport={() => Store.reportRoomMessage(m.id).catch(() => {})}
+            onAvatarClick={() => openProfile(m.handle)}
           />
         ))}
       </div>
@@ -177,6 +278,8 @@ function ConnectOpenRoom() {
         </motion.button>
       </div>
     </div>
+    <PeerProfileModal peer={profilePeer} onClose={() => setProfilePeer(null)} onMessage={handleMessagePrivately} />
+    </>
   );
 }
 
@@ -558,7 +661,7 @@ function Connect() {
         <AnimatePresence mode="wait">
           {room === "open" ? (
             <motion.div key="open" {...enter(0.12)}>
-              <ConnectOpenRoom />
+              <ConnectOpenRoom onOpenPrivate={() => setRoom("private")} />
             </motion.div>
           ) : (
             <motion.div key="private" {...enter(0.12)}>

@@ -261,6 +261,10 @@ window.Api = (function () {
     return request("/connect/match", { method: "POST", body: { fusionLabel } });
   }
 
+  function connectMatchWithPeer(handle) {
+    return request("/connect/peers/" + encodeURIComponent(handle) + "/match", { method: "POST" });
+  }
+
   function connectGetMatch(matchId) {
     return request("/connect/matches/" + encodeURIComponent(matchId));
   }
@@ -387,6 +391,7 @@ window.Api = (function () {
     connectListRoomMessages,
     connectSendRoomMessage,
     connectJoinMatch,
+    connectMatchWithPeer,
     connectGetMatch,
     connectListMatchMessages,
     connectSendMatchMessage,

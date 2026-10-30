@@ -1,11 +1,16 @@
+from datetime import timedelta
+
 from django.test import TestCase
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from authentication.models import User
+from growthlog.models import GrowthLogEntry
 
 from .models import ChatProfile, PeerMatch, Report, RoomMessage
-from .services import find_or_create_match, get_or_create_chat_profile
+from .services import find_or_create_match, get_or_create_chat_profile, start_direct_match
+from .streak import compute_streak
 
 
 def make_user(email):
@@ -249,3 +254,132 @@ class ModerationTests(TestCase):
         self.assertEqual(len(pending), 1)
         self.assertEqual(pending[0]["privateMessageText"], "unwelcome message")
         self.assertIsNone(pending[0]["roomMessageText"])
+
+
+def _log_on(user, days_ago):
+    entry = GrowthLogEntry.objects.create(user=user, title="x")
+    day = timezone.localdate() - timedelta(days=days_ago)
+    when = timezone.make_aware(timezone.datetime(day.year, day.month, day.day, 12, 0))
+    GrowthLogEntry.objects.filter(pk=entry.pk).update(loggedAt=when)
+
+
+class StreakTests(TestCase):
+    def test_no_entries_is_zero(self):
+        user = make_user("ada@example.com")
+        self.assertEqual(compute_streak(user), 0)
+
+    def test_counts_consecutive_days_ending_today(self):
+        user = make_user("ada@example.com")
+        for d in (0, 1, 2):
+            _log_on(user, d)
+        self.assertEqual(compute_streak(user), 3)
+
+    def test_still_counts_if_today_not_logged_yet(self):
+        user = make_user("ada@example.com")
+        for d in (1, 2, 3):
+            _log_on(user, d)
+        self.assertEqual(compute_streak(user), 3)
+
+    def test_breaks_on_a_gap(self):
+        user = make_user("ada@example.com")
+        _log_on(user, 0)
+        _log_on(user, 1)
+        _log_on(user, 5)
+        self.assertEqual(compute_streak(user), 2)
+
+    def test_presence_surfaces_a_peers_streak(self):
+        ada = make_user("ada@example.com")
+        bo = make_user("bo@example.com")
+        for d in (0, 1):
+            _log_on(bo, d)
+        bo_client = APIClient()
+        bo_client.force_authenticate(user=bo)
+        bo_client.post("/api/connect/presence", {"status": "active", "fusionLabel": "Design×AI"}, format="json")
+
+        ada_client = APIClient()
+        ada_client.force_authenticate(user=ada)
+        presence = ada_client.get("/api/connect/presence").json()
+        self.assertEqual(len(presence), 1)
+        self.assertEqual(presence[0]["streak"], 2)
+
+
+class DirectMatchTests(TestCase):
+    def test_messaging_a_specific_peer_opens_an_active_match(self):
+        ada = make_user("ada@example.com")
+        bo = make_user("bo@example.com")
+        bo_handle = get_or_create_chat_profile(bo).handle
+
+        client = APIClient()
+        client.force_authenticate(user=ada)
+        response = client.post(f"/api/connect/peers/{bo_handle}/match")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        body = response.json()
+        self.assertEqual(body["status"], "active")
+        self.assertEqual(body["peerHandle"], bo_handle)
+
+    def test_messaging_the_same_peer_twice_resumes_the_same_match(self):
+        ada = make_user("ada@example.com")
+        bo = make_user("bo@example.com")
+        bo_handle = get_or_create_chat_profile(bo).handle
+        client = APIClient()
+        client.force_authenticate(user=ada)
+
+        first = client.post(f"/api/connect/peers/{bo_handle}/match").json()
+        second = client.post(f"/api/connect/peers/{bo_handle}/match").json()
+        self.assertEqual(first["matchId"], second["matchId"])
+
+    def test_refuses_to_message_yourself(self):
+        ada = make_user("ada@example.com")
+        ada_handle = get_or_create_chat_profile(ada).handle
+        client = APIClient()
+        client.force_authenticate(user=ada)
+        response = client.post(f"/api/connect/peers/{ada_handle}/match")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_refuses_when_target_already_active_with_someone_else(self):
+        ada = make_user("ada@example.com")
+        bo = make_user("bo@example.com")
+        carl = make_user("carl@example.com")
+        # bo and carl are already actively matched with each other.
+        PeerMatch.objects.create(userA=bo, userB=carl, fusionLabel="Design×AI", status=PeerMatch.Status.ACTIVE)
+        bo_handle = get_or_create_chat_profile(bo).handle
+
+        client = APIClient()
+        client.force_authenticate(user=ada)
+        response = client.post(f"/api/connect/peers/{bo_handle}/match")
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+
+    def test_claims_a_waiting_match_instead_of_leaving_it_queued(self):
+        ada = make_user("ada@example.com")
+        bo = make_user("bo@example.com")
+        waiting = find_or_create_match(bo, "Design×AI")
+        self.assertEqual(waiting.status, PeerMatch.Status.WAITING)
+        bo_handle = get_or_create_chat_profile(bo).handle
+
+        client = APIClient()
+        client.force_authenticate(user=ada)
+        response = client.post(f"/api/connect/peers/{bo_handle}/match").json()
+
+        waiting.refresh_from_db()
+        self.assertEqual(str(waiting.matchId), response["matchId"])
+        self.assertEqual(waiting.status, PeerMatch.Status.ACTIVE)
+
+    def test_closes_the_requesters_other_open_match_first(self):
+        ada = make_user("ada@example.com")
+        bo = make_user("bo@example.com")
+        carl = make_user("carl@example.com")
+        old = PeerMatch.objects.create(userA=ada, userB=bo, fusionLabel="Design×AI", status=PeerMatch.Status.ACTIVE)
+        carl_handle = get_or_create_chat_profile(carl).handle
+
+        client = APIClient()
+        client.force_authenticate(user=ada)
+        client.post(f"/api/connect/peers/{carl_handle}/match")
+
+        old.refresh_from_db()
+        self.assertEqual(old.status, PeerMatch.Status.CLOSED)
+
+    def test_service_function_raises_on_self_match(self):
+        ada = make_user("ada@example.com")
+        with self.assertRaises(ValueError):
+            start_direct_match(ada, ada, "Design×AI")

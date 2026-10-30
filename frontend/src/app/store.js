@@ -51,6 +51,7 @@ function buildSeed() {
       name: "",
       handle: "",
       email: "",
+      role: "student",
       isEmailVerified: false,
       personaTypes: [],
       baseline: null,

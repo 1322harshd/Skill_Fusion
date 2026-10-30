@@ -118,6 +118,7 @@ function Onboarding() {
       name: user.fullName,
       handle: (user.email || "").split("@")[0].toLowerCase(),
       email: user.email,
+      role: user.role,
       isEmailVerified: user.isEmailVerified,
       personaTypes: user.personaTypes || [],
       baseline: user.baseline || null,

@@ -285,7 +285,7 @@ class ModerationReportsView(APIView):
 
     def get(self, request):
         reports = Report.objects.filter(status=Report.Status.PENDING).select_related(
-            "roomMessage", "targetUser", "targetUser__chat_profile"
+            "roomMessage", "privateMessage", "targetUser", "targetUser__chat_profile"
         )
         return Response([report_dict(r) for r in reports])
 

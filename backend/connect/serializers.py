@@ -47,5 +47,7 @@ def report_dict(r: Report):
         "createdAt": r.createdAt.isoformat(),
         "roomMessageId": str(r.roomMessage_id) if r.roomMessage_id else None,
         "roomMessageText": r.roomMessage.text if r.roomMessage_id else None,
+        "privateMessageId": str(r.privateMessage_id) if r.privateMessage_id else None,
+        "privateMessageText": r.privateMessage.text if r.privateMessage_id else None,
         "targetHandle": getattr(getattr(r.targetUser, "chat_profile", None), "handle", "unknown"),
     }

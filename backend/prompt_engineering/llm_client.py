@@ -51,6 +51,10 @@ async def call_sf14b(adapter, prompt, retries=2, max_tokens=3000):
         try:
             # sync requests in async wrapper for scaffold
             r=requests.post(f"{SF_URL}/v1/chat/completions", json=body, timeout=300)
+            if r.status_code >= 500:
+                # mlx is single-threaded and restarts/queues under load — a 5xx
+                # (e.g. transient 502/503) is retryable, not fatal.
+                r.raise_for_status()
             data=r.json()
             choice=data["choices"][0]
             msg=choice["message"]
@@ -85,9 +89,17 @@ async def call_sf14b(adapter, prompt, retries=2, max_tokens=3000):
                     # raw newlines) — allow them rather than failing.
                     json.loads(text, strict=False)
             return text
-        except Exception:
-            if attempt==retries: raise
-            await asyncio.sleep(0.3*(attempt+1))
+        except (requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout,
+                requests.exceptions.RequestException, ValueError,
+                KeyError, IndexError, json.JSONDecodeError):
+            # Only transient/parse failures retry; backoff grows so a busy
+            # single-threaded mlx server (or a model reload) settles first.
+            if attempt == retries:
+                raise
+            from random import uniform
+            backoff = min(0.6 * (3 ** attempt), 20.0) + uniform(0, 0.4)
+            await asyncio.sleep(backoff)
 
 async def call_sf14b_json(adapter, prompt, retries=4, max_tokens=3000):
     """Same as call_sf14b but returns the parsed object (lenient parse)."""

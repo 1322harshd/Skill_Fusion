@@ -242,3 +242,43 @@ class ProgressAndRestoreTests(TestCase):
         response = self.client.get("/api/roadmap/chosen/", {"fusion_id": "fc-own"})
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.json()["roadmap"])
+
+
+class FallbackPreviewsTests(TestCase):
+    """When SF is unreachable even after transport retries, get_previews
+    must serve the offline set — Select-a-path can never 502 again."""
+
+    def _service(self):
+        from .services import get_previews
+        return get_previews
+
+    def test_get_previews_falls_back_when_sf_is_down(self):
+        get_previews = self._service()
+        with patch("roadmaps.services.call_sf14b_json",
+                   side_effect=RuntimeError("connection refused")):
+            previews = get_previews({"a": "Python", "b": "Design"}, salt=0)
+        self.assertEqual(len(previews), 3)
+        for pv in previews:
+            self.assertTrue(pv["fallback"])
+            self.assertTrue(pv["roadmap"]["weeks"])
+            for week in pv["roadmap"]["weeks"]:
+                self.assertTrue(week["topic"])
+
+    def test_per_preview_detail_fallback_keeps_shells(self):
+        get_previews = self._service()
+        calls = {"n": 0}
+
+        def flaky(adapter, prompt, **kw):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                return {"previews": [
+                    {"title": "T1", "summary": "s", "weeks": 2, "outcomes": ["o"]},
+                    {"title": "T2", "summary": "s", "weeks": 3, "outcomes": ["o"]},
+                    {"title": "T3", "summary": "s", "weeks": 4, "outcomes": ["o"]}]}
+            raise RuntimeError("mid-set failure")
+
+        with patch("roadmaps.services.call_sf14b_json", side_effect=flaky):
+            previews = get_previews({"a": "Python", "b": "Design"}, salt=1)
+        self.assertEqual(len(previews), 3)
+        self.assertTrue(all(pv["fallback"] for pv in previews))
+        self.assertEqual([pv["title"] for pv in previews], ["T1", "T2", "T3"])

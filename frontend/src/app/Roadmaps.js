@@ -255,9 +255,20 @@ function Roadmaps() {
     let live = true;
     setBusy(true);
     setLoadError(null);
-    Store.getPreviewsRemote(fusion, salt)
-      .then((pvs) => { if (live) { setPreviews(pvs); setBusy(false); } })
-      .catch(() => { if (live) { setLoadError("Couldn't load roadmaps — is the backend (:8000) and SF (:8081) running?"); setBusy(false); } });
+    // Auto-retry with backoff so a busy/offline-spike SF never dead-ends the
+    // user: attempts at ~3s and ~7s before surfacing the error card.
+    (async () => {
+      const delays = [0, 3000, 7000];
+      for (let i = 0; i < delays.length; i++) {
+        if (delays[i]) await new Promise((r) => setTimeout(r, delays[i]));
+        try {
+          const pvs = await Store.getPreviewsRemote(fusion, salt);
+          if (live) { setPreviews(pvs); setBusy(false); }
+          return;
+        } catch { /* keep trying */ }
+      }
+      if (live) { setLoadError("Couldn't load roadmaps — is the backend (:8000) and SF (:8081) running?"); setBusy(false); }
+    })();
     return () => { live = false; };
   }, [fusionId, salt]);
 
@@ -420,7 +431,7 @@ function Roadmaps() {
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-heading text-xl italic text-white/40">{String(i + 1).padStart(2, "0")}</span>
-                      {i === 1 ? <span className="rounded-full bg-white px-3 py-1 font-body text-[10px] font-semibold text-black">Most Popular</span> : <span className="rounded-full px-3 py-1 font-body text-[11px] font-semibold text-black" style={F.gradStyle(fusion.a, fusion.b)}>{pv.weeks} wks</span>}
+                      {pv.fallback ? <span className="rounded-full px-3 py-1 font-body text-[10px] text-white/60 ring-1 ring-white/25">offline preview</span> : i === 1 ? <span className="rounded-full bg-white px-3 py-1 font-body text-[10px] font-semibold text-black">Most Popular</span> : <span className="rounded-full px-3 py-1 font-body text-[11px] font-semibold text-black" style={F.gradStyle(fusion.a, fusion.b)}>{pv.weeks} wks</span>}
                     </div>
                     <h3 className="mt-8 font-heading text-2xl italic leading-[1.05] tracking-[-1px] text-white">{pv.title}</h3>
                     <p className="mt-3 flex-1 font-body text-sm font-light text-white/60">{pv.summary}</p>

@@ -21,6 +21,8 @@ async function mockApi(
     skillsKnown = null,
     quizSession = null,
     quizLevels = [],
+    fusionHistory = [],
+    roadmapChosenByFusionId = {},
   } = {}
 ) {
   const baseUser = {
@@ -78,6 +80,14 @@ async function mockApi(
     }
     if (url.includes("/api/fusion/quiz/submit")) {
       return json(200, { levels: quizLevels });
+    }
+    if (url.includes("/api/fusion/history")) {
+      return json(200, { fusions: fusionHistory });
+    }
+    if (url.includes("/api/roadmap/chosen")) {
+      const fusionId = new URL(url).searchParams.get("fusion_id");
+      const roadmap = roadmapChosenByFusionId[fusionId];
+      return json(200, roadmap ? { roadmap } : {});
     }
     if (url.includes("/api/growth-log/entries")) {
       if (route.request().method() === "POST") {

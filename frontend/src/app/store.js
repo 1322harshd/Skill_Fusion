@@ -62,7 +62,6 @@ function buildSeed() {
     logEntries: [],
     githubContributions: null,
     posts: [],
-    peers: [],
     presence: [],
     roomMessages: [],
     connectProfile: null,
@@ -201,16 +200,6 @@ window.Store = (function () {
 
   function sendMessage(msg) {
     set({ messages: [...state.messages, msg] });
-  }
-
-  function addPeer(handle, fusionLabel) {
-    const existing = state.peers.find((p) => p.handle === handle);
-    if (existing) return;
-    set({ peers: [...state.peers, { handle, fusionLabel, online: true, connection: "none" }] });
-  }
-
-  function setPeerConnection(handle, connection) {
-    set({ peers: state.peers.map((p) => (p.handle === handle ? { ...p, connection } : p)) });
   }
 
   function chooseRoadmap(fusionId, preview) {
@@ -550,8 +539,6 @@ window.Store = (function () {
     draftPost,
     loadPosts,
     sendMessage,
-    addPeer,
-    setPeerConnection,
     getPreviewsRemote,
     loadFusions,
     chooseRoadmap,

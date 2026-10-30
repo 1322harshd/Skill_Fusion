@@ -3,7 +3,6 @@ const { motion, AnimatePresence } = window.Motion;
 const { Icons } = window;
 const { Avatar } = window;
 const { FadingVideo } = window;
-const F = window.Fusion;
 const Store = window.Store;
 
 const enter = window.MotionKit.enter;
@@ -103,26 +102,6 @@ function ConnectOpenRoom() {
 
   const reported = new Set(s.reportedMessages);
 
-  const scanEntries = s.roomMessages.map((m) => {
-    if (m.self) return null;
-    const peer = s.presence.find((p) => p.handle === m.handle);
-    if (peer) {
-      const parts = String(peer.fusionLabel || "").split("×").map((x) => x.trim());
-      if (parts.length === 2) return { key: m.id, a: F.colorOf(parts[0]), b: F.colorOf(parts[1]) };
-    }
-    return { key: m.id, a: F.colorOf("Design"), b: F.colorOf("AI") };
-  }).filter(Boolean);
-  const bubbleRefs = window.Ambient.useAmbient(scanEntries);
-
-  const refsById = {};
-  scanEntries.forEach((e, i) => {
-    refsById[e.key] = bubbleRefs[i];
-  });
-
-  useEffect(() => {
-    if (scanEntries[0]) window.Ambient.setHex(scanEntries[0].a, scanEntries[0].b);
-  }, []);
-
   async function send() {
     if (!draft.trim()) return;
     const text = draft;
@@ -165,21 +144,14 @@ function ConnectOpenRoom() {
 
       <div className="flex max-h-[46vh] flex-col gap-4 overflow-y-auto bg-black/30 p-6">
         {reported.size > 0 && <ModBanner />}
-        {s.roomMessages.map((m) => {
-          const ref = refsById[m.id];
-          const bubble = (
-            <ChatBubble
-              msg={m}
-              reported={reported.has(m.id)}
-              onReport={() => Store.reportRoomMessage(m.id).catch(() => {})}
-            />
-          );
-          return ref ? (
-            <div key={m.id} ref={ref}>{bubble}</div>
-          ) : (
-            bubble
-          );
-        })}
+        {s.roomMessages.map((m) => (
+          <ChatBubble
+            key={m.id}
+            msg={m}
+            reported={reported.has(m.id)}
+            onReport={() => Store.reportRoomMessage(m.id).catch(() => {})}
+          />
+        ))}
       </div>
 
       <div className="flex items-center gap-3 border-t border-white/10 px-6 py-4">
@@ -546,10 +518,18 @@ function ConnectPrivateRoom() {
 
 function Connect() {
   const [room, setRoom] = useState("open");
+  const fusion = Store.useStore().fusions[0];
 
   useEffect(() => {
     Store.loadConnectProfile().catch(() => {});
   }, []);
+
+  // Page ambient follows the signed-in user's fusion colors, same as every
+  // other tab — peer messages tint their own bubbles, never the background.
+  useEffect(() => {
+    if (fusion) window.Ambient.setFusion(fusion.a, fusion.b);
+    else window.Ambient.clear();
+  }, [fusion?.id]);
 
   return (
     <div className="mx-auto max-w-4xl">

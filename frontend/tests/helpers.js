@@ -21,12 +21,17 @@ async function mockApi(
     skillsKnown = null,
     quizSession = null,
     quizLevels = [],
+    fusionHistory = [],
+    roadmapChosenByFusionId = {},
+    moderationReports = [],
+    moderationForbidden = false,
   } = {}
 ) {
   const baseUser = {
     userId: "u1",
     email: "ada@skillfusion.ai",
     fullName: "Ada Lovelace",
+    role: "student",
     isEmailVerified: true,
     personaTypes: ["Designer"],
     baseline: { method: "quiz" },
@@ -78,6 +83,14 @@ async function mockApi(
     }
     if (url.includes("/api/fusion/quiz/submit")) {
       return json(200, { levels: quizLevels });
+    }
+    if (url.includes("/api/fusion/history")) {
+      return json(200, { fusions: fusionHistory });
+    }
+    if (url.includes("/api/roadmap/chosen")) {
+      const fusionId = new URL(url).searchParams.get("fusion_id");
+      const roadmap = roadmapChosenByFusionId[fusionId];
+      return json(200, roadmap ? { roadmap } : {});
     }
     if (url.includes("/api/growth-log/entries")) {
       if (route.request().method() === "POST") {
@@ -147,6 +160,16 @@ async function mockApi(
         return json(201, { id: "rm-created", handle: connectHandle, text: body.text, ts: "now", self: true, hidden: false });
       }
       return json(200, roomMessages);
+    }
+    if (url.includes("/api/connect/moderation/reports")) {
+      if (moderationForbidden) return json(403, { detail: "You do not have permission to perform this action." });
+      const match = url.match(/\/moderation\/reports\/([^/]+)\/action/);
+      if (match) {
+        const body = route.request().postDataJSON();
+        const existing = moderationReports.find((r) => r.reportId === match[1]) || {};
+        return json(200, { ...existing, status: "reviewed", action: body.action });
+      }
+      return json(200, moderationReports);
     }
     return json(200, {});
   });

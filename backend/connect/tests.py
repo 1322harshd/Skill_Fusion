@@ -229,3 +229,23 @@ class ModerationTests(TestCase):
             c.force_authenticate(user=r)
             c.post("/api/connect/report", {"messageType": "room", "messageId": self.message_id}, format="json")
         self.assertTrue(RoomMessage.objects.get(messageId=self.message_id).hidden)
+
+    def test_moderation_report_surfaces_private_message_text(self):
+        bo = make_user("bo@example.com")
+        bo_client = APIClient()
+        bo_client.force_authenticate(user=bo)
+        match = find_or_create_match(self.ada, "Design×AI")
+        find_or_create_match(bo, "Design×AI")
+        match.refresh_from_db()
+
+        msg = self.ada_client.post(
+            f"/api/connect/matches/{match.matchId}/messages", {"text": "unwelcome message"}, format="json"
+        ).json()
+        bo_client.post(
+            "/api/connect/report", {"messageType": "private", "messageId": msg["id"], "reason": "harassment"}, format="json"
+        )
+
+        pending = self.mod_client.get("/api/connect/moderation/reports").json()
+        self.assertEqual(len(pending), 1)
+        self.assertEqual(pending[0]["privateMessageText"], "unwelcome message")
+        self.assertIsNone(pending[0]["roomMessageText"])

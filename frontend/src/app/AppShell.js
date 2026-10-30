@@ -408,6 +408,7 @@ function AppShell({ route, children }) {
   const user = s.user;
   const [profileOpen, setProfileOpen] = React.useState(false);
   const needsVerification = !!user?.email && user?.isEmailVerified === false && route !== "/verify-email";
+  const navItems = user?.role === "admin" ? [...NAV, ["Moderation", "/moderation", "Shield"]] : NAV;
 
   return (
     <div className="relative min-h-screen text-white">
@@ -425,7 +426,7 @@ function AppShell({ route, children }) {
           className="liquid-glass hidden items-center gap-1 rounded-full px-1.5 py-1.5 md:flex"
           aria-label="App navigation"
         >
-          {NAV.map(([label, to, icon]) => {
+          {navItems.map(([label, to, icon]) => {
             const Icon = Icons[icon];
             const active = isActive(to, route);
             return (
@@ -476,7 +477,7 @@ function AppShell({ route, children }) {
         className="liquid-glass-strong fixed bottom-4 left-4 right-4 z-50 flex items-center justify-around rounded-full px-2 py-2 md:hidden"
         aria-label="Mobile navigation"
       >
-        {NAV.map(([label, to, icon]) => {
+        {navItems.map(([label, to, icon]) => {
           const Icon = Icons[icon];
           const active = isActive(to, route);
           return (

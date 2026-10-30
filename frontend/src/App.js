@@ -69,6 +69,7 @@ const ROUTES = [
   { pattern: "/posts/:entryId", render: (p) => <window.Posts entryId={p.entryId} /> },
   { pattern: "/connect", render: () => <window.Connect /> },
   { pattern: "/dashboard", render: () => <window.Dashboard /> },
+  { pattern: "/moderation", render: () => <window.Moderation /> },
 ];
 
 function ScreenFor() {
@@ -128,6 +129,7 @@ function App() {
         name: user.fullName,
         handle: (user.email || "").split("@")[0].toLowerCase(),
         email: user.email,
+        role: user.role,
         isEmailVerified: user.isEmailVerified,
         personaTypes: user.personaTypes || [],
         baseline: user.baseline || null,

@@ -1,7 +1,6 @@
-const { useState, useEffect } = React;
+const { useEffect } = React;
 const { motion, AnimatePresence } = window.Motion;
 const { Icons } = window;
-const { Avatar } = window;
 const F = window.Fusion;
 const Store = window.Store;
 
@@ -40,12 +39,6 @@ function DashBadge({ source }) {
       Self
     </span>
   );
-}
-
-function SplitChip({ label }) {
-  const parts = String(label || "").split("×");
-  if (parts.length === 2) return <F.FusionChip a={parts[0].trim()} b={parts[1].trim()} size="sm" />;
-  return <span className="rounded-full border border-white/20 px-2.5 py-0.5 font-body text-[11px] text-white/70">{label}</span>;
 }
 
 function FeaturedCard({ fusion }) {
@@ -96,8 +89,15 @@ function FeaturedCard({ fusion }) {
   );
 }
 
-const FusionGridCard = React.forwardRef(function FusionGridCard({ fusion }, ref) {
-  const evidence = Store.getSnapshot().logEntries.find((e) => e.fusionId === fusion.id);
+function evidenceForFusion(logEntries, fusion) {
+  // Entries aren't linked to a fusion by id — match on skill tag overlap
+  // with the fusion's two skills instead (entries are already newest-first).
+  const skills = new Set([fusion.a, fusion.b]);
+  return logEntries.find((e) => e.tags.some((t) => t.kind === "skill" && skills.has(t.label)));
+}
+
+const FusionGridCard = React.forwardRef(function FusionGridCard({ fusion, logEntries }, ref) {
+  const evidence = evidenceForFusion(logEntries, fusion);
   const rw = fusion.roadmap;
   const frac = Math.min(1, rw.progressWeeks / rw.totalWeeks);
   return (
@@ -145,61 +145,6 @@ const FusionGridCard = React.forwardRef(function FusionGridCard({ fusion }, ref)
     </motion.div>
   );
 });
-
-function RequestCard({ peer }) {
-  const [handled, setHandled] = useState(null);
-
-  function respond(accept) {
-    setHandled(accept);
-    Store.setPeerConnection(peer.handle, accept ? "connected" : "declined");
-    window.Toast.show(accept ? `Connected with ${peer.handle}` : `Declined ${peer.handle}`, accept ? "success" : "error");
-  }
-
-  return (
-    <div className="liquid-glass flex items-center justify-between gap-4 rounded-2xl p-5">
-      <div className="flex min-w-0 items-center gap-3">
-        <Avatar handle={peer.handle} name={peer.handle.split(".")[0]} size="md" />
-        <div className="min-w-0">
-          <p className="truncate font-heading text-lg italic leading-none text-white">{peer.handle}</p>
-          <div className="mt-1.5">
-            <SplitChip label={peer.fusionLabel} />
-          </div>
-        </div>
-      </div>
-      <div className="flex shrink-0 gap-2">
-        {handled === null ? (
-          <>
-            <button
-              type="button"
-              onClick={() => respond(true)}
-              className="tappable flex items-center gap-1.5 rounded-full bg-white px-4 py-2 font-body text-sm font-medium text-black"
-            >
-              <Icons.Check className="h-4 w-4" />
-              Accept
-            </button>
-            <button
-              type="button"
-              onClick={() => respond(false)}
-              className="tappable liquid-glass flex items-center gap-1.5 rounded-full px-4 py-2 font-body text-sm font-medium text-white/85"
-            >
-              <Icons.X className="h-4 w-4" />
-              Decline
-            </button>
-          </>
-        ) : handled ? (
-          <span className="flex items-center gap-1.5 rounded-full bg-white px-4 py-2 font-body text-sm font-medium text-black">
-            <Icons.Check className="h-4 w-4" />
-            Connected
-          </span>
-        ) : (
-          <span className="flex items-center gap-1.5 rounded-full border border-white/20 px-4 py-2 font-body text-sm text-white/60">
-            Declined
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
 
 function SkillRow({ skill }) {
   return (
@@ -250,16 +195,26 @@ function UpNextCard({ fusion }) {
 
 function Dashboard() {
   const s = Store.useStore();
-  const featured = s.fusions[0];
-  const incoming = s.peers.filter((p) => p.connection === "incoming");
-  const outgoing = s.peers.filter((p) => p.connection === "requested");
+  // Restoring a fusion after reload is two steps (base record, then its
+  // roadmap, fetched separately and asynchronously) — every card below reads
+  // fusion.roadmap, so only fusions where that's landed are safe to render.
+  const readyFusions = s.fusions.filter((f) => f.roadmap);
+  const restoring = s.fusions.length > 0 && readyFusions.length === 0;
+  const featured = readyFusions[0];
+
+  // Fusions are otherwise only loaded when the Fuse screen mounts — without
+  // this, reloading straight into /dashboard shows the empty state even for
+  // a learner who already has fusions.
+  useEffect(() => {
+    if (s.user.userId) Store.loadFusions().catch(() => {});
+  }, [s.user.userId]);
 
   useEffect(() => {
     if (featured) window.Ambient.setFusion(featured.a, featured.b);
     else window.Ambient.clear();
   }, [featured?.id]);
 
-  const scanEntries = s.fusions.map((f) => ({
+  const scanEntries = readyFusions.map((f) => ({
     key: f.id,
     a: F.colorOf(f.a),
     b: F.colorOf(f.b),
@@ -280,6 +235,14 @@ function Dashboard() {
     io.observe(topSection.current);
     return () => io.disconnect();
   }, [featured?.id]);
+
+  if (restoring) {
+    return (
+      <div className="mx-auto flex min-h-[70vh] max-w-2xl flex-col items-center justify-center text-center">
+        <motion.p {...enter()} className="font-body text-sm text-white/50">{"// Restoring your fusions…"}</motion.p>
+      </div>
+    );
+  }
 
   if (!featured) {
     return (
@@ -322,35 +285,10 @@ function Dashboard() {
         </a>
       </div>
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
-        {s.fusions.map((f, i) => (
-          <FusionGridCard key={f.id} fusion={f} ref={gridRefs[i]} />
+        {readyFusions.map((f, i) => (
+          <FusionGridCard key={f.id} fusion={f} logEntries={s.logEntries} ref={gridRefs[i]} />
         ))}
       </div>
-
-      {(incoming.length > 0 || outgoing.length > 0) && (
-        <div className="mt-12">
-          <h2 className="font-heading text-2xl italic text-white">Requests</h2>
-          <div className="mt-5 flex flex-col gap-3">
-            {incoming.map((p) => (
-              <RequestCard key={p.handle} peer={p} />
-            ))}
-            {outgoing.map((p) => (
-              <div key={p.handle} className="liquid-glass flex items-center justify-between gap-4 rounded-2xl p-5 opacity-70">
-                <div className="flex min-w-0 items-center gap-3">
-                  <Avatar handle={p.handle} name={p.handle.split(".")[0]} size="md" />
-                  <div className="min-w-0">
-                    <p className="truncate font-heading text-lg italic leading-none text-white">{p.handle}</p>
-                    <div className="mt-1.5">
-                      <SplitChip label={p.fusionLabel} />
-                    </div>
-                  </div>
-                </div>
-                <p className="shrink-0 font-body text-xs font-light text-white/50">Waiting on them…</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="mt-12 grid grid-cols-1 gap-5 lg:grid-cols-2">
         <div className="liquid-glass rounded-[1.5rem] p-8 md:p-10">

@@ -7,6 +7,9 @@ window.Fusion = (function () {
     business: "#CDA62F",
     science: "#52A970",
     comm: "#7D84CE",
+    everyday: "#E6884E",
+    wellness: "#8BC94B",
+    craft: "#A0724A",
   };
 
   // Publish the palette as CSS custom properties so components can use
@@ -24,16 +27,22 @@ window.Fusion = (function () {
     business: "Business",
     science: "Scientific",
     comm: "Communicative",
+    everyday: "Everyday & Home",
+    wellness: "Health & Fitness",
+    craft: "Crafts & Trades",
   };
 
-  const CATEGORY_ORDER = ["tech", "creative", "business", "science", "comm"];
+  const CATEGORY_ORDER = ["tech", "creative", "business", "science", "comm", "everyday", "wellness", "craft"];
 
   const RULES = [
+    [/cook|bak|meal|garden|organiz|interior|pet\b|first aid|mend|houseplant/i, "everyday"],
+    [/yoga|fit\b|fitness|run\b|running|swim|danc|nutrit|meditat|martial|box|strength|workout|hik/i, "wellness"],
+    [/woodwork|metalwork|pottery|jewelr|leather|mechanic|bike|3d print|woodwork|weld|carp|\bdiy\b|repair/i, "craft"],
     [/code|progr|dev|engineer|ai\b|ml\b|data|sql|cloud|cyber|api|soft|back-end|backend|front|python|react|automation|security|hardware|analytics/i, "tech"],
-    [/design|illust|art|photo|video|anim|ui\b|ux\b|brand|content|music|sound|fashion|motion|3d/i, "creative"],
+    [/design|illust|art|photo|video|anim|ui\b|ux\b|brand|content|music|sound|fashion|motion|podcast|act\b|acting/i, "creative"],
     [/market|sales|business|finance|startup|product|strateg|operat|manage|entrepreneur|growth|pricing|account|negotiat|ecom/i, "business"],
-    [/scien|math|research|bio|phys|chem|stat|lab|psych|neurosci/i, "science"],
-    [/communi|present|teach|coach|public|social|story|editor|copy|language|speak|writing|content/i, "comm"],
+    [/scien|math|research|bio|phys|chem|stat|lab|psych|neurosci|astronomy|climat|environment/i, "science"],
+    [/communi|present|teach|coach|public|social|story|editor|copy|language|speak|writing|comedy/i, "comm"],
   ];
 
   const FALLBACK_ACCENTS = ["#8A5CF6", "#E88F3D", "#4FB98A", "#E05A7A", "#3FA3D9"];
@@ -44,14 +53,20 @@ window.Fusion = (function () {
     color: CATEGORY_COLORS[id],
     skills:
       id === "tech"
-        ? ["Web Dev", "Frontend", "Backend", "Python", "JavaScript", "APIs", "Cloud", "ML", "SQL", "Framer Motion"]
+        ? ["Web Dev", "Frontend", "Backend", "Python", "JavaScript", "APIs", "Cloud", "ML", "SQL", "Framer Motion", "Cybersecurity", "Game Dev", "Prompt Engineering", "No-Code Tools"]
         : id === "creative"
-          ? ["UI Design", "UX Research", "Branding", "Illustration", "Graphic Design", "Motion & 3D", "Sound Design", "Photography"]
+          ? ["UI Design", "UX Research", "Branding", "Illustration", "Graphic Design", "Motion & 3D", "Sound Design", "Photography", "Video Editing", "Music Production", "Podcasting", "Acting", "Fashion Design"]
           : id === "business"
-          ? ["Marketing", "Growth", "Product Management", "Strategy", "Finance", "Operations", "Sales", "Entrepreneurship"]
+          ? ["Marketing", "Growth", "Product Management", "Strategy", "Finance", "Operations", "Sales", "Entrepreneurship", "Accounting", "HR & People Ops", "Negotiation"]
           : id === "science"
-          ? ["Data Science", "Statistics", "Research", "Psychology", "Math", "Physics", "Biology"]
-          : ["Writing", "Copywriting", "Editing", "Storytelling", "Public Speaking", "Teaching", "Social Media"],
+          ? ["Data Science", "Statistics", "Research", "Psychology", "Math", "Physics", "Biology", "Astronomy", "Climate & Environment", "Neuroscience"]
+          : id === "comm"
+          ? ["Writing", "Copywriting", "Editing", "Storytelling", "Public Speaking", "Teaching", "Social Media", "Stand-up Comedy", "Event Hosting", "Sign Language", "Language Learning"]
+          : id === "everyday"
+          ? ["Cooking", "Baking", "Meal Planning", "Gardening", "Home Organization", "Interior Styling", "Sewing & Mending", "Pet Care", "First Aid"]
+          : id === "wellness"
+          ? ["Strength Training", "Yoga", "Running", "Swimming", "Dance", "Nutrition", "Meditation", "Martial Arts", "Boxing", "Hiking"]
+          : ["Woodworking", "Metalwork", "3D Printing", "Electronics", "Auto Mechanics", "Pottery", "Jewelry Making", "Leatherwork", "Bike Repair"],
   }));
 
   function allSkills() {

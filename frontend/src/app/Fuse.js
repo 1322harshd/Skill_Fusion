@@ -3,6 +3,7 @@ const { AnimatePresence, motion } = window.Motion;
 const { Icons } = window;
 const F = window.Fusion;
 const Store = window.Store;
+const Creature = window.Creature;
 const { AiSteps } = window;
 
 const FUSE_LOADING_STEPS = [
@@ -13,6 +14,168 @@ const FUSE_LOADING_STEPS = [
 ];
 
 const enter = window.MotionKit.enter;
+
+// ---- The Fusion Oracle (WOW #1) -------------------------------------------
+// A skeptic and an oracle debate the candidate pair BEFORE the user commits
+// to fusing, rendered as alternating chat bubbles and a star verdict. One
+// backend call; the backend always answers (SF shapes it, templates carry
+// it when offline — flagged so we can badge "offline verdict").
+
+const VOICE_LABEL = { skeptic: "The Skeptic", oracle: "The Oracle" };
+
+function OracleBubble({ line, a, b, index }) {
+  const isOracle = line.voice === "oracle";
+  const tint = F.tintStyle(a, b, 0.14);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 14, filter: "blur(6px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      transition={{ duration: 0.45, ease: "easeOut", delay: 0.35 + index * 0.85 }}
+      className={"flex " + (isOracle ? "justify-end" : "justify-start")}
+    >
+      <div className={"max-w-[85%] " + (isOracle ? "text-right" : "")}>
+        <p className={"mb-1 font-body text-[10px] uppercase tracking-[0.18em] " + (isOracle ? "text-white/60" : "text-white/40")}>
+          {VOICE_LABEL[line.voice]}
+        </p>
+        <p
+          className={
+            (isOracle
+              ? "liquid-glass-strong text-white"
+              : "liquid-glass text-white/85") +
+            " font-body text-sm font-light leading-relaxed"
+          }
+          style={isOracle ? tint : undefined}
+        >
+          <span
+            className="rounded-2xl px-4 py-3"
+            style={{ display: "inline-block", textAlign: "left" }}
+          >
+            {line.line}
+          </span>
+        </p>
+      </div>
+    </motion.div>
+  );
+}
+
+function OracleStars({ value }) {
+  return (
+    <p aria-label={value + " out of 5 stars"} className="mt-1 text-lg leading-none tracking-[2px]">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <span key={i} style={{ color: i <= value ? "#FFD970" : "rgba(255,255,255,0.18)" }}>★</span>
+      ))}
+    </p>
+  );
+}
+
+function OraclePanel({ a, b, state, data, onFuse, onRethink, onRetry }) {
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+      <motion.div
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={state === "ready" ? onRethink : undefined}
+      />
+      <motion.div
+        role="dialog" aria-modal="true" aria-label="The Fusion Oracle"
+        className="liquid-glass-strong relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-[1.5rem] p-6 md:p-8"
+        initial={{ opacity: 0, filter: "blur(8px)", y: 18, scale: 0.98 }}
+        animate={{ opacity: 1, filter: "blur(0px)", y: 0, scale: 1 }}
+        exit={{ opacity: 0, filter: "blur(6px)", y: 12 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+      >
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <p className="font-body text-[11px] uppercase tracking-[0.18em] text-white/50">Before you fuse</p>
+            <p className="mt-1 font-heading text-2xl italic text-white">The Fusion Oracle</p>
+            <p className="mt-1 font-body text-xs font-light text-white/55">{a} × {b}</p>
+          </div>
+          {state === "ready" && (
+            <button
+              type="button" onClick={onRethink} aria-label="Close the Oracle"
+              className="tappable flex h-8 w-8 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              <Icons.X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        {state === "loading" && (
+          <div className="flex flex-col items-center gap-4 py-10 text-center">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: "linear" }}
+              className="h-10 w-10 rounded-full"
+              style={{ background: F.tintStyle(a, b, 0.9, 90).background, maskImage: "radial-gradient(circle, transparent 55%, black 56%)", WebkitMaskImage: "radial-gradient(circle, transparent 55%, black 56%)" }}
+            />
+            <p className="font-body text-sm font-light text-white/70">Consulting the Oracle…</p>
+            <p className="max-w-xs font-body text-xs font-light text-white/40">
+              A skeptic and an oracle are arguing about {a} × {b} on your behalf.
+            </p>
+          </div>
+        )}
+
+        {state === "error" && (
+          <div className="py-8 text-center">
+            <p className="font-heading text-xl italic text-white">The Oracle is unreachable</p>
+            <p className="mt-2 font-body text-sm font-light text-white/60">Try again in a moment.</p>
+            <div className="mt-5 flex justify-center gap-3">
+              <button type="button" onClick={onRetry} className="rounded-full bg-white px-6 py-2 font-body text-sm font-medium text-black">Retry</button>
+              <button type="button" onClick={onRethink} className="liquid-glass rounded-full px-6 py-2 font-body text-sm text-white/75">Close</button>
+            </div>
+          </div>
+        )}
+
+        {state === "ready" && data && (
+          <div className="flex flex-col gap-4">
+            {data.debate.map((line, i) => (
+              <OracleBubble key={i} line={line} a={a} b={b} index={i} />
+            ))}
+
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut", delay: 0.4 + data.debate.length * 0.85 }}
+              className="liquid-glass-strong mt-2 rounded-2xl p-5"
+              style={F.tintStyle(a, b, 0.1)}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-body text-[11px] uppercase tracking-[0.18em] text-white/50">Verdict</p>
+                  <p className="mt-1.5 font-heading text-xl italic leading-snug text-white">{data.verdict.headline}</p>
+                </div>
+                <OracleStars value={data.verdict.stars} />
+              </div>
+              <p className="mt-4 font-body text-sm font-light leading-relaxed text-white/75">
+                <span className="font-medium text-white/90">First question for you: </span>
+                {data.verdict.question}
+              </p>
+              {data.source === "fallback" && (
+                <p className="mt-3 font-body text-[11px] font-light text-white/40">offline verdict — SF unreachable</p>
+              )}
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={onFuse}
+                  className="tappable flex items-center gap-2 rounded-full bg-white px-6 py-2.5 font-body text-sm font-medium text-black"
+                >
+                  Fuse anyway <Icons.Bolt className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={onRethink}
+                  className="tappable rounded-full px-5 py-2.5 font-body text-sm text-white/70 transition-colors hover:text-white"
+                >
+                  Rethink the pair
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </motion.div>
+    </div>
+  );
+}
 
 function Fuse() {
   const s = Store.useStore();
@@ -28,6 +191,33 @@ function Fuse() {
   }
 
   const ready = a.trim().length > 0 && b.trim().length > 0;
+
+  // ---- Fusion Oracle state ----
+  const [oracleState, setOracleState] = useState("idle"); // idle | loading | ready | error
+  const [oracle, setOracle] = useState(null); // { debate, verdict, source }
+
+  async function consultOracle() {
+    if (!ready || oracleState === "loading") return;
+    setOracleState("loading");
+    setOracle(null);
+    try {
+      const data = await window.Api.fusionOracle(a.trim(), b.trim());
+      setOracle({ debate: data.oracle.debate, verdict: data.oracle.verdict, source: data.source });
+      setOracleState("ready");
+    } catch (e) {
+      setOracleState("error");
+    }
+  }
+
+  function closeOracle() {
+    setOracleState("idle");
+    setOracle(null);
+  }
+
+  function fuseFromOracle() {
+    closeOracle();
+    fuse();
+  }
 
   useEffect(() => {
     if (phase === "result" && fusion) window.Ambient.setFusion(fusion.a, fusion.b);
@@ -105,7 +295,21 @@ function Fuse() {
                 />
               </div>
 
-              <div className="mt-10 flex justify-center">
+              <div className="mt-10 flex flex-col items-center gap-4">
+                <motion.button
+                  type="button"
+                  onClick={consultOracle}
+                  disabled={!ready}
+                  whileTap={{ scale: 0.97 }}
+                  className={
+                    (ready ? "liquid-glass-strong text-white tappable" : "liquid-glass text-white/30") +
+                    " flex items-center gap-2 rounded-full px-7 py-3 font-body text-sm font-light tracking-wide disabled:cursor-not-allowed"
+                  }
+                  style={ready ? F.tintStyle(a.trim(), b.trim(), 0.16) : undefined}
+                >
+                  <span aria-hidden="true">🔮</span>
+                  Consult the Oracle
+                </motion.button>
                 <motion.button
                   type="button"
                   onClick={fuse}
@@ -122,6 +326,20 @@ function Fuse() {
               </div>
             </motion.div>
           )}
+
+          <AnimatePresence>
+            {oracleState !== "idle" && (
+              <OraclePanel
+                a={a.trim()}
+                b={b.trim()}
+                state={oracleState}
+                data={oracleState === "ready" ? oracle : null}
+                onFuse={fuseFromOracle}
+                onRethink={closeOracle}
+                onRetry={consultOracle}
+              />
+            )}
+          </AnimatePresence>
 
           {phase === "loading" && (
             <motion.div key="loading" {...enter(0.05)}>
@@ -152,6 +370,15 @@ function Fuse() {
 
           {phase === "result" && fusion && (
             <motion.div key="result" {...enter(0.05)}>
+              <div className="mb-8 flex justify-center">
+                <Creature.CreatureView
+                  a={fusion.a}
+                  b={fusion.b}
+                  score={fusion.score}
+                  size={128}
+                  caption
+                />
+              </div>
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
                   <p className="font-body text-[11px] uppercase tracking-[0.18em] text-white/50">

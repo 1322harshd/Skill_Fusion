@@ -404,6 +404,8 @@ window.Api = (function () {
     connectModerationAction,
     // ---- Kunal: SF-backed AI endpoints ----
     fuse: (a, b) => request("/fusion/", { method: "POST", body: { a, b } }),
+    fusionOracle: (a, b) =>
+      request("/fusion/oracle/", { method: "POST", body: { a, b } }),
     fusionHistory: () => request("/fusion/history"),
     roadmapPreviews: (fusion, salt = 0) =>
       request("/roadmap/previews/", { method: "POST", body: { fusion: { id: fusion.id, a: fusion.a, b: fusion.b }, salt } }),

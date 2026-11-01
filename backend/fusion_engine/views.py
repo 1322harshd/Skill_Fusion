@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from .services import make_brief
+from .services import make_brief, make_oracle, fallback_oracle
 from .quiz import generate_quiz, score_quiz
 from .evidence import judge_skills_from_resume
 from .categories import category_of
@@ -63,6 +63,27 @@ def fusion_history_view(request):
         "score": r.score, "brief": r.brief, "project": r.project,
         "createdAt": r.created_at.isoformat(),
     } for r in rows]})
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def oracle_view(request):
+    """The Fusion Oracle: a skeptic/oracle self-debate on a candidate pair,
+    shown BEFORE the learner commits to fusing. One SF call; deterministic
+    fallback debate when SF is unreachable (never dead-ends, always renders)."""
+    a = request.data.get("a", "").strip()
+    b = request.data.get("b", "").strip()
+    if not a or not b:
+        return Response({"error": "a and b required"}, status=400)
+    import asyncio
+    try:
+        oracle = asyncio.run(make_oracle(a, b))
+        source = "sf"
+    except Exception:
+        # make_oracle already catches internally; this guard exists for
+        # anything unforeseen (import cycles, asyncio teardown, etc.)
+        oracle = fallback_oracle(a, b)
+        source = "fallback"
+    return Response({"oracle": oracle, "source": source})
 
 @api_view(["POST"])
 @permission_classes([AllowAny])

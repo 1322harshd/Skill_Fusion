@@ -3,6 +3,7 @@ const { motion, AnimatePresence } = window.Motion;
 const { Icons } = window;
 const F = window.Fusion;
 const Store = window.Store;
+const Creature = window.Creature;
 
 const enter = (delay = 0) => ({
   initial: { filter: "blur(10px)", opacity: 0, y: 22 },
@@ -96,6 +97,11 @@ function ScoreScreen({ fusionId }) {
   return (
     <div className="mx-auto max-w-3xl">
       <motion.div {...enter()} className="text-center">
+        {Creature ? (
+          <div className="mb-6 flex justify-center" key={fusionKey}>
+            <Creature.CreatureView a={fusion.a} b={fusion.b} score={score} size={148} caption />
+          </div>
+        ) : null}
         <F.FusionChip a={fusion.a} b={fusion.b} size="lg" />
         <h1 className="mt-5 font-heading text-4xl italic leading-[0.95] tracking-[-2px] text-white md:text-5xl">
           Fusion Score

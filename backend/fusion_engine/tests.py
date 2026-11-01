@@ -53,10 +53,18 @@ class CategoryParityTests(TestCase):
         # JS pipeline: (h*31+c) | 0 per char then Math.abs; server must match
         # or restored fusions land in the wrong category bucket.
         from .categories import category_of as backend, hash as backend_hash
-        self.assertEqual(backend("Woodworking"), "tech")
-        self.assertEqual(backend("Cooking"), "creative")
+        self.assertEqual(backend("Woodworking"), "craft")
+        self.assertEqual(backend("Cooking"), "everyday")
+        self.assertEqual(backend("Yoga"), "wellness")
         self.assertEqual(backend_hash("History"), 1703379852)
         self.assertEqual(backend_hash("Woodworking×History"), 502937727)
+
+    def test_rule_order_matches_frontend_routing(self):
+        # Same trap the frontend handles: "3D Printing" must route to craft
+        # while "Motion & 3D" (which contains "3D") stays creative.
+        from .categories import category_of as backend
+        self.assertEqual(backend("3D Printing"), "craft")
+        self.assertEqual(backend("Motion & 3D"), "creative")
 
 
 # ---- fuse + history ------------------------------------------------------
@@ -113,6 +121,73 @@ class FuseTests(TestCase):
     def test_missing_args_is_400(self):
         response = self.client.post("/api/fusion/", {"a": "Design"}, format="json")
         self.assertEqual(response.status_code, 400)
+
+
+class OracleTests(TestCase):
+    """/api/fusion/oracle/ — the pre-fuse skeptic/oracle debate."""
+
+    def setUp(self):
+        self.client = APIClient()
+
+    @staticmethod
+    def _sf_oracle():
+        return {
+            "debate": [
+                {"voice": "skeptic", "line": "One keyword beats two keywords in every job filter that exists."},
+                {"voice": "oracle", "line": "But no filter is looking for this blend — that is your open field."},
+                {"voice": "skeptic", "line": "No established title means the CV scan never lands you."},
+                {"voice": "oracle", "line": "Then be the title: ship one artifact the panel cannot misread."},
+            ],
+            "verdict": {"stars": 4, "headline": "Uncrowded on purpose",
+                        "question": "What would the first credible portfolio piece be?"},
+        }
+
+    def test_oracle_endpoint_returns_sf_debate(self):
+        with patch("fusion_engine.views.make_oracle", return_value=self._sf_oracle()):
+            response = self.client.post("/api/fusion/oracle/", {"a": "Design", "b": "Code"}, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["source"], "sf")
+        oracle = response.json()["oracle"]
+        self.assertEqual([l["voice"] for l in oracle["debate"]],
+                         ["skeptic", "oracle", "skeptic", "oracle"])
+        self.assertEqual(oracle["verdict"]["stars"], 4)
+
+    def test_oracle_endpoint_requires_pair(self):
+        response = self.client.post("/api/fusion/oracle/", {"a": "Design"}, format="json")
+        self.assertEqual(response.status_code, 400)
+
+    def test_oracle_falls_back_when_sf_unreachable(self):
+        # SF down must still return a usable debate — flagged "fallback" so
+        # the UI can badge it, mirroring the roadmaps offline rule.
+        with patch("fusion_engine.views.make_oracle", side_effect=RuntimeError("SF down")):
+            response = self.client.post("/api/fusion/oracle/", {"a": "Design", "b": "Code"}, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["source"], "fallback")
+        oracle = response.json()["oracle"]
+        voices = [l["voice"] for l in oracle["debate"]]
+        self.assertEqual(voices, ["skeptic", "oracle", "skeptic", "oracle"])
+        self.assertTrue(1 <= oracle["verdict"]["stars"] <= 5)
+
+    def test_fallback_oracle_is_deterministic_and_never_pairs_the_verdict(self):
+        from .services import fallback_oracle
+        f1, f2 = fallback_oracle("Design", "Code"), fallback_oracle("Design", "Code")
+        self.assertEqual(f1, f2)
+        for line in f1["debate"]:
+            # lines must be populated and voice-matched — the UI renders voices
+            self.assertGreater(len(line["line"]), 12)
+            self.assertIn(line["voice"], ("skeptic", "oracle"))
+        same_pair = fallback_oracle("Cooking", "Baking")
+        self.assertNotEqual(same_pair["debate"][2]["line"], same_pair["debate"][0]["line"])
+
+    def test_oracle_schema_clamps_stars_and_normalizes_voice(self):
+        from .schemas import OracleSchema
+        data = dict(self._sf_oracle())
+        data["verdict"] = dict(data["verdict"], stars=9)
+        data["debate"][0]["voice"] = "SKEPTIC"
+        parsed = OracleSchema.model_validate(data).model_dump()
+        self.assertEqual(parsed["verdict"]["stars"], 5)
+        self.assertEqual(parsed["debate"][0]["voice"], "skeptic")
+        self.assertEqual(parsed["debate"][1]["voice"], "oracle")
 
 
 class FusionHistoryTests(TestCase):

@@ -266,10 +266,18 @@ function Dashboard() {
         <motion.div {...enter()} className="relative p-8 md:p-12">
           <p className="font-body text-sm text-white/70">{"// Today at a glance"}</p>
           <h1 className="mt-3 font-heading text-5xl italic leading-[1.0] tracking-[-3px] text-white md:text-6xl">
-            Good {s.user.name ? s.user.name.split(" ")[0] : "there"}
+            {(() => {
+              // "Good morning/afternoon/evening" — the greeting was previously
+              // rendered as `Good <name>`, which read "Good opilkujy" whenever
+              // a name wasn't a time of day.
+              const h = new Date().getHours();
+              const word = h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
+              const name = s.user.name ? `,\u00A0${s.user.name.split(" ")[0]}` : "";
+              return `Good ${word}${name}`;
+            })()}
           </h1>
           <p className="mt-4 max-w-xl font-body text-sm font-light leading-relaxed text-white/65">
-            You're building <span className="text-white">{featured.a} × {featured.b}</span> — a{" "}
+            You're building <span className="text-white">{featured.a} × {featured.b}</span> — {/^[aeiou]/i.test(featured.score.rarityLabel) ? "an" : "a"}{" "}
             {featured.score.rarityLabel.toLowerCase()} blend with {featured.score.value} points on the line.
           </p>
         </motion.div>

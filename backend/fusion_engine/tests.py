@@ -402,3 +402,159 @@ def evidence_mod():
     """Late import so views' module-level binding isn't affected."""
     from . import evidence as _e
     return _e
+
+
+# ---- re-fusion (Add third skill -> graduate to the trio) -------------------
+
+class AddSkillTests(TestCase):
+    """POST /api/fusion/add-skill/ — re-fusion creates a NEW trio row, the
+    old pair row is never mutated, and the trio carries full lineage."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(email=USER, password=PASSWORD, fullName="Ada")
+        self.client.force_authenticate(user=self.user)
+        with _mock_sf():
+            self.client.post("/api/fusion/", {"a": "Pottery", "b": "Podcasting"}, format="json")
+        self.old = Fusion.objects.get()
+        self.old_id = self.old.id
+
+    def _add(self, skill="Woodworking", fusion_id=None):
+        with _mock_sf():
+            return self.client.post("/api/fusion/add-skill/",
+                                    {"fusion_id": fusion_id or self.old_id, "skill": skill},
+                                    format="json")
+
+    def test_requires_auth(self):
+        anon = APIClient()
+        response = anon.post("/api/fusion/add-skill/", {"fusion_id": self.old_id, "skill": "Woodworking"}, format="json")
+        self.assertIn(response.status_code, (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN))
+
+    def test_missing_args_are_400(self):
+        self.assertEqual(self.client.post("/api/fusion/add-skill/", {}, format="json").status_code, 400)
+        self.assertEqual(self._add(skill="  ").status_code, 400)
+
+    def test_unknown_or_foreign_fusion_is_404(self):
+        self.assertEqual(self._add(fusion_id="f999999-u1").status_code, 404)
+        other = User.objects.create_user(email=USER2, password=PASSWORD, fullName="Grace")
+        foreign = User.objects.create_user(email="x@x.com", password=PASSWORD)
+        f = Fusion.objects.create(id=f"fx-o{other.pk}", user=other, a="A", b="B",
+                                  category_a="tech", category_b="craft")
+        self.client.force_authenticate(user=foreign)
+        response = self.client.post("/api/fusion/add-skill/", {"fusion_id": f.id, "skill": "C"}, format="json")
+        self.assertEqual(response.status_code, 404)
+
+    def test_skill_already_in_fusion_is_400(self):
+        for skill in ("Pottery", "podcasting"):
+            response = self._add(skill=skill)
+            self.assertEqual(response.status_code, 400, skill)
+
+    def test_trio_fusion_cannot_grow_again(self):
+        self._add()
+        trio = Fusion.objects.exclude(id=self.old_id).get()
+        response = self._add(fusion_id=trio.id)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("trio", response.json()["error"])
+
+    def test_creates_new_row_and_never_touches_the_old_one(self):
+        before = {f: getattr(self.old, f) for f in
+                  ("added_skills", "lineage_from", "score", "brief", "project", "a", "b")}
+        response = self._add()
+        self.assertEqual(response.status_code, 200)
+        body = response.json()["fusion"]
+        # new row semantics
+        self.assertNotEqual(body["id"], self.old_id)
+        self.assertEqual(body["addedSkills"], ["Woodworking"])
+        self.assertEqual(body["lineageFrom"], self.old_id)
+        self.assertEqual(body["a"], "Pottery")
+        self.assertEqual(body["b"], "Podcasting")
+        # canonical skills list (alpha, case-normalized-first-seen)
+        self.assertEqual(body["score"]["skills"], ["Podcasting", "Pottery", "Woodworking"])
+        self.assertEqual(body["score"]["source"], "trio-heuristic")
+        # old row is frozen exactly as it was
+        fresh_old = Fusion.objects.get(id=self.old_id)
+        for f, v in before.items():
+            self.assertEqual(getattr(fresh_old, f), v)
+        # exactly one new row, marked with lineage
+        self.assertEqual(Fusion.objects.count(), 2)
+        trio = Fusion.objects.exclude(id=self.old_id).get()
+        self.assertEqual(trio.added_skills, ["Woodworking"])
+        self.assertEqual(trio.lineage_from, self.old_id)
+        self.assertEqual(trio.score["recommendation"], None)  # trios don't push a 4th skill
+
+    def test_re_refusing_same_trio_replaces_its_row(self):
+        self._add()
+        self._add()
+        trios = Fusion.objects.exclude(id=self.old_id)
+        self.assertEqual(trios.count(), 1)
+
+    def test_history_carries_added_and_lineage(self):
+        self._add()
+        self.client.force_authenticate(user=self.user)
+        rows = self.client.get("/api/fusion/history/").json()["fusions"]
+        by_id = {r["id"]: r for r in rows}
+        self.assertEqual(by_id[self.old_id]["addedSkills"], [])
+        trio = by_id[[k for k in by_id if k != self.old_id][0]]
+        self.assertEqual(trio["addedSkills"], ["Woodworking"])
+        self.assertEqual(trio["lineageFrom"], self.old_id)
+
+
+class TrioScoreTests(TestCase):
+    """make_score_sync_n: deterministic, honest, recommendation-free."""
+
+    def test_deterministic_and_order_insensitive(self):
+        from scores.services import make_score_sync_n
+        first = make_score_sync_n(["Baking", "Psychology", "UX Research"])
+        again = make_score_sync_n(["psychology", "UX Research", "Baking"])
+        self.assertEqual(first, again)
+
+    def test_shape_and_honesty(self):
+        from scores.services import make_score_sync_n
+        s = make_score_sync_n(["A", "B", "C"])
+        for key in ("value", "rarity", "demand", "rarityLabel", "demandLabel",
+                    "explanation", "recommendation", "history", "skills"):
+            self.assertIn(key, s)
+        # honest recompute: value derives from rarity/demand, NOT pair+delta
+        self.assertEqual(s["value"], round((s["rarity"] * 0.45 + s["demand"] * 0.55) * 100))
+        self.assertIsNone(s["recommendation"])
+        self.assertGreaterEqual(s["value"], 0)
+
+    def test_trio_never_recommend_pair_member(self):
+        # the pair heuristic path keeps skipping pair members across all lanes
+        from scores.services import make_score_sync
+        for pair in (("AI", "Automation"), ("Writing", "Copywriting"), ("Cooking", "Baking")):
+            rec = make_score_sync(*pair)["recommendation"]["skill"]
+            self.assertNotIn(rec.lower(), {p.lower() for p in pair})
+
+
+class BriefShapeTests(TestCase):
+    """fallback_brief: pair output byte-compat with the 2-skill voice, trios
+    get trio-shaped lines — and both pass the BriefSchema."""
+
+    def test_pair_fallback_unchanged(self):
+        from .services import fallback_brief
+        score = {"rarityLabel": "Rare", "demandLabel": "Steady"}
+        brief = fallback_brief(["Design", "Code"], score)
+        self.assertEqual(fallback_brief(["Design", "Code"], score), brief)
+        self.assertIn("When Design and Code sit side by side", brief["lede"])
+        self.assertIn("Holding both makes you", brief["complementarity"][1])
+        self.assertNotIn("third", " ".join(brief["complementarity"]).lower())
+
+    def test_trio_fallback_mentions_third_skill(self):
+        from .services import fallback_brief
+        brief = fallback_brief(["Pottery", "Podcasting", "Woodworking"],
+                               {"rarityLabel": "Rare", "demandLabel": "Steady"})
+        self.assertIn("Pottery, Podcasting and Woodworking", brief["lede"])
+        self.assertIn("Woodworking", brief["complementarity"][1])
+        self.assertTrue(all("Pottery" in a or "Podcasting" in a or "Woodworking" in a
+                            for a in brief["applications"][:2]))
+
+    def test_sf_prompt_is_n_skill_aware(self):
+        from .prompts import fusion_brief
+        score = {"value": 70, "rarityLabel": "Rare", "demandLabel": "Steady"}
+        pair = fusion_brief(["A", "B"], score)
+        trio = fusion_brief(["A", "B", "C"], score)
+        self.assertIn('"A", "B"', pair)
+        self.assertNotIn("every skill", pair)
+        self.assertIn('"A", "B", "C"', trio)
+        self.assertIn("every skill", trio)

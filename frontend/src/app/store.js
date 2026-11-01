@@ -119,11 +119,24 @@ window.Store = (function () {
     return state.fusions.find((f) => f.id === id) || null;
   }
 
-  function addSkillToFusion(fusionId, skill) {
+  // Re-fusion: "Add third skill" is a server round-trip that creates a NEW
+  // trio fusion (fresh brief/project/score, lineage -> the old pair). The new
+  // row is prepended so it becomes the featured fusion; the old pair stays
+  // untouched with its roadmap progress, project and grades intact. Nothing
+  // changes on failure — the modal stays open and the error bubbles to the
+  // caller for its toast.
+  async function addSkillToFusion(fusionId, skill) {
     const f = getFusion(fusionId);
-    if (!f || f.addedSkills.includes(skill)) return;
-    const next = { ...f, addedSkills: [...f.addedSkills, skill], score: { ...f.score, value: f.score.value + (f.score.recommendation && f.score.recommendation.skill === skill ? f.score.recommendation.delta : 6) } };
-    set({ fusions: state.fusions.map((x) => (x.id === fusionId ? next : x)) });
+    if (!f) throw new Error("Fusion not found");
+    const held = [f.a, f.b, ...f.addedSkills].map((s) => (s || "").toLowerCase());
+    if (f.addedSkills.length || held.includes(skill.toLowerCase())) {
+      throw new Error("That skill is already in this fusion.");
+    }
+    const data = await window.Api.addFusionSkill(fusionId, skill);
+    const trio = fromBackendFusion(data.fusion);
+    trio.roadmap = null; // trio picks its own path on the roadmap picker next
+    set({ fusions: [trio, ...state.fusions] });
+    return trio;
   }
 
   function refreshFusionScore(fusionId, score) {
@@ -481,6 +494,7 @@ window.Store = (function () {
       categoryB: r.categoryB || F.categoryOf(r.b),
       createdAt: r.createdAt || "just now",
       addedSkills: r.addedSkills || [],
+      lineageFrom: r.lineageFrom || null,
       score: r.score,
       brief: r.brief,
       project: normalizeProject(r.project, r.a, r.b),
@@ -520,12 +534,13 @@ window.Store = (function () {
   }
 
   async function tweakRoadmap(fusion, pv, newRequest) {
-    // Pre-commit change request — SF judges by ONE rule: both skills must
+    // Pre-commit change request — SF judges by ONE rule: every skill must
     // survive. Returns {classification, reasoning, diff, updated_constraints}.
     return window.Api.roadmapTweak({
       roadmap_id: pv.roadmapId,
       skill_a: fusion.a,
       skill_b: fusion.b,
+      skill_c: (fusion.addedSkills && fusion.addedSkills[0]) || undefined,
       new_request: newRequest,
     });
   }

@@ -377,6 +377,7 @@ function Fuse() {
                   score={fusion.score}
                   size={128}
                   caption
+                  third={(fusion.addedSkills && fusion.addedSkills[0]) || null}
                 />
               </div>
               <div className="flex flex-wrap items-end justify-between gap-4">
@@ -385,7 +386,9 @@ function Fuse() {
                     Your fusion
                   </p>
                   <p className="mt-2 font-heading text-4xl italic tracking-[-2px] text-white md:text-5xl">
-                    {fusion.a} <span className="text-white/40">×</span> {fusion.b}
+                    {fusion.a} <span className="text-white/40">×</span> {fusion.b}{fusion.addedSkills && fusion.addedSkills[0] ? (
+                      <> <span className="text-white/40">+</span> {fusion.addedSkills[0]}</>
+                    ) : null}
                   </p>
                 </div>
                 <div className="text-right">
@@ -451,7 +454,7 @@ function Fuse() {
               <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
                 {window.Store && (
                   <a
-                    href={"#/quiz?skills=" + encodeURIComponent(fusion.a + "," + fusion.b)}
+                    href={"#/quiz?skills=" + encodeURIComponent([fusion.a, fusion.b, ...(fusion.addedSkills || [])].join(","))}
                     className="tappable flex items-center gap-2 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black"
                   >
                     Take the 5-min quiz

@@ -168,7 +168,7 @@ function FeaturedCard({ fusion }) {
         <div>
           <p className="font-body text-[11px] uppercase tracking-[0.18em] text-white/50">Featured fusion</p>
           <div className="mt-3">
-            <F.FusionChip a={fusion.a} b={fusion.b} size="lg" />
+            <F.FusionChip a={fusion.a} b={fusion.b} size="lg" third={fusion.addedSkills[0] || null} />
           </div>
           <h2 className="mt-4 max-w-md font-heading text-3xl italic leading-[1.05] tracking-[-1px] text-white md:text-4xl">
             {fusion.roadmap.title}
@@ -219,7 +219,7 @@ const FusionGridCard = React.forwardRef(function FusionGridCard({ fusion, logEnt
   return (
     <motion.div ref={ref} {...enter(0.05)} className="liquid-glass flex flex-col rounded-2xl p-6">
       <div className="flex items-center justify-between gap-3">
-        <F.FusionChip a={fusion.a} b={fusion.b} size="md" />
+        <F.FusionChip a={fusion.a} b={fusion.b} size="md" third={fusion.addedSkills[0] || null} />
         <a
           href={"#/score/" + fusion.id}
           className="flex items-center gap-1 font-body text-[11px] font-medium text-white/60 transition-colors hover:text-white"
@@ -389,7 +389,7 @@ function Dashboard() {
           </h1>
           <p className="mt-4 flex max-w-2xl flex-wrap items-center gap-x-2 gap-y-2 font-body text-sm font-light leading-relaxed text-white/65">
             <span>
-              You're building <span className="text-white">{featured.a} × {featured.b}</span> — {/^[aeiou]/i.test(featured.score.rarityLabel) ? "an" : "a"}{" "}
+              You're building <span className="text-white">{featured.a} × {featured.b}{featured.addedSkills[0] ? ` + ${featured.addedSkills[0]}` : ""}</span> — {/^[aeiou]/i.test(featured.score.rarityLabel) ? "an" : "a"}{" "}
               {featured.score.rarityLabel.toLowerCase()} blend with {featured.score.value} points on the line.
             </span>
             <ScoreDeltaChip fusion={featured} />

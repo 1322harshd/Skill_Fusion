@@ -13,6 +13,9 @@ class Fusion(models.Model):
     roadmap = models.JSONField(default=dict)
     project = models.JSONField(default=dict)
     added_skills = models.JSONField(default=list)
+    # id of the pair fusion this trio was re-fused from ("graduated"), kept so
+    # the creature can render a "evolved from X × Y" lineage note forever.
+    lineage_from = models.CharField(max_length=64, blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

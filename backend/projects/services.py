@@ -14,10 +14,13 @@ def _lst(v, default_text):
     s = str(v or "").strip()
     return [s] if s else [default_text]
 
-def normalize_brief(raw, a, b):
+def normalize_brief(raw, skills):
     """Map whatever SF returned (current snake_case shape or older variants)
     onto the full UI contract, filling every missing field with defensible
-    defaults — the project page must always render."""
+    defaults — the project page must always render. `skills` is the full
+    skill list (pair or trio)."""
+    skills = [str(s) for s in (skills if isinstance(skills, (list, tuple)) else [skills])]
+    blend = " × ".join(skills)
     raw = raw if isinstance(raw, dict) else {}
     def pick(*keys, default=""):
         for k in keys:
@@ -28,25 +31,28 @@ def normalize_brief(raw, a, b):
                 return v
         return default
     return {
-        "title": pick("title", default=f"{a} × {b} flagship project"),
+        "title": pick("title", default=f"{blend} flagship project"),
         "client": pick("client", "client_type", default="Self-directed"),
         "timeline": pick("timeline", "duration", default="2-4 weeks"),
         "format": pick("format", "format_type", default="Web experience"),
         "audience": pick("audience", default="Early adopters and reviewers"),
-        "goal": pick("goal", "goal_statement", "concept", default=str(raw.get("expected_outcome") or "").strip() or f"One flagship artifact that proves {a} × {b} in the real world."),
+        "goal": pick("goal", "goal_statement", "concept", default=str(raw.get("expected_outcome") or "").strip() or f"One flagship artifact that proves {blend} in the real world."),
         "tools": _lst(raw.get("tools"), "Tools of your trade"),
         "deliverables": _lst(raw.get("deliverables") or raw.get("key_deliverables"), "A shipped, shareable artifact"),
         "expectedOutcome": str(pick("expectedOutcome", "expected_outcome", "outcome") or "Hireable proof of the fusion, not just a certificate."),
         "status": str(raw.get("status") or "brief"),
     }
 
-def make_project(a, b):
-    prompt = (f'Propose one flagship project brief combining "{a}" and "{b}". '
+def make_project(skills):
+    skills = [str(s) for s in skills]
+    joined = " and ".join(f'"{s}"' for s in skills)
+    prompt = (f'Propose one flagship project brief combining {joined}. '
               'Client should be a realistic sponsor, timeline a 2-4 phrase, format the artifact type, '
               'audience who it is for. Keep every value one short line. '
+              'If several skills are given, the brief must genuinely weave in all of them, not just two. '
               f'Return ONLY valid JSON, no markdown fencing, no extra text, matching exactly: {BRIEF_SHAPE}')
     raw = asyncio.run(call_sf14b_json("sf-project", prompt))
-    return normalize_brief(raw, a, b)
+    return normalize_brief(raw, skills)
 
 
 # ---- milestone submission assessment --------------------------------------
@@ -61,7 +67,7 @@ def assess_submission(brief, explanation, artifact_text, source_link=""):
         "assessor. Below are the PROJECT BRIEF (what was supposed to be built), "
         "the student's own explanation, and the submitted artifact text.\n"
         "Compare the artifact against the brief: does the described work exist, "
-        "is it real and complete, does it use BOTH skills of the fusion?\n"
+        "is it real and complete, does it use the skills of the fusion?\n"
         "grade matchScore 0-100 (0 = nothing in the artifact matches the brief, "
         "100 = all briefed deliverables clearly present and complete); closeness "
         "strong (75+) / partial (35-74) / weak (<35); strengths: 2 things done "

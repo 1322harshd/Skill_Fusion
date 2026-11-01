@@ -6,18 +6,36 @@ from .categories import category_of
 CURATED = {"Design×Code": "Ship a product you designed end-to-end", "Marketing×Data": "Run campaigns you can prove worked"}
 GENERIC = [lambda a,b: f"Do {b} work that carries your {a} edge", lambda a,b: f"Turn your {a} instinct into {b} results", lambda a,b: f"Become the rare {a} + {b} hire"]
 
-def fallback_brief(a,b, score):
-    key = f"{a}×{b}"
+def fallback_brief(skills, score):
+    """Deterministic offline brief for 2 OR 3 skills. The pair wording is
+    byte-compatible with the original 2-skill version (Users/tests rely on
+    the stable voice); trios get trio-flavored lines on the same skeleton."""
+    skills = [str(s) for s in skills]
+    a, b, third = (skills[0], skills[1], skills[2] if len(skills) > 2 else None)
+    key = "×".join(skills)
     outcome = CURATED.get(key) or CURATED.get(f"{b}×{a}") or GENERIC[hash(a+b)%len(GENERIC)](a,b)
-    return {"lede": f"When {a} and {b} sit side by side they stop being two keywords and start being one capability — {outcome}.", "complementarity": [f"{a} points at the problem; {b} is how you actually move it.", "Most people carry one or the other. Holding both makes you the person who ships the middle."], "applications": [f"A portfolio piece that pairs {a} thinking with {b} craft", f"Interview stories built on a real {a} × {b} artifact", "A role or service that only this blend can fill"], "industries": ["Product teams","Studios & agencies","Early-stage startups"], "insights": [f"Your rarity signal reads {(score.get('rarityLabel') or 'rare').lower()} — this pair stands out before you say a word.", f"Demand reads {(score.get('demandLabel') or 'steady').lower()}, so the blend itself matters more than polishing either side alone."]}
+    consts_lede = (f"When {a}, {b} and {third} sit side by side they stop being three keywords and start being one capability — {outcome}."
+                   if third else
+                   f"When {a} and {b} sit side by side they stop being two keywords and start being one capability — {outcome}.")
+    complementarity = [f"{a} points at the problem; {b} is how you actually move it.",
+                       (f"The third leg matters most: {third} is what turns a promising blend into a routine you can actually run." if third
+                        else "Most people carry one or the other. Holding both makes you the person who ships the middle.")]
+    applications = [f"A portfolio piece that pairs {a} thinking with {b} craft" + (f" and {third} polish" if third else ""),
+                    f"Interview stories built on a real {' × '.join(skills)} artifact",
+                    "A role or service that only this blend can fill"]
+    industries = ["Product teams", "Studios & agencies", "Early-stage startups"]
+    insights = [f"Your rarity signal reads {(score.get('rarityLabel') or 'rare').lower()} — this {'combination' if third else 'pair'} stands out before you say a word.",
+                f"Demand reads {(score.get('demandLabel') or 'steady').lower()}, so the {'mix' if third else 'blend'} itself matters more than polishing any one side alone."]
+    return {"lede": consts_lede, "complementarity": complementarity, "applications": applications,
+            "industries": industries, "insights": insights}
 
-async def make_brief(a,b, score):
-    prompt = fusion_brief(a,b, score)
+async def make_brief(skills, score):
+    skills = [str(s) for s in skills]
     try:
-        raw = await call_sf14b(adapter="sf-fusion", prompt=prompt)
+        raw = await call_sf14b(adapter="sf-fusion", prompt=fusion_brief(skills, score))
         return BriefSchema.model_validate_json(raw).model_dump()
     except Exception:
-        return fallback_brief(a,b, score)
+        return fallback_brief(skills, score)
 
 
 # ---- Fusion Oracle --------------------------------------------------------

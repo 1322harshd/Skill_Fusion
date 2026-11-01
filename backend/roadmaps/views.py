@@ -138,6 +138,7 @@ def tweak_view(request):
     outcome = request.data.get("outcome_statement", rm.outcome_statement if rm else "")
     skill_a = request.data.get("skill_a", "")
     skill_b = request.data.get("skill_b", "")
+    skill_c = request.data.get("skill_c", "") or None
     constraints = list(request.data.get("existing_constraints", []))
     if rm:
         constraints = list(dict.fromkeys(list(rm.constraints) + constraints))
@@ -146,7 +147,7 @@ def tweak_view(request):
         return Response({"error": "new_request required"}, status=400)
     record = {"title": title, "weeks": weeks, "outcome_statement": outcome}
     try:
-        result = tweak_roadmap(record, constraints, skill_a, skill_b, new_request)
+        result = tweak_roadmap(record, constraints, skill_a, skill_b, new_request, skill_c=skill_c)
     except Exception as e:
         return Response({"error": f"SF unreachable: {str(e)[:120]}"}, status=502)
     if result.get("classification") == "acceptable":

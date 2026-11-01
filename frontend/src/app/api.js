@@ -407,8 +407,15 @@ window.Api = (function () {
     fusionOracle: (a, b) =>
       request("/fusion/oracle/", { method: "POST", body: { a, b } }),
     fusionHistory: () => request("/fusion/history"),
+    // Re-fusion: graduate a pair fusion to the trio by adding `skill`.
+    // Creates a NEW fusion row server-side; the old pair is never touched.
+    addFusionSkill: (fusionId, skill) =>
+      request("/fusion/add-skill/", { method: "POST", body: { fusion_id: fusionId, skill } }),
     roadmapPreviews: (fusion, salt = 0) =>
-      request("/roadmap/previews/", { method: "POST", body: { fusion: { id: fusion.id, a: fusion.a, b: fusion.b }, salt } }),
+      request("/roadmap/previews/", { method: "POST", body: { fusion: {
+        id: fusion.id, a: fusion.a, b: fusion.b,
+        third: (fusion.addedSkills && fusion.addedSkills[0]) || undefined,
+      }, salt } }),
     roadmapChoose: (roadmapId) =>
       request("/roadmap/choose/", { method: "POST", body: { roadmap_id: roadmapId } }),
     roadmapTweak: (payload) =>

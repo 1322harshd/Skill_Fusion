@@ -1,8 +1,9 @@
 from django.urls import path
-from .views import fuse_view, fusion_history_view, oracle_view, quiz_generate, quiz_submit, skills_known_view
+from .views import fuse_view, fusion_history_view, oracle_view, add_skill_view, quiz_generate, quiz_submit, skills_known_view
 urlpatterns = [
     path("", fuse_view, name="fuse"),
     path("oracle/", oracle_view, name="fusion-oracle"),
+    path("add-skill/", add_skill_view, name="fusion-add-skill"),
     path("history/", fusion_history_view, name="fusion-history"),
     path("quiz/generate/", quiz_generate),
     path("quiz/submit/", quiz_submit),

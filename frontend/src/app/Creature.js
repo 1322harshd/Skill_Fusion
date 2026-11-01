@@ -169,17 +169,23 @@ window.Creature = (function () {
 
   // ---- assembly ----------------------------------------------------------
   function chimera(a, b, score, opts = {}) {
-    // uid is pair-derived, not a call counter: the same pair regenerates
-    // byte-identical SVG (across devices, reloads, logins). Two creatures of
-    // the SAME pair on one page share a gradient id — but by definition an
-    // identical gradient, so rendering is still correct.
-    const uid = `cg${F.hash(String(a) + "|" + String(b))}${opts.salt || ""}`;
-    const seed = F.hash(String(a) + "×" + String(b) + "|creature");
+    // uid is pair(-or-trio)-derived, not a call counter: the same skill set
+    // regenerates byte-identical SVG (across devices, reloads, logins). Two
+    // creatures of the SAME set on one page share a gradient id — but by
+    // definition an identical gradient, so rendering is still correct.
+    const third = opts.third && opts.third !== a && opts.third !== b ? opts.third : null;
+    // canonical (order-insensitive) skill set drives uid + seed: rendering the
+    // same creature in any display order regenerates the identical SVG
+    const canonical = [a, b, third].filter(Boolean).sort((x, y) => x.toLowerCase() < y.toLowerCase() ? -1 : 1);
+    const uid = `cg${F.hash(canonical.join("|"))}${opts.salt || ""}`;
+    const seed = F.hash(canonical.join("×") + "|creature");
     const r = mulberry32(seed);
     const [c1, c2] = F.colors(a, b);
+    const c3 = third ? F.colorOf(third) : null;
     const stage = stageOf(score);
     const catA = F.categoryOf(a);
     const catB = F.categoryOf(b);
+    const catC = third ? F.categoryOf(third) : null;
     const blobRy = 19 + r() * 3;
     const blobRx = 25 + r() * 4;
 
@@ -212,42 +218,53 @@ window.Creature = (function () {
          <ellipse cx="68" cy="98" rx="4" ry="6.5" fill="${c2}"/>`
       : "";
 
+    // Trio: the third skill wears its category part at independent jitter,
+    // and the legs pick up its color as a third foot.
+    const thirdPart = third
+      ? (PARTS[catC] || PARTS.tech)(mulberry32((seed >>> 5) | 0x2545f491), [c3, c2], stage.idx)
+      : "";
+    const thirdLeg = third && stage.idx >= 1 ? `<ellipse cx="60" cy="100" rx="3.4" ry="5.5" fill="${c3}"/>` : "";
+
     return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img"
-        aria-label="${esc(`Fusion creature: ${a} × ${b}, ${stage.name} stage`)}">
+        aria-label="${esc(`Fusion creature for ${canonical.join(" × ")}, ${stage.name} stage`)}">
       <defs>
         <linearGradient id="${uid}-g" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="${c1}"/>
-          <stop offset="100%" stop-color="${c2}"/>
+          ${third ? `<stop offset="0%" stop-color="${c1}"/>
+          <stop offset="50%" stop-color="${c3}"/>
+          <stop offset="100%" stop-color="${c2}"/>`
+          : `<stop offset="0%" stop-color="${c1}"/>
+          <stop offset="100%" stop-color="${c2}"/>`}
         </linearGradient>
         <radialGradient id="${uid}-a">
-          <stop offset="0%" stop-color="${c2}" stop-opacity="${stage.idx >= 2 ? 0.3 : 0.16}"/>
-          <stop offset="100%" stop-color="${c2}" stop-opacity="0"/>
+          <stop offset="0%" stop-color="${third || c2}" stop-opacity="${stage.idx >= 2 ? 0.3 : 0.16}"/>
+          <stop offset="100%" stop-color="${third || c2}" stop-opacity="0"/>
         </radialGradient>
       </defs>
       <circle cx="60" cy="72" r="46" fill="url(#${uid}-a)"/>
       ${partFor(catA, mulberry32(seed >> 1))}
       ${stage.idx >= 2 ? partFor("science", mulberry32(seed << 1), stage.idx) : ""}
-      ${legs}
+      ${legs}${thirdLeg}
       <ellipse cx="60" cy="76" rx="${blobRx}" ry="${blobRy}" fill="url(#${uid}-g)"/>
       <ellipse cx="60" cy="57" rx="16.5" ry="13" fill="url(#${uid}-g)"/>
       <ellipse cx="60" cy="83" rx="13" ry="7" fill="#fff" opacity="0.12"/>
       ${eyes(mulberry32(seed >> 3), [c1, c2], stage.idx)}
       ${partFor(catB === catA ? "creative" : catB, mulberry32(seed ^ 0x9e3779b9), stage.idx)}
+      ${thirdPart}
       ${extras}
     </svg>`;
   }
 
   // ---- React view --------------------------------------------------------
-  function CreatureView({ a, b, score, className = "", size = 120, caption = false }) {
+  function CreatureView({ a, b, score, className = "", size = 120, caption = false, third = null, lineage = null }) {
     const { svg, stage } = useMemo(() => {
       const stage = stageOf(score);
-      return { svg: chimera(a, b, score, {}), stage };
-    }, [a, b, score && score.value]);
+      return { svg: chimera(a, b, score, { third }), stage };
+    }, [a, b, third, score && score.value]);
     return (
       <motion.div
         className={"flex select-none flex-col items-center " + className}
         animate={{ y: [0, -5, 0] }}
-        transition={{ duration: 3.6 + (F.hash(String(a) + String(b)) % 10) / 10, repeat: Infinity, ease: "easeInOut" }}
+        transition={{ duration: 3.6 + (F.hash(String(a) + String(b) + String(third || "")) % 10) / 10, repeat: Infinity, ease: "easeInOut" }}
       >
         <div
           className="creature-art"
@@ -257,6 +274,11 @@ window.Creature = (function () {
         {caption && (
           <p className="mt-1 font-body text-[11px] uppercase tracking-[0.18em] text-white/45">
             {stage.name}-stage creature · {stage.note}
+          </p>
+        )}
+        {lineage && (
+          <p className="mt-0.5 font-body text-[10px] font-light italic text-white/35">
+            evolved from {lineage}
           </p>
         )}
       </motion.div>

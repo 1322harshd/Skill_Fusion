@@ -48,18 +48,85 @@ def make_score_sync(a,b):
     rarityLabel="Exceptional" if rarity>=0.8 else "Rare" if rarity>=0.65 else "Uncommon" if rarity>=0.5 else "Common"
     demandLabel="In demand" if demand>=0.75 else "Steady" if demand>=0.6 else "Growing" if demand>=0.45 else "Emerging"
     explanation=[f"Very few people lead with {a} and {b} together, so you stand out before you even talk to a recruiter.", f"Jobs asking for this blend are {demandLabel.lower()}; when one appears, competition is thinner than for either skill alone.", f"The pair reads as a full capability — {a} gives the depth, {b} gives the proof — instead of two vague keywords."]
-    THIRD={"tech":["AI","Automation","Data"],"creative":["Motion","Storytelling","Illustration"],"business":["Sales","Strategy","Pricing"],"science":["Statistics","Research","Neuroscience"],"comm":["Writing","Public Speaking","Community"]}
-    # category via hash
-    cat=list(THIRD.keys())[(seed & 1) % len(THIRD)]
-    pool=THIRD[cat]
-    pick=pool[(seed>>6)%len(pool)]
-    if pick in (a,b):
-        # rotate the pool so the fallback can't return a pair member
-        for cand in pool[1:]+pool[:1]:
-            if cand not in (a,b): pick=cand; break
-    skill=pick
+    cat, skill, _ = _pick_third(seed, [a, b])
     delta=8+((seed>>3)%9)
     return {"value":value,"rarity":rarity,"demand":demand,"rarityLabel":rarityLabel,"demandLabel":demandLabel,"explanation":explanation,"recommendation":{"skill":skill,"delta":delta,"category":cat},"history":[value]}
+
+
+# The third-skill recommendation pool, one lane per domain. Pair scores draw
+# from whichever domain the pair doesn't already cover, so the nudge reads as
+# genuine range instead of a cousin of what the user already has.
+THIRD = {
+    "tech": ["AI", "Automation", "Prompt Engineering"],
+    "creative": ["Storytelling", "Motion & 3D", "Video Editing"],
+    "business": ["Sales", "Strategy", "Negotiation"],
+    "science": ["Statistics", "Research", "Neuroscience"],
+    "comm": ["Writing", "Public Speaking", "Copywriting"],
+    "everyday": ["Cooking", "Gardening", "First Aid"],
+    "wellness": ["Meditation", "Nutrition", "Running"],
+    "craft": ["3D Printing", "Electronics", "Woodworking"],
+}
+
+
+def _pick_third(seed, skills):
+    """Deterministic (category, suggestion, delta-context) for a set of skills
+    the user already holds: prefer domains none of them cover, and the
+    suggestion itself can never be a skill the user already has."""
+    from fusion_engine.categories import category_of
+    held = {s.lower() for s in skills}
+    covered = {category_of(s) for s in skills}
+    fresh = [k for k in THIRD if k not in covered] or list(THIRD.keys())
+    # seed-rotated domain order, fresh (uncovered) domains first
+    r = (seed >> 2) % len(fresh)
+    ordered = fresh[r:] + fresh[:r]
+    for cat in ordered:
+        pool = [p for p in THIRD[cat] if p.lower() not in held]
+        if pool:
+            return cat, pool[(seed >> 6) % len(pool)], cat
+    # uncovered lanes exhausted — scan all categories; a held skill can
+    # still never repeat
+    for cat in THIRD:
+        pool = [p for p in THIRD[cat] if p.lower() not in held]
+        if pool:
+            return cat, pool[(seed >> 6) % len(pool)], cat
+    return "tech", "AI", "tech"
+
+
+def make_score_sync_n(skills):
+    """Trio heuristic for re-fused fusions (N>2 has no job-data pipeline).
+    Deterministic and honest: the score is recomputed from scratch for the
+    trio — never the pair value plus the advertised delta — so it may land
+    lower than the nudge promised. A trio is complete, so recommendation is
+    null (no fourth-skill push)."""
+    skills = [str(s).strip() for s in skills if str(s).strip()]
+    # canonical order so the payload is identical for any ordering and any
+    # casing of the same three skills (deterministic, order-insensitive);
+    # taxonomy casing wins when the skill is one of ours, else first-seen
+    seen = {}
+    for s in skills:
+        seen.setdefault(s.lower(), s)
+    from fusion_engine.categories import DOMAINS
+    canon = {}
+    for k, first_seen in seen.items():
+        official = next((d for pool in DOMAINS.values() for d in pool if d.lower() == k), None)
+        canon[k] = official or first_seen
+    skills = [canon[k] for k in sorted(canon)]
+    key = "×".join(sorted(s.lower() for s in skills))
+    seed = hash(key)
+    rarity = 0.50 + (seed % 300) / 1000          # [0.50, 0.80) — breadth reads less rare
+    demand = 0.55 + ((seed >> 4) % 350) / 1000   # [0.55, 0.90) — wider coverage, steadier demand
+    value = round((rarity * 0.45 + demand * 0.55) * 100)
+    rarityLabel = "Exceptional" if rarity >= 0.8 else "Rare" if rarity >= 0.65 else "Uncommon" if rarity >= 0.5 else "Common"
+    demandLabel = "In demand" if demand >= 0.75 else "Steady" if demand >= 0.6 else "Growing" if demand >= 0.45 else "Emerging"
+    a, b, c = skills[0], skills[1], skills[-1]
+    explanation = [
+        f"Three skills rarely travel together — {a}, {b} and {c} is a fuller capability than any two of them alone.",
+        f"Roles that genuinely use all three stay {demandLabel.lower()}; breadth widens the door without diluting the proof.",
+        "Re-checked as a trio, not the pair plus a bonus — this number is what the combination reads as today.",
+    ]
+    return {"value": value, "rarity": rarity, "demand": demand, "rarityLabel": rarityLabel,
+            "demandLabel": demandLabel, "explanation": explanation, "recommendation": None,
+            "history": [value], "source": "trio-heuristic", "skills": skills}
 
 # async version: real pgvector + job counts when data exists, labeled heuristic
 # otherwise. (DB + HTTP are blocking — run via sync_to_async under the hood

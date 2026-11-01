@@ -108,7 +108,12 @@ window.Fusion = (function () {
     return hex + a;
   }
 
-  function gradStyle(a, b, deg = 135) {
+  function gradStyle(a, b, deg = 135, third = null) {
+    if (third && third !== a && third !== b) {
+      // trios wear a 3-stop gradient: pair colors with the third skill's
+      // category color as the midpoint
+      return { background: `linear-gradient(${deg}deg, ${colorOf(a)}, ${colorOf(third)}, ${colorOf(b)})` };
+    }
     const [ca, cb] = colors(a, b);
     return { background: `linear-gradient(${deg}deg, ${ca}, ${cb})` };
   }
@@ -126,8 +131,8 @@ window.Fusion = (function () {
     };
   }
 
-  function FusionChip({ a, b, className = "", size = "md" }) {
-    const style = useMemo(() => gradStyle(a, b), [a, b]);
+  function FusionChip({ a, b, className = "", size = "md", third = null }) {
+    const style = useMemo(() => gradStyle(a, b, 135, third), [a, b, third]);
     const sizes = {
       sm: "px-2 py-0.5 text-[10px]",
       md: "px-2.5 py-1 text-[11px]",
@@ -141,6 +146,11 @@ window.Fusion = (function () {
         <span className="opacity-90">{a}</span>
         <span className="text-black/50">×</span>
         <span className="opacity-90">{b}</span>
+        {third && third !== a && third !== b ? (
+          <span className="flex items-center gap-0.5 rounded-full bg-black/25 px-1.5 py-px text-[0.85em] font-semibold text-white">
+            +{third}
+          </span>
+        ) : null}
       </span>
     );
   }

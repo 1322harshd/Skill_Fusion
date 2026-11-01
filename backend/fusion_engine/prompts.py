@@ -1,9 +1,17 @@
 VERSION = "v7.2"
 
 
-def fusion_brief(a, b, score):
-    return f"""System: You are Skill Fusion's fusion engine (SF:14B sf-fusion, {VERSION}). Output JSON only.
-User: Given skills "{a}" and "{b}" with score {score['value']} ({score['rarityLabel']} rarity, {score['demandLabel']} demand), write brief JSON {{lede, complementarity[2], applications[3], industries[3], insights[2]}}. Lede must contain outcome "{a} meets {b}"."""
+def fusion_brief(skills, score):
+    skills = [str(s) for s in skills]
+    quoted = ", ".join(f'"{s}"' for s in skills)
+    extra = (" referring to every skill, not just two of them" if len(skills) > 2 else "")
+    return (
+        f"System: You are Skill Fusion's fusion engine (SF:14B sf-fusion, {VERSION}). Output JSON only.\n"
+        f"User: Given skills {quoted} with score {score['value']} "
+        f"({score['rarityLabel']} rarity, {score['demandLabel']} demand), "
+        f"write brief JSON {{lede, complementarity[2], applications[3], industries[3], insights[2]}}{extra}. "
+        f'Lede must contain outcome "{skills[0]} meets {skills[-1]}".'
+    )
 
 
 def fusion_oracle(a, b):

@@ -6,6 +6,122 @@ const Store = window.Store;
 
 const enter = window.MotionKit.enter;
 
+const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+// Claude-style openers, personalized for Skill Fusion (NOT a mirror of
+// claude.ai's copy): time-of-day backbone, day-specific greetings,
+// returning-user openers that tie into the app's own lore (fusions,
+// creatures, the Oracle), and late-night variants. A random member of the
+// eligible pool is picked once per page load, so each visit can open
+// differently — like a senderBreak from the app itself.
+//   {n} = ",Firstname" (empty when anonymous)
+//   {N} = "Firstname"   (template opt-out when anonymous)
+function pickGreeting(name, hasFusions, now = new Date()) {
+  const first = name ? String(name).split(" ")[0].trim() : "";
+  const fills = (t) =>
+    t.replace(/\{n\}/g, first ? `, ${first}` : "").replace(/\{N\}/g, first);
+  const h = now.getHours();
+  const dow = WEEKDAYS[now.getDay()];
+  const weekend = now.getDay() === 0 || now.getDay() === 6;
+  const timeWord = h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
+
+  let pool = [
+    `Good ${timeWord}{n}`,  // the backbone — period always matches the clock
+  ];
+  if (weekend) {
+    pool.push(
+      "Welcome to the weekend",
+      "Welcome to the weekend{n}",
+      `${dow} fuse session{n}?`,
+      `That ${dow} feeling`,
+    );
+  } else {
+    pool.push(`Happy ${dow}{n}`);
+  }
+  if (hasFusions) {
+    pool.push(
+      "{N} returns!",
+      "Back at it, {N}",
+      "Back at it!",
+      "Pick up where you fused off",
+      "The creatures missed you",
+      "Still building, {N}?",
+    );
+  }
+  // fusion-flavored, ours-not-Claude's
+  pool.push(
+    "Fuse o'clock",
+    "What becomes rare today?",
+    "Two skills walked into a room…",
+    "What's on the fuse line?",
+    "Hello, skill collector",
+    "Points don't earn themselves",
+  );
+  if (h < 5) pool.push("Late-night fuse, {N}?");
+
+  pool = pool.filter((t) => /\{N\}/.test(t) ? !!first : true);
+  return fills(pool[Math.floor(Math.random() * pool.length)]);
+}
+
+// The honest delta chip: a real week-over-week trend once the score
+// history has trend points to compare; until then it surfaces the one
+// true actionable number in the score payload — the lift that the
+// recommended third skill would add ("+8 pts within reach"). Nothing
+// invented, nothing fake-flat.
+function ScoreDeltaChip({ fusion }) {
+  const hist = fusion.score.history || [];
+  const rec = fusion.score.recommendation;
+  const added = !!(rec && fusion.addedSkills.includes(rec.skill));
+  let chip = null;
+  if (hist.length >= 2) {
+    const d = Math.round((hist[hist.length - 1] - hist[hist.length - 2]) * 10) / 10;
+    if (Math.abs(d) < 0.05) chip = { label: "flat this week", glyph: "—", tone: "muted" };
+    else if (d > 0) chip = { label: `+${d} this week`, glyph: "↑", tone: "up" };
+    else chip = { label: `${d} this week`, glyph: "↓", tone: "down" };
+  } else if (rec && !added) {
+    chip = {
+      label: `+${rec.delta} pts within reach — add ${rec.skill}`,
+      glyph: null,
+      tone: "reach",
+      href: "#/score/" + fusion.id,
+    };
+  }
+  if (!chip) return null;
+  const cls = {
+    up: "text-white",
+    down: "text-white/70",
+    muted: "text-white/50",
+    reach: "text-white",
+  }[chip.tone];
+  const body = (
+    <>
+      {chip.glyph ? (
+        <span aria-hidden="true" className="font-body text-[11px]">{chip.glyph}</span>
+      ) : (
+        <span
+          aria-hidden="true"
+          className="h-1.5 w-1.5 shrink-0 rounded-full"
+          style={{ background: `linear-gradient(135deg, ${F.colorOf(fusion.a)}, ${F.colorOf(fusion.b)})` }}
+        />
+      )}
+      {chip.label}
+    </>
+  );
+  const base =
+    "inline-flex items-center gap-1.5 rounded-full font-body text-[11px] font-medium " + cls + " " +
+    (chip.tone === "reach"
+      ? "liquid-glass-strong tappable px-3 py-1 transition-colors hover:bg-white/10"
+      : "liquid-glass px-3 py-1");
+  if (chip.href) {
+    return (
+      <a href={chip.href} className={base} title="See the score breakdown">
+        {body}
+      </a>
+    );
+  }
+  return <span className={base}>{body}</span>;
+}
+
 function MiniSpark({ history }) {
   const pts = history.map((v, i) => [i * 18, 26 - (v / 100) * 22]);
   const line = pts.map((p) => p.join(",")).join(" ");
@@ -201,6 +317,9 @@ function Dashboard() {
   const readyFusions = s.fusions.filter((f) => f.roadmap);
   const restoring = s.fusions.length > 0 && readyFusions.length === 0;
   const featured = readyFusions[0];
+  // Openers are drawn once per mount (useState initializer) — fresh each
+  // page load, stable within it.
+  const [greeting] = React.useState(() => pickGreeting(s.user.name, s.fusions.length > 0));
 
   // Fusions are otherwise only loaded when the Fuse screen mounts — without
   // this, reloading straight into /dashboard shows the empty state even for
@@ -266,19 +385,14 @@ function Dashboard() {
         <motion.div {...enter()} className="relative p-8 md:p-12">
           <p className="font-body text-sm text-white/70">{"// Today at a glance"}</p>
           <h1 className="mt-3 font-heading text-5xl italic leading-[1.0] tracking-[-3px] text-white md:text-6xl">
-            {(() => {
-              // "Good morning/afternoon/evening" — the greeting was previously
-              // rendered as `Good <name>`, which read "Good opilkujy" whenever
-              // a name wasn't a time of day.
-              const h = new Date().getHours();
-              const word = h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
-              const name = s.user.name ? `,\u00A0${s.user.name.split(" ")[0]}` : "";
-              return `Good ${word}${name}`;
-            })()}
+            {greeting}
           </h1>
-          <p className="mt-4 max-w-xl font-body text-sm font-light leading-relaxed text-white/65">
-            You're building <span className="text-white">{featured.a} × {featured.b}</span> — {/^[aeiou]/i.test(featured.score.rarityLabel) ? "an" : "a"}{" "}
-            {featured.score.rarityLabel.toLowerCase()} blend with {featured.score.value} points on the line.
+          <p className="mt-4 flex max-w-2xl flex-wrap items-center gap-x-2 gap-y-2 font-body text-sm font-light leading-relaxed text-white/65">
+            <span>
+              You're building <span className="text-white">{featured.a} × {featured.b}</span> — {/^[aeiou]/i.test(featured.score.rarityLabel) ? "an" : "a"}{" "}
+              {featured.score.rarityLabel.toLowerCase()} blend with {featured.score.value} points on the line.
+            </span>
+            <ScoreDeltaChip fusion={featured} />
           </p>
         </motion.div>
       </section>

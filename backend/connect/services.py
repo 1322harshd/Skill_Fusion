@@ -5,7 +5,12 @@ from .models import ChatProfile, PeerMatch
 
 class PeerBusyError(Exception):
     """Raised when a targeted direct-match request's peer already has an
-    open conversation (with someone else)."""
+    active conversation (with someone else)."""
+
+
+class InvalidResponseError(Exception):
+    """Raised when accept/decline is attempted on a match that isn't
+    actually a pending request waiting on this user."""
 
 
 def get_or_create_chat_profile(user) -> ChatProfile:
@@ -14,30 +19,48 @@ def get_or_create_chat_profile(user) -> ChatProfile:
 
 
 def _open_match_for(user):
-    return PeerMatch.objects.filter(status__in=[PeerMatch.Status.WAITING, PeerMatch.Status.ACTIVE]).filter(
-        models.Q(userA=user) | models.Q(userB=user)
-    )
+    return PeerMatch.objects.filter(
+        status__in=[PeerMatch.Status.WAITING, PeerMatch.Status.REQUESTED, PeerMatch.Status.ACTIVE]
+    ).filter(models.Q(userA=user) | models.Q(userB=user))
+
+
+def current_match_for(user):
+    """The one open (or just-closed) match this user is part of, from either
+    side — whether they started it (queue or direct request) or someone
+    else's direct request is waiting on them. Precedence: an ACTIVE chat
+    outranks a pending REQUESTED one, which outranks an anonymous WAITING
+    queue entry, which outranks a just-CLOSED one (shown once, then gone)."""
+    rows = PeerMatch.objects.filter(models.Q(userA=user) | models.Q(userB=user))
+    for s in (PeerMatch.Status.ACTIVE, PeerMatch.Status.REQUESTED, PeerMatch.Status.WAITING):
+        match = rows.filter(status=s).order_by("-createdAt").first()
+        if match:
+            return match
+    return rows.filter(status=PeerMatch.Status.CLOSED).order_by("-createdAt").first()
 
 
 @transaction.atomic
 def start_direct_match(user, target_user, fusion_label: str) -> PeerMatch:
     """Click-to-message a specific online peer (as opposed to the anonymous
-    fusion-label queue in find_or_create_match). Resumes an existing match
-    with that exact peer if one's already open. Otherwise closes whatever
-    conversation `user` currently has open (only one at a time, same as the
-    queue flow) — unless the target is already ACTIVELY talking to someone
-    else, in which case this refuses rather than forcing it. A target who's
-    merely WAITING in the anonymous queue isn't "busy"; this just claims
-    that waiting match directly instead of leaving it to the queue."""
+    fusion-label queue in find_or_create_match). Both sides must agree
+    before the chat opens (FR-9): this creates a REQUESTED match that the
+    target has to accept, rather than connecting them immediately — unless
+    the target already sent `user` a request of their own, in which case
+    messaging them back counts as accepting it. Refuses with PeerBusyError
+    if the target is already ACTIVELY talking to someone else; being merely
+    WAITING in the anonymous queue doesn't count as busy."""
     if user.pk == target_user.pk:
         raise ValueError("Can't message yourself.")
 
-    # A WAITING match only ever has one participant, so only an ACTIVE match
-    # can possibly already pair these two specific users.
-    existing_with_target = PeerMatch.objects.filter(status=PeerMatch.Status.ACTIVE).filter(
-        models.Q(userA=user, userB=target_user) | models.Q(userA=target_user, userB=user)
-    ).first()
+    existing_with_target = PeerMatch.objects.filter(
+        status__in=[PeerMatch.Status.REQUESTED, PeerMatch.Status.ACTIVE]
+    ).filter(models.Q(userA=user, userB=target_user) | models.Q(userA=target_user, userB=user)).first()
     if existing_with_target:
+        if (
+            existing_with_target.status == PeerMatch.Status.REQUESTED
+            and existing_with_target.requestedBy_id == target_user.pk
+        ):
+            existing_with_target.status = PeerMatch.Status.ACTIVE
+            existing_with_target.save(update_fields=["status"])
         return existing_with_target
 
     target_active = PeerMatch.objects.filter(status=PeerMatch.Status.ACTIVE).filter(
@@ -46,22 +69,32 @@ def start_direct_match(user, target_user, fusion_label: str) -> PeerMatch:
     if target_active:
         raise PeerBusyError("That peer is already in a conversation.")
 
-    _open_match_for(user).update(status=PeerMatch.Status.CLOSED)
-
-    target_waiting = (
-        PeerMatch.objects.select_for_update()
-        .filter(status=PeerMatch.Status.WAITING, userA=target_user)
-        .first()
-    )
-    if target_waiting:
-        target_waiting.userB = user
-        target_waiting.status = PeerMatch.Status.ACTIVE
-        target_waiting.save(update_fields=["userB", "status"])
-        return target_waiting
+    _open_match_for(user).update(status=PeerMatch.Status.CLOSED, closeReason=PeerMatch.CloseReason.LEFT)
 
     return PeerMatch.objects.create(
-        userA=target_user, userB=user, fusionLabel=fusion_label, status=PeerMatch.Status.ACTIVE
+        userA=user,
+        userB=target_user,
+        fusionLabel=fusion_label,
+        status=PeerMatch.Status.REQUESTED,
+        requestedBy=user,
     )
+
+
+@transaction.atomic
+def respond_to_match(user, match: PeerMatch, accept: bool) -> PeerMatch:
+    if match.status != PeerMatch.Status.REQUESTED or user.pk not in (match.userA_id, match.userB_id):
+        raise InvalidResponseError("This request is no longer pending.")
+    if match.requestedBy_id == user.pk:
+        raise InvalidResponseError("You can't accept or decline your own request.")
+
+    if accept:
+        match.status = PeerMatch.Status.ACTIVE
+        match.save(update_fields=["status"])
+    else:
+        match.status = PeerMatch.Status.CLOSED
+        match.closeReason = PeerMatch.CloseReason.DECLINED
+        match.save(update_fields=["status", "closeReason"])
+    return match
 
 
 @transaction.atomic

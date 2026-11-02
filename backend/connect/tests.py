@@ -304,7 +304,7 @@ class StreakTests(TestCase):
 
 
 class DirectMatchTests(TestCase):
-    def test_messaging_a_specific_peer_opens_an_active_match(self):
+    def test_messaging_a_specific_peer_opens_a_pending_request_not_an_active_chat(self):
         ada = make_user("ada@example.com")
         bo = make_user("bo@example.com")
         bo_handle = get_or_create_chat_profile(bo).handle
@@ -315,10 +315,100 @@ class DirectMatchTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         body = response.json()
-        self.assertEqual(body["status"], "active")
+        self.assertEqual(body["status"], "requested")
+        self.assertEqual(body["direction"], "outgoing")
         self.assertEqual(body["peerHandle"], bo_handle)
 
-    def test_messaging_the_same_peer_twice_resumes_the_same_match(self):
+    def test_the_recipient_sees_it_as_an_incoming_request(self):
+        ada = make_user("ada@example.com")
+        bo = make_user("bo@example.com")
+        bo_handle = get_or_create_chat_profile(bo).handle
+        ada_client = APIClient()
+        ada_client.force_authenticate(user=ada)
+        match_id = ada_client.post(f"/api/connect/peers/{bo_handle}/match").json()["matchId"]
+
+        bo_client = APIClient()
+        bo_client.force_authenticate(user=bo)
+        seen = bo_client.get(f"/api/connect/matches/{match_id}").json()
+        self.assertEqual(seen["status"], "requested")
+        self.assertEqual(seen["direction"], "incoming")
+        self.assertEqual(seen["peerHandle"], get_or_create_chat_profile(ada).handle)
+
+    def test_messages_are_blocked_until_the_request_is_accepted(self):
+        ada = make_user("ada@example.com")
+        bo = make_user("bo@example.com")
+        bo_handle = get_or_create_chat_profile(bo).handle
+        ada_client = APIClient()
+        ada_client.force_authenticate(user=ada)
+        match_id = ada_client.post(f"/api/connect/peers/{bo_handle}/match").json()["matchId"]
+
+        response = ada_client.post(f"/api/connect/matches/{match_id}/messages", {"text": "hey"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_recipient_accepts_and_both_sides_can_then_chat(self):
+        ada = make_user("ada@example.com")
+        bo = make_user("bo@example.com")
+        bo_handle = get_or_create_chat_profile(bo).handle
+        ada_client = APIClient()
+        ada_client.force_authenticate(user=ada)
+        match_id = ada_client.post(f"/api/connect/peers/{bo_handle}/match").json()["matchId"]
+
+        bo_client = APIClient()
+        bo_client.force_authenticate(user=bo)
+        response = bo_client.post(f"/api/connect/matches/{match_id}/respond", {"action": "accept"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["status"], "active")
+
+        sent = ada_client.post(f"/api/connect/matches/{match_id}/messages", {"text": "hey"}, format="json")
+        self.assertEqual(sent.status_code, status.HTTP_201_CREATED)
+
+    def test_recipient_declines_and_the_requester_sees_why_it_closed(self):
+        ada = make_user("ada@example.com")
+        bo = make_user("bo@example.com")
+        bo_handle = get_or_create_chat_profile(bo).handle
+        ada_client = APIClient()
+        ada_client.force_authenticate(user=ada)
+        match_id = ada_client.post(f"/api/connect/peers/{bo_handle}/match").json()["matchId"]
+
+        bo_client = APIClient()
+        bo_client.force_authenticate(user=bo)
+        bo_client.post(f"/api/connect/matches/{match_id}/respond", {"action": "decline"}, format="json")
+
+        seen_by_requester = ada_client.get(f"/api/connect/matches/{match_id}").json()
+        self.assertEqual(seen_by_requester["status"], "closed")
+        self.assertEqual(seen_by_requester["closeReason"], "declined")
+        self.assertEqual(seen_by_requester["direction"], "outgoing")
+
+        seen_by_decliner = bo_client.get(f"/api/connect/matches/{match_id}").json()
+        self.assertEqual(seen_by_decliner["direction"], "incoming")
+
+    def test_requester_cannot_accept_their_own_request(self):
+        ada = make_user("ada@example.com")
+        bo = make_user("bo@example.com")
+        bo_handle = get_or_create_chat_profile(bo).handle
+        client = APIClient()
+        client.force_authenticate(user=ada)
+        match_id = client.post(f"/api/connect/peers/{bo_handle}/match").json()["matchId"]
+
+        response = client.post(f"/api/connect/matches/{match_id}/respond", {"action": "accept"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_messaging_someone_who_already_requested_you_connects_immediately(self):
+        ada = make_user("ada@example.com")
+        bo = make_user("bo@example.com")
+        ada_handle = get_or_create_chat_profile(ada).handle
+        bo_handle = get_or_create_chat_profile(bo).handle
+
+        bo_client = APIClient()
+        bo_client.force_authenticate(user=bo)
+        bo_client.post(f"/api/connect/peers/{ada_handle}/match")  # bo asks ada first
+
+        ada_client = APIClient()
+        ada_client.force_authenticate(user=ada)
+        response = ada_client.post(f"/api/connect/peers/{bo_handle}/match").json()
+        self.assertEqual(response["status"], "active")
+
+    def test_messaging_the_same_peer_twice_resumes_the_same_pending_request(self):
         ada = make_user("ada@example.com")
         bo = make_user("bo@example.com")
         bo_handle = get_or_create_chat_profile(bo).handle
@@ -350,7 +440,7 @@ class DirectMatchTests(TestCase):
         response = client.post(f"/api/connect/peers/{bo_handle}/match")
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
 
-    def test_claims_a_waiting_match_instead_of_leaving_it_queued(self):
+    def test_does_not_touch_a_target_merely_waiting_in_the_anonymous_queue(self):
         ada = make_user("ada@example.com")
         bo = make_user("bo@example.com")
         waiting = find_or_create_match(bo, "Design×AI")
@@ -362,8 +452,9 @@ class DirectMatchTests(TestCase):
         response = client.post(f"/api/connect/peers/{bo_handle}/match").json()
 
         waiting.refresh_from_db()
-        self.assertEqual(str(waiting.matchId), response["matchId"])
-        self.assertEqual(waiting.status, PeerMatch.Status.ACTIVE)
+        self.assertNotEqual(str(waiting.matchId), response["matchId"])
+        self.assertEqual(waiting.status, PeerMatch.Status.WAITING)
+        self.assertEqual(response["status"], "requested")
 
     def test_closes_the_requesters_other_open_match_first(self):
         ada = make_user("ada@example.com")
@@ -378,8 +469,30 @@ class DirectMatchTests(TestCase):
 
         old.refresh_from_db()
         self.assertEqual(old.status, PeerMatch.Status.CLOSED)
+        self.assertEqual(old.closeReason, PeerMatch.CloseReason.LEFT)
 
     def test_service_function_raises_on_self_match(self):
         ada = make_user("ada@example.com")
         with self.assertRaises(ValueError):
             start_direct_match(ada, ada, "Design×AI")
+
+    def test_current_match_endpoint_surfaces_an_incoming_request(self):
+        ada = make_user("ada@example.com")
+        bo = make_user("bo@example.com")
+        ada_handle = get_or_create_chat_profile(ada).handle
+        ada_client = APIClient()
+        ada_client.force_authenticate(user=ada)
+        bo_client = APIClient()
+        bo_client.force_authenticate(user=bo)
+
+        bo_client.post(f"/api/connect/peers/{ada_handle}/match")
+
+        mine = ada_client.get("/api/connect/match").json()
+        self.assertEqual(mine["status"], "requested")
+        self.assertEqual(mine["direction"], "incoming")
+
+    def test_current_match_endpoint_is_none_when_nothing_is_open(self):
+        ada = make_user("ada@example.com")
+        client = APIClient()
+        client.force_authenticate(user=ada)
+        self.assertEqual(client.get("/api/connect/match").json(), {"status": "none"})

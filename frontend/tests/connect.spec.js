@@ -40,26 +40,31 @@ test("private room prompts to fuse first when there are no fusions", async ({ pa
 test("matching on a fusion waits, then shows the peer once active", async ({ page }) => {
   await mockApi(page, { signedIn: true });
 
+  let created = false;
+  let pollsSinceCreated = 0;
   await page.route("**/api/connect/match", async (route) => {
+    if (route.request().method() === "GET") {
+      if (!created) {
+        return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "none" }) });
+      }
+      pollsSinceCreated += 1;
+      const current = pollsSinceCreated > 2 ? "active" : "waiting";
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          matchId: "m1",
+          status: current,
+          fusionLabel: "Design×AI",
+          peerHandle: current === "active" ? "bold.hawk21" : null,
+        }),
+      });
+    }
+    created = true;
     await route.fulfill({
       status: 201,
       contentType: "application/json",
       body: JSON.stringify({ matchId: "m1", status: "waiting", fusionLabel: "Design×AI", peerHandle: null }),
-    });
-  });
-  let pollCalls = 0;
-  await page.route("**/api/connect/matches/m1", async (route) => {
-    pollCalls += 1;
-    const status = pollCalls > 1 ? "active" : "waiting";
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({
-        matchId: "m1",
-        status,
-        fusionLabel: "Design×AI",
-        peerHandle: status === "active" ? "bold.hawk21" : null,
-      }),
     });
   });
   await page.route("**/api/connect/matches/m1/messages", async (route) => {
@@ -83,7 +88,10 @@ test("matching on a fusion waits, then shows the peer once active", async ({ pag
 });
 
 test("reporting a matched peer closes the conversation", async ({ page }) => {
-  await mockApi(page, { signedIn: true });
+  await mockApi(page, {
+    signedIn: true,
+    myMatch: { matchId: "m1", status: "active", fusionLabel: "Design×AI", peerHandle: "bold.hawk21", direction: null, closeReason: null },
+  });
 
   await page.route("**/api/connect/peers/bold.hawk21/report", async (route) => {
     await route.fulfill({
@@ -92,18 +100,6 @@ test("reporting a matched peer closes the conversation", async ({ page }) => {
       body: JSON.stringify({ reportId: "r1", reason: "", autoFlagged: false, status: "pending", action: "none", createdAt: new Date().toISOString() }),
     });
   });
-
-  await page.goto("/index.html#/connect");
-  await page.waitForFunction(() => window.Store);
-  await page.evaluate(() => {
-    window.Store.set({
-      fusions: [{ id: "f1", a: "Design", b: "AI" }],
-      connectMatchId: "m1",
-      matchStatus: "active",
-      privatePeer: { handle: "bold.hawk21", fusionLabel: "Design×AI" },
-    });
-  });
-
   await page.route("**/api/connect/matches/m1/messages", async (route) => {
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([]) });
   });
@@ -111,11 +107,15 @@ test("reporting a matched peer closes the conversation", async ({ page }) => {
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "none" }) });
   });
 
+  await page.goto("/index.html#/connect");
+
   await page.getByRole("button", { name: "Private room" }).click();
   await expect(page.getByText("bold.hawk21").first()).toBeVisible();
 
   await page.getByRole("button", { name: "Report menu" }).click();
   await page.getByRole("button", { name: /Report bold.hawk21/ }).click();
   await expect(page.getByText("Reported — conversation closed")).toBeVisible();
-  await expect(page.getByText("Find a peer")).toBeVisible();
+  await expect(page.getByText("Conversation closed").first()).toBeVisible();
+  await page.getByRole("button", { name: "Find another match" }).click();
+  await expect(page.getByText("Fuse two skills first")).toBeVisible();
 });

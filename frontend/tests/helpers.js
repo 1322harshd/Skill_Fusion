@@ -25,6 +25,7 @@ async function mockApi(
     roadmapChosenByFusionId = {},
     moderationReports = [],
     moderationForbidden = false,
+    myMatch = { status: "none" },
   } = {}
 ) {
   const baseUser = {
@@ -160,6 +161,9 @@ async function mockApi(
         return json(201, { id: "rm-created", handle: connectHandle, text: body.text, ts: "now", self: true, hidden: false });
       }
       return json(200, roomMessages);
+    }
+    if (url.includes("/api/connect/match") && !url.includes("/api/connect/matches") && route.request().method() === "GET") {
+      return json(200, myMatch);
     }
     if (url.includes("/api/connect/moderation/reports")) {
       if (moderationForbidden) return json(403, { detail: "You do not have permission to perform this action." });

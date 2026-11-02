@@ -68,6 +68,9 @@ function buildSeed() {
     connectProfile: null,
     connectMatchId: null,
     matchStatus: "none",
+    matchDirection: null,
+    matchCloseReason: null,
+    dismissedMatchId: null,
     privatePeer: null,
     privateMessages: [],
     exchanges: [],
@@ -310,10 +313,28 @@ window.Store = (function () {
   }
 
   function applyMatch(data) {
+    // A closed match the viewer already dismissed (clicked "Find another
+    // match") must not keep reappearing just because it's still the most
+    // recent row the backend has for them — treat it the same as "none"
+    // until a genuinely new match replaces it.
+    if (data.status === "none" || (data.status === "closed" && data.matchId === state.dismissedMatchId)) {
+      set({
+        connectMatchId: null,
+        matchStatus: "none",
+        matchDirection: null,
+        matchCloseReason: null,
+        privatePeer: null,
+        privateMessages: [],
+      });
+      return;
+    }
+    const showPeer = (data.status === "active" || data.status === "requested") && data.peerHandle;
     set({
       connectMatchId: data.matchId,
       matchStatus: data.status,
-      privatePeer: data.status === "active" ? { handle: data.peerHandle, fusionLabel: data.fusionLabel } : null,
+      matchDirection: data.direction || null,
+      matchCloseReason: data.closeReason || null,
+      privatePeer: showPeer ? { handle: data.peerHandle, fusionLabel: data.fusionLabel } : null,
       privateMessages: data.status === "active" ? state.privateMessages : [],
     });
   }
@@ -330,11 +351,32 @@ window.Store = (function () {
     return data;
   }
 
-  async function refreshMatch() {
-    if (!state.connectMatchId) return null;
-    const data = await window.Api.connectGetMatch(state.connectMatchId);
+  // Polls for the viewer's current match situation from either side — this
+  // is how an incoming chat request (someone else messaged them) actually
+  // gets discovered, since nothing else tells them about it.
+  async function loadMyMatch() {
+    const data = await window.Api.connectGetMyMatch();
     applyMatch(data);
     return data;
+  }
+
+  async function respondToMatch(action) {
+    if (!state.connectMatchId) return null;
+    const data = await window.Api.connectRespondToMatch(state.connectMatchId, action);
+    applyMatch(data);
+    return data;
+  }
+
+  function dismissClosedMatch() {
+    set({
+      dismissedMatchId: state.connectMatchId,
+      connectMatchId: null,
+      matchStatus: "none",
+      matchDirection: null,
+      matchCloseReason: null,
+      privatePeer: null,
+      privateMessages: [],
+    });
   }
 
   async function loadMatchMessages() {
@@ -389,8 +431,8 @@ window.Store = (function () {
     set({
       blocked: [...state.blocked, handle],
       privatePeer: null,
-      connectMatchId: null,
       matchStatus: "closed",
+      matchCloseReason: "reported",
       privateMessages: [],
       exchanges: state.exchanges.filter((x) => x.handle !== handle),
     });
@@ -575,7 +617,9 @@ window.Store = (function () {
     reportRoomMessage,
     joinMatch,
     messagePeer,
-    refreshMatch,
+    loadMyMatch,
+    respondToMatch,
+    dismissClosedMatch,
     loadMatchMessages,
     sendMatchMessage,
     reportMatchMessage,

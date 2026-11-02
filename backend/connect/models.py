@@ -58,8 +58,15 @@ class RoomMessage(models.Model):
 class PeerMatch(models.Model):
     class Status(models.TextChoices):
         WAITING = "waiting", "Waiting"
+        REQUESTED = "requested", "Requested"
         ACTIVE = "active", "Active"
         CLOSED = "closed", "Closed"
+
+    class CloseReason(models.TextChoices):
+        NONE = "", "None"
+        DECLINED = "declined", "Declined"
+        REPORTED = "reported", "Reported"
+        LEFT = "left", "Left"
 
     matchId = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     fusionLabel = models.CharField(max_length=100)
@@ -68,6 +75,13 @@ class PeerMatch(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="matches_as_b", null=True, blank=True
     )
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.WAITING)
+    # Set only for a direct (click-to-message) request — whoever didn't
+    # initiate it is the one who needs to accept/decline (FR-9: two people
+    # must agree to chat before a direct conversation opens).
+    requestedBy = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    closeReason = models.CharField(max_length=10, choices=CloseReason.choices, blank=True, default=CloseReason.NONE)
     createdAt = models.DateTimeField(auto_now_add=True)
 
     def other(self, user):

@@ -507,11 +507,6 @@ function FindMatch() {
 }
 
 function WaitingForMatch() {
-  useEffect(() => {
-    const t = setInterval(() => Store.refreshMatch().catch(() => {}), MATCH_POLL_MS);
-    return () => clearInterval(t);
-  }, []);
-
   return (
     <motion.div
       {...enter(0.1)}
@@ -528,6 +523,115 @@ function WaitingForMatch() {
       <p className="font-body text-sm font-light leading-relaxed text-white/60">
         You're first in line for this fusion. We'll connect you the moment someone else matches it.
       </p>
+    </motion.div>
+  );
+}
+
+function WaitingForAccept({ peer }) {
+  return (
+    <motion.div
+      {...enter(0.1)}
+      className="liquid-glass-strong mx-auto flex max-w-md flex-col items-center gap-4 rounded-[1.5rem] p-10 text-center"
+    >
+      <div className="relative">
+        <Avatar handle={peer.handle} name={peer.handle.split(".")[0]} size="lg" />
+        <motion.span
+          animate={{ opacity: [0.4, 1, 0.4] }}
+          transition={{ repeat: Infinity, duration: 1.4, ease: "easeInOut" }}
+          className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-black bg-white/60"
+        />
+      </div>
+      <p className="font-heading text-2xl italic text-white">Waiting for {peer.handle}…</p>
+      <p className="font-body text-sm font-light leading-relaxed text-white/60">
+        They need to agree before the chat opens. We'll let you know the moment they accept.
+      </p>
+    </motion.div>
+  );
+}
+
+function IncomingRequest({ peer, onRespond }) {
+  const [responding, setResponding] = useState(null);
+
+  async function respond(action) {
+    setResponding(action);
+    try {
+      await onRespond(action);
+    } catch (e) {
+      window.Toast.show(e.message || "Couldn't respond to that request", "error");
+      setResponding(null);
+    }
+  }
+
+  return (
+    <motion.div
+      {...enter(0.1)}
+      className="liquid-glass-strong mx-auto flex max-w-md flex-col items-center gap-4 rounded-[1.5rem] p-10 text-center"
+    >
+      <Avatar handle={peer.handle} name={peer.handle.split(".")[0]} size="lg" />
+      <p className="font-heading text-2xl italic text-white">{peer.handle} wants to chat</p>
+      <p className="font-body text-sm font-light leading-relaxed text-white/60">
+        {peer.fusionLabel ? `They're fusing ${peer.fusionLabel}.` : ""} Accepting opens a private, anonymous room — just between you two.
+      </p>
+      <div className="mt-2 flex gap-2">
+        <motion.button
+          type="button"
+          onClick={() => respond("accept")}
+          disabled={!!responding}
+          whileTap={{ scale: 0.97 }}
+          className="tappable flex items-center gap-2 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black disabled:opacity-60"
+        >
+          <Icons.Check className="h-4 w-4" />
+          {responding === "accept" ? "Accepting…" : "Accept"}
+        </motion.button>
+        <motion.button
+          type="button"
+          onClick={() => respond("decline")}
+          disabled={!!responding}
+          whileTap={{ scale: 0.97 }}
+          className="tappable liquid-glass flex items-center gap-2 rounded-full px-6 py-3 font-body text-sm font-medium text-white/85 disabled:opacity-60"
+        >
+          {responding === "decline" ? "Declining…" : "Decline"}
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+}
+
+function closeReasonText(reason, direction) {
+  if (reason === "declined") {
+    // direction "incoming" here means the viewer received the request —
+    // i.e. they're the one who just declined it.
+    return direction === "incoming"
+      ? "You declined the request. No hard feelings — the room's still full of other people to talk to."
+      : "They declined your chat request. No hard feelings — the room's still full of other people to talk to.";
+  }
+  if (reason === "reported") return "You reported this peer and the conversation was closed.";
+  if (reason === "left") return "That conversation has ended.";
+  return "That conversation has ended. Your standing in the room isn't affected.";
+}
+
+function ClosedNote({ reason, direction, onFindAnother }) {
+  return (
+    <motion.div
+      {...enter(0.1)}
+      className="liquid-glass-strong mx-auto flex max-w-md flex-col items-center gap-4 rounded-[1.5rem] p-10 text-center"
+    >
+      <span className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 text-white/50">
+        <Icons.Lock className="h-5 w-5" />
+      </span>
+      <p className="font-heading text-2xl italic text-white">Conversation closed</p>
+      <p className="font-body text-sm font-light leading-relaxed text-white/60">
+        {closeReasonText(reason, direction)}
+      </p>
+      <motion.button
+        type="button"
+        onClick={onFindAnother}
+        whileTap={{ scale: 0.97 }}
+        className="tappable mt-2 flex items-center gap-2 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black"
+      >
+        Find another match
+        <Icons.ArrowUpRight className="h-4 w-4" />
+      </motion.button>
     </motion.div>
   );
 }
@@ -562,6 +666,18 @@ function ConnectPrivateRoom() {
       {s.matchStatus === "waiting" ? (
         <div className="mt-10">
           <WaitingForMatch />
+        </div>
+      ) : s.matchStatus === "requested" && s.matchDirection === "outgoing" && peer ? (
+        <div className="mt-10">
+          <WaitingForAccept peer={peer} />
+        </div>
+      ) : s.matchStatus === "requested" && s.matchDirection === "incoming" && peer ? (
+        <div className="mt-10">
+          <IncomingRequest peer={peer} onRespond={(action) => Store.respondToMatch(action)} />
+        </div>
+      ) : s.matchStatus === "closed" ? (
+        <div className="mt-10">
+          <ClosedNote reason={s.matchCloseReason} direction={s.matchDirection} onFindAnother={() => Store.dismissClosedMatch()} />
         </div>
       ) : !peer ? (
         <div className="mt-10">
@@ -621,7 +737,9 @@ function ConnectPrivateRoom() {
 
 function Connect() {
   const [room, setRoom] = useState("open");
-  const fusion = Store.useStore().fusions[0];
+  const s = Store.useStore();
+  const fusion = s.fusions[0];
+  const hasIncomingRequest = s.matchStatus === "requested" && s.matchDirection === "incoming";
 
   useEffect(() => {
     Store.loadConnectProfile().catch(() => {});
@@ -633,6 +751,15 @@ function Connect() {
     if (fusion) window.Ambient.setFusion(fusion.a, fusion.b);
     else window.Ambient.clear();
   }, [fusion?.id]);
+
+  // Polls for the viewer's own match situation regardless of which tab
+  // they're on — this is the only way an incoming chat request (someone
+  // else clicked "Message privately" on them) ever gets discovered.
+  useEffect(() => {
+    Store.loadMyMatch().catch(() => {});
+    const t = setInterval(() => Store.loadMyMatch().catch(() => {}), MATCH_POLL_MS);
+    return () => clearInterval(t);
+  }, []);
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -648,11 +775,14 @@ function Connect() {
             onClick={() => setRoom(key)}
             className={
               (room === key ? "bg-white text-black" : "liquid-glass text-white/85 hover:text-white") +
-              " tappable flex items-center gap-2 rounded-full px-5 py-2.5 font-body text-sm font-medium transition-colors"
+              " tappable relative flex items-center gap-2 rounded-full px-5 py-2.5 font-body text-sm font-medium transition-colors"
             }
           >
             {key === "open" ? <Icons.Users className="h-4 w-4" /> : <Icons.Lock className="h-4 w-4" />}
             {label}
+            {key === "private" && hasIncomingRequest && (
+              <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[var(--color-status-active)]" />
+            )}
           </button>
         ))}
       </motion.div>

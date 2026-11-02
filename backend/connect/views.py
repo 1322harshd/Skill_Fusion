@@ -16,7 +16,15 @@ from .serializers import (
     report_dict,
     room_message_dict,
 )
-from .services import PeerBusyError, find_or_create_match, get_or_create_chat_profile, start_direct_match
+from .services import (
+    InvalidResponseError,
+    PeerBusyError,
+    current_match_for,
+    find_or_create_match,
+    get_or_create_chat_profile,
+    respond_to_match,
+    start_direct_match,
+)
 from .streak import compute_streak
 
 PRESENCE_WINDOW_SECONDS = 90
@@ -32,15 +40,22 @@ def _ban_check(user):
 
 def _match_payload(match: PeerMatch, requester):
     peer_handle = None
-    if match.status == PeerMatch.Status.ACTIVE:
+    if match.status in (PeerMatch.Status.ACTIVE, PeerMatch.Status.REQUESTED) and match.userB_id:
         peer = match.other(requester)
         if peer:
             peer_handle = get_or_create_chat_profile(peer).handle
+    # Kept even once CLOSED/ACTIVE so the frontend can phrase a "they
+    # declined" vs. "you declined" close message correctly for each side.
+    direction = None
+    if match.requestedBy_id:
+        direction = "outgoing" if match.requestedBy_id == requester.pk else "incoming"
     return {
         "matchId": str(match.matchId),
         "status": match.status,
         "fusionLabel": match.fusionLabel,
         "peerHandle": peer_handle,
+        "direction": direction,
+        "closeReason": match.closeReason if match.status == PeerMatch.Status.CLOSED else None,
     }
 
 
@@ -110,6 +125,16 @@ class RoomMessagesView(APIView):
 
 
 class MatchView(APIView):
+    def get(self, request):
+        """The caller's current match situation, from either side — whether
+        they started it themselves or someone else's direct request is
+        waiting on them. Lets the frontend discover incoming chat requests
+        without already knowing a matchId."""
+        match = current_match_for(request.user)
+        if not match:
+            return Response({"status": "none"})
+        return Response(_match_payload(match, request.user))
+
     def post(self, request):
         ban = _ban_check(request.user)
         if ban:
@@ -151,6 +176,22 @@ class MatchDetailView(APIView):
         return Response(_match_payload(match, request.user))
 
 
+class MatchRespondView(APIView):
+    """Accept or decline a pending direct chat request (FR-9: two people
+    must agree before a direct conversation opens)."""
+
+    def post(self, request, match_id):
+        match = get_object_or_404(PeerMatch, matchId=match_id)
+        accept = request.data.get("action") == "accept"
+        if request.data.get("action") not in ("accept", "decline"):
+            return Response({"detail": "action must be 'accept' or 'decline'."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            match = respond_to_match(request.user, match, accept)
+        except InvalidResponseError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(_match_payload(match, request.user))
+
+
 class MatchMessagesView(APIView):
     def _get_match(self, request, match_id):
         match = get_object_or_404(PeerMatch, matchId=match_id)
@@ -185,6 +226,8 @@ class MatchMessagesView(APIView):
         match = self._get_match(request, match_id)
         if not match:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        if match.status != PeerMatch.Status.ACTIVE:
+            return Response({"detail": "This chat hasn't been accepted yet."}, status=status.HTTP_400_BAD_REQUEST)
         serializer = SendMessageSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         text = serializer.validated_data["text"]
@@ -251,7 +294,8 @@ class ReportPeerView(APIView):
         if not match:
             return Response({"detail": "No active match with that peer."}, status=status.HTTP_404_NOT_FOUND)
         match.status = PeerMatch.Status.CLOSED
-        match.save(update_fields=["status"])
+        match.closeReason = PeerMatch.CloseReason.REPORTED
+        match.save(update_fields=["status", "closeReason"])
         report = Report.objects.create(reporter=request.user, targetUser=target_user, reason="Reported from private room")
         return Response(report_dict(report), status=status.HTTP_201_CREATED)
 

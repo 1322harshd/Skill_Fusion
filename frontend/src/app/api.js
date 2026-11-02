@@ -269,6 +269,14 @@ window.Api = (function () {
     return request("/connect/matches/" + encodeURIComponent(matchId));
   }
 
+  function connectGetMyMatch() {
+    return request("/connect/match");
+  }
+
+  function connectRespondToMatch(matchId, action) {
+    return request("/connect/matches/" + encodeURIComponent(matchId) + "/respond", { method: "POST", body: { action } });
+  }
+
   function connectListMatchMessages(matchId) {
     return request("/connect/matches/" + encodeURIComponent(matchId) + "/messages");
   }
@@ -393,6 +401,8 @@ window.Api = (function () {
     connectJoinMatch,
     connectMatchWithPeer,
     connectGetMatch,
+    connectGetMyMatch,
+    connectRespondToMatch,
     connectListMatchMessages,
     connectSendMatchMessage,
     connectReportMessage,

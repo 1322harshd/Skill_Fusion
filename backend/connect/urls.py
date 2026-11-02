@@ -9,6 +9,7 @@ connect_urlpatterns = [
     path("match", views.MatchView.as_view()),
     path("peers/<str:handle>/match", views.MatchWithPeerView.as_view()),
     path("matches/<uuid:match_id>", views.MatchDetailView.as_view()),
+    path("matches/<uuid:match_id>/respond", views.MatchRespondView.as_view()),
     path("matches/<uuid:match_id>/messages", views.MatchMessagesView.as_view()),
     path("matches/<uuid:match_id>/exchange", views.ExchangeView.as_view()),
     path("report", views.ReportView.as_view()),

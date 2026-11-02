@@ -348,7 +348,11 @@ function PrivateChat({ matchId }) {
 
 function ExchangePanel({ peer }) {
   const s = Store.useStore();
-  const ex = s.exchanges.find((x) => x.handle === peer.handle);
+  const exRaw = s.exchanges.find((x) => x.handle === peer.handle);
+  // A fetched-but-empty exchange ({status: "none"}) must behave the same as
+  // no exchange at all — otherwise it's truthy and none of the branches
+  // below match, silently rendering nothing once the fetch resolves.
+  const ex = exRaw && exRaw.status !== "none" ? exRaw : null;
 
   useEffect(() => {
     Store.loadExchange().catch(() => {});
@@ -685,15 +689,18 @@ function ConnectPrivateRoom() {
         </div>
       ) : (
         <div className="mt-10">
-          <div className="liquid-glass flex items-center justify-between rounded-[1.5rem] p-5">
-            <div className="flex items-center gap-4">
-              <Avatar handle={peer.handle} name={peer.handle.split(".")[0]} size="lg" />
-              <div>
-                <p className="font-heading text-xl italic leading-none text-white">{peer.handle}</p>
-                <p className="mt-1 font-body text-xs font-light text-white/50">{peer.fusionLabel}</p>
+          {/* The dropdown is a sibling of the liquid-glass card, not nested
+              inside it — that class sets overflow:hidden (for its edge-glow
+              effect), which was clipping almost the entire menu to a sliver. */}
+          <div className="relative">
+            <div className="liquid-glass flex items-center justify-between rounded-[1.5rem] p-5">
+              <div className="flex items-center gap-4">
+                <Avatar handle={peer.handle} name={peer.handle.split(".")[0]} size="lg" />
+                <div>
+                  <p className="font-heading text-xl italic leading-none text-white">{peer.handle}</p>
+                  <p className="mt-1 font-body text-xs font-light text-white/50">{peer.fusionLabel}</p>
+                </div>
               </div>
-            </div>
-            <div className="relative">
               <button
                 type="button"
                 aria-label="Report menu"
@@ -702,30 +709,30 @@ function ConnectPrivateRoom() {
               >
                 <Icons.Dots className="h-4 w-4" />
               </button>
-              <AnimatePresence>
-                {menuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -6, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -6, scale: 0.98 }}
-                    transition={{ duration: 0.2, ease: "easeOut" }}
-                    className="liquid-glass-strong absolute right-0 top-11 z-20 w-48 rounded-2xl p-1.5"
-                  >
-                    <button
-                      type="button"
-                      onClick={doReportPeer}
-                      className="tappable flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left font-body text-sm font-medium text-white/85 transition-colors hover:bg-white/10"
-                    >
-                      <Icons.Flag className="h-4 w-4 text-white/60" />
-                      Report {peer.handle}
-                    </button>
-                    <p className="px-3 pb-1.5 pt-1 font-body text-[11px] font-light text-white/40">
-                      Reports are private and reviewed by our team.
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
+            <AnimatePresence>
+              {menuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  className="liquid-glass-strong absolute right-0 top-full z-20 mt-2 w-48 rounded-2xl p-1.5"
+                >
+                  <button
+                    type="button"
+                    onClick={doReportPeer}
+                    className="tappable flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left font-body text-sm font-medium text-white/85 transition-colors hover:bg-white/10"
+                  >
+                    <Icons.Flag className="h-4 w-4 text-white/60" />
+                    Report {peer.handle}
+                  </button>
+                  <p className="px-3 pb-1.5 pt-1 font-body text-[11px] font-light text-white/40">
+                    Reports are private and reviewed by our team.
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
           <PrivateChat matchId={s.connectMatchId} />
           <ExchangePanel peer={peer} />

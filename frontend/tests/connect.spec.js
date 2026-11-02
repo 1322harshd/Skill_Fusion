@@ -112,8 +112,21 @@ test("reporting a matched peer closes the conversation", async ({ page }) => {
   await page.getByRole("button", { name: "Private room" }).click();
   await expect(page.getByText("bold.hawk21").first()).toBeVisible();
 
+  // A freshly fetched-but-empty exchange ({status: "none"}) must still show
+  // the propose button — it previously went truthy and silently rendered
+  // nothing once this fetch resolved.
+  await expect(page.getByRole("button", { name: "Propose exchange" })).toBeVisible();
+
   await page.getByRole("button", { name: "Report menu" }).click();
-  await page.getByRole("button", { name: /Report bold.hawk21/ }).click();
+  const reportItem = page.getByRole("button", { name: /Report bold.hawk21/ });
+  await expect(reportItem).toBeVisible();
+  // The dropdown must not be a descendant of a liquid-glass card — that
+  // class sets overflow:hidden and previously clipped almost the entire
+  // menu to an unreadable sliver.
+  const clippedByGlassCard = await reportItem.evaluate((el) => !!el.closest(".liquid-glass"));
+  expect(clippedByGlassCard).toBe(false);
+
+  await reportItem.click();
   await expect(page.getByText("Reported — conversation closed")).toBeVisible();
   await expect(page.getByText("Conversation closed").first()).toBeVisible();
   await page.getByRole("button", { name: "Find another match" }).click();

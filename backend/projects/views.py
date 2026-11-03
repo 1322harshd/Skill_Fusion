@@ -16,8 +16,14 @@ def project_view(request):
 
 MAX_ASSESS_TEXT = 20_000  # chars kept from the extracted artifact for SF
 MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024  # 10MB upload cap
-TEXT_EXTS = {"pdf", "txt", "md", "csv", "json", "html", "xml", "yaml", "yml",
-             "js", "jsx", "ts", "tsx", "py", "css", "java", "c", "cpp", "h", "sh", "sql"}
+# Everything here decodes as plain text — each project artifact type gets its
+# own reader. (The generic work used to funnel into the resume extractor,
+# whose .pdf/.txt-only rules + 5MB cap landed a false "upload a resume"
+# error on .md/.py/.csv submissions.)
+TEXT_DECODE_EXTS = {"txt", "md", "markdown", "csv", "json", "html", "htm", "xml",
+                    "yaml", "yml", "js", "jsx", "ts", "tsx", "py", "css", "java",
+                    "c", "cpp", "h", "sh", "sql", "r", "go", "rs", "swift", "kt",
+                    "ipynb", "log", "ini", "cfg", "env", "svg"}
 
 
 def _docx_text(raw):
@@ -32,22 +38,43 @@ def _docx_text(raw):
     return re.sub(r"<[^>]+>", "", xml)
 
 
+def _pdf_text(raw):
+    """pypdf text lift for project submissions (mirrors the resume reader but
+    speaks in project language)."""
+    from io import BytesIO
+    from pypdf import PdfReader
+    from pypdf.errors import PdfReadError
+    try:
+        reader = PdfReader(BytesIO(raw))
+        text = "\n".join(page.extract_text() or "" for page in reader.pages)
+    except PdfReadError:
+        raise ValueError("Couldn't read that PDF — it may be corrupted or password-protected.") from None
+    return text.strip()
+
+
 def _extract_artifact_text(file):
-    """Returns (text, note). Text-readable docs return (text, ""); images/zip
-    return ("", "<visual-proof note>") — stored, not judged; other binaries
-    are rejected with a user-safe message."""
-    from resume.extract import extract_text, ExtractionError
+    """Returns (text, note). Text artifacts are read with project-specific
+    extractors; images/zip return ("", "<visual-proof note>") — stored, not
+    judged; other binaries are rejected with a user-safe message."""
     name = getattr(file, "name", "") or ""
     size = getattr(file, "size", 0) or 0
     if size > MAX_ATTACHMENT_BYTES:
         raise ValueError("Attachment too large — please keep it under 10MB.")
     ext = name.rsplit(".", 1)[-1].lower() if "." in name else ""
 
-    if ext in TEXT_EXTS:
-        try:
-            return extract_text(file), ""
-        except ExtractionError as e:
-            raise ValueError(str(e)) from e
+    if ext == "pdf":
+        text = _pdf_text(file.read()).strip()
+        if not text:
+            raise ValueError("Couldn't find readable text in that PDF — if it's a "
+                             "scanned export, paste a text-based artifact or a link instead.")
+        return text, ""
+
+    if ext in TEXT_DECODE_EXTS:
+        text = file.read().decode("utf-8", errors="ignore").strip()
+        if not text:
+            raise ValueError("That file appears to be empty — attach a written-up "
+                             "artifact or paste a link instead.")
+        return text, ""
 
     if ext == "docx":
         raw = file.read()
@@ -67,6 +94,11 @@ def _extract_artifact_text(file):
         kind = human[ext]
         return "", (f"{kind.capitalize()} attached as proof — not machine-read. "
                     "Describe the key points in your explanation for full assessment.")
+
+    # Anything else is an unknown binary — don't silently store junk.
+    raise ValueError(
+        "That file type can't be attached — attach a document (.pdf, .txt, .md, "
+        "code/JSON/CSV), an image (.png/.jpg) or a .zip, or paste a link instead.")
 
     # Anything else is an unknown binary — don't silently store junk.
     raise ValueError(

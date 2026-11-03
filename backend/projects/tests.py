@@ -137,6 +137,55 @@ class SubmitWorkTests(TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()["submission"]["sourceLink"], "https://github.com/me/lumina")
 
+    def _submit_file(self, name, content):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        with patch("projects.services.call_sf14b_json", return_value=VERDICT_PAYLOAD):
+            return self.client.post("/api/projects/submit", {
+                "fusion_id": "f-demo", "explanation": "readable artifact",
+                "file": SimpleUploadedFile(name, content, content_type="application/octet-stream"),
+            }, format="multipart")
+
+    def test_markdown_py_csv_json_submissions_are_read_not_rejected(self):
+        """The 19 advertised-but-secretly-rejected extensions now actually read:
+        a .md/.py/.csv submission must reach the grader, not bounce with a
+        resume-flavored 'upload .pdf or .txt' error."""
+        from projects.models import ProjectSubmission
+        samples = [
+            ("writeup.md", "# Lumina\n\nWe measured a 40% latency drop."),
+            ("extract.py", "def extract(text):\n    return text.strip()"),
+            ("results.csv", "run,latency_ms\n1,420\n2,410"),
+            ("package.json", '{"name": "lumina", "version": "0.1.0"}'),
+        ]
+        for name, content in samples:
+            with self.subTest(ext=name.rsplit(".", 1)[-1]):
+                response = self._submit_file(name, content.encode("utf-8"))
+                self.assertEqual(response.status_code, 201, response.json())
+                self.assertIn(content.strip().splitlines()[0],
+                              ProjectSubmission.objects.latest("id").file_text)
+
+    def test_empty_readable_file_rejected_with_message(self):
+        response = self._submit_file("empty.md", b"   \n")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("empty", response.json()["error"].lower())
+
+    def test_10mb_text_file_accepted_at_submit_cap(self):
+        """The read cap matches the submit cap (the old 5MB resume cap used to
+        reject text files the view advertised as fine)."""
+        from projects.models import ProjectSubmission
+        payload = ("Week of work — " * 400000).encode("utf-8")[: 9 * 1024 * 1024]  # 9MB text
+        response = self._submit_file("diary.txt", payload)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(ProjectSubmission.objects.latest("id").file_text), 20_000)
+
+    def test_unreadable_pdf_rejected_with_project_message(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        response = self.client.post("/api/projects/submit", {
+            "fusion_id": "f-demo", "explanation": "broken pdf",
+            "file": SimpleUploadedFile("broken.pdf", b"%PDF-1.4 not really a pdf", content_type="application/pdf"),
+        }, format="multipart")
+        self.assertEqual(response.status_code, 400)
+        self.assertNotIn("resume", response.json()["error"].lower())
+
     def test_sf_failure_fails_open_with_saved_submission(self):
         with patch("projects.services.call_sf14b_json", side_effect=RuntimeError("down")):
             response = self.client.post("/api/projects/submit", {

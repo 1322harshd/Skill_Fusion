@@ -496,3 +496,60 @@ class DirectMatchTests(TestCase):
         client = APIClient()
         client.force_authenticate(user=ada)
         self.assertEqual(client.get("/api/connect/match").json(), {"status": "none"})
+
+
+class DjangoAdminModerationTests(TestCase):
+    """The REST moderation endpoints (ModerationReportsView/ModerationActionView)
+    are the frontend's path; this is the second, Django-admin path onto the
+    exact same apply_moderation_action() — a superuser reviewing reports via
+    /admin/ instead of the custom /moderation screen."""
+
+    def setUp(self):
+        self.ada = make_user("ada@example.com")
+        self.superuser = User.objects.create_superuser(
+            email="root@example.com", password="CorrectHorse1!", fullName="Root"
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.superuser)
+        self.client.force_login(self.superuser)
+
+    def test_superuser_can_open_the_report_changelist(self):
+        response = self.client.get("/admin/connect/report/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_warn_action_from_the_admin_changelist(self):
+        report = Report.objects.create(targetUser=self.ada, reason="rude")
+        response = self.client.post(
+            "/admin/connect/report/",
+            {"action": "warn_target", "_selected_action": [str(report.reportId)]},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        report.refresh_from_db()
+        self.assertEqual(report.status, Report.Status.REVIEWED)
+        self.assertEqual(report.action, Report.Action.WARNED)
+        self.assertEqual(ChatProfile.objects.get(user=self.ada).warnCount, 1)
+
+    def test_ban_action_from_the_admin_changelist(self):
+        report = Report.objects.create(targetUser=self.ada, reason="worse")
+        self.client.post(
+            "/admin/connect/report/",
+            {"action": "ban_target", "_selected_action": [str(report.reportId)]},
+            follow=True,
+        )
+        self.assertTrue(ChatProfile.objects.get(user=self.ada).isBanned)
+
+    def test_already_reviewed_reports_are_skipped_not_reapplied(self):
+        report = Report.objects.create(targetUser=self.ada, reason="x")
+        self.client.post(
+            "/admin/connect/report/",
+            {"action": "warn_target", "_selected_action": [str(report.reportId)]},
+            follow=True,
+        )
+        # Running it again shouldn't double-warn an already-reviewed report.
+        self.client.post(
+            "/admin/connect/report/",
+            {"action": "warn_target", "_selected_action": [str(report.reportId)]},
+            follow=True,
+        )
+        self.assertEqual(ChatProfile.objects.get(user=self.ada).warnCount, 1)

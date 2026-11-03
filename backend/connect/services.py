@@ -1,6 +1,7 @@
 from django.db import models, transaction
+from django.utils import timezone
 
-from .models import ChatProfile, PeerMatch
+from .models import ChatProfile, PeerMatch, Report
 
 
 class PeerBusyError(Exception):
@@ -95,6 +96,31 @@ def respond_to_match(user, match: PeerMatch, accept: bool) -> PeerMatch:
         match.closeReason = PeerMatch.CloseReason.DECLINED
         match.save(update_fields=["status", "closeReason"])
     return match
+
+
+@transaction.atomic
+def apply_moderation_action(report: Report, action: str) -> Report:
+    """Warn/ban/dismiss a report's target — the one place this logic lives,
+    used by both the REST moderation endpoint and the Django admin actions
+    so the two can't drift apart."""
+    profile = get_or_create_chat_profile(report.targetUser)
+    if action == "warn":
+        profile.warnCount += 1
+        profile.save(update_fields=["warnCount"])
+        report.action = Report.Action.WARNED
+    elif action == "ban":
+        profile.isBanned = True
+        profile.save(update_fields=["isBanned"])
+        report.action = Report.Action.BANNED
+    elif action == "dismiss":
+        report.action = Report.Action.DISMISSED
+    else:
+        raise ValueError("action must be 'warn', 'ban' or 'dismiss'.")
+
+    report.status = Report.Status.REVIEWED
+    report.reviewedAt = timezone.now()
+    report.save(update_fields=["status", "action", "reviewedAt"])
+    return report
 
 
 @transaction.atomic

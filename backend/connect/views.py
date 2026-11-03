@@ -19,6 +19,7 @@ from .serializers import (
 from .services import (
     InvalidResponseError,
     PeerBusyError,
+    apply_moderation_action,
     current_match_for,
     find_or_create_match,
     get_or_create_chat_profile,
@@ -370,21 +371,5 @@ class ModerationActionView(APIView):
         report = get_object_or_404(Report, reportId=report_id)
         serializer = ModerationActionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        action = serializer.validated_data["action"]
-
-        profile = get_or_create_chat_profile(report.targetUser)
-        if action == "warn":
-            profile.warnCount += 1
-            profile.save(update_fields=["warnCount"])
-            report.action = Report.Action.WARNED
-        elif action == "ban":
-            profile.isBanned = True
-            profile.save(update_fields=["isBanned"])
-            report.action = Report.Action.BANNED
-        else:
-            report.action = Report.Action.DISMISSED
-
-        report.status = Report.Status.REVIEWED
-        report.reviewedAt = timezone.now()
-        report.save(update_fields=["status", "action", "reviewedAt"])
+        report = apply_moderation_action(report, serializer.validated_data["action"])
         return Response(report_dict(report))

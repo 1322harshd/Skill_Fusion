@@ -186,6 +186,10 @@ function Fuse() {
   const [a, setA] = useState("");
   const [b, setB] = useState("");
   const [phase, setPhase] = useState("input");
+  // Loader/data hand-off: true the moment the real fusion payload lands.
+  // AiSteps holds its final step until then, so step-4 completion and the
+  // result appearing are one instant instead of "loader idles, then pop".
+  const [stepsHeld, setStepsHeld] = useState(true);
   const [fusion, setFusion] = useState(null);
   const [error, setError] = useState(null);
   const fusionRef = useRef(null);
@@ -241,11 +245,15 @@ function Fuse() {
     setFusion(null);
     fusionRef.current = null;
     animDoneRef.current = false;
+    setStepsHeld(true);
     setPhase("loading");
     try {
       const f = await Store.fuseRemote(a.trim(), b.trim());
       fusionRef.current = f;
       setFusion(f);
+      // Data in while steps are still animating: release the hold — the
+      // remaining steps fast-forward, then the result shows immediately.
+      setStepsHeld(false);
       maybeResult();
     } catch (e) {
       setPhase("error");
@@ -259,6 +267,7 @@ function Fuse() {
     setError(null);
     fusionRef.current = null;
     animDoneRef.current = false;
+    setStepsHeld(true);
     setPhase("input");
   }
 
@@ -355,7 +364,8 @@ function Fuse() {
                 </div>
                 <AiSteps
                   steps={FUSE_LOADING_STEPS}
-                  speed={1250}
+                  speed={3000}
+                  hold={stepsHeld}
                   onDone={() => { animDoneRef.current = true; maybeResult(); }}
                 />
               </div>

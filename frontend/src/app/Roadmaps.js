@@ -259,6 +259,9 @@ function Roadmaps() {
   const [fusionId, setFusionId] = useState(s.fusions[0]?.id || null);
   const [salt, setSalt] = useState(0);
   const [busy, setBusy] = useState(false);
+  // "Re-thinking" is only honest when the USER asked for fresh options —
+  // the first load is "Finding your path…", not a re-anything.
+  const [isRegen, setIsRegen] = useState(false);
   const [previews, setPreviews] = useState([]);
   const [loadError, setLoadError] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
@@ -280,11 +283,11 @@ function Roadmaps() {
         if (delays[i]) await new Promise((r) => setTimeout(r, delays[i]));
         try {
           const pvs = await Store.getPreviewsRemote(fusion, salt);
-          if (live) { setPreviews(pvs); setBusy(false); }
+          if (live) { setPreviews(pvs); setBusy(false); setIsRegen(false); }
           return;
         } catch { /* keep trying */ }
       }
-      if (live) { setLoadError("Couldn't load roadmaps — is the backend (:8000) and SF (:8081) running?"); setBusy(false); }
+      if (live) { setLoadError("Couldn't load roadmaps — is the backend (:8000) and SF (:8081) running?"); setBusy(false); setIsRegen(false); }
     })();
     return () => { live = false; };
   }, [fusionId, salt]);
@@ -349,8 +352,9 @@ function Roadmaps() {
 
   function regenerate() {
     if (busy) return;
+    setIsRegen(true);
     setBusy(true);
-    setTimeout(() => { setSalt((x) => x + 1); setSelectedId(null); setExpandedId(null); setBusy(false); }, 900);
+    setTimeout(() => { setSalt((x) => x + 1); setSelectedId(null); setExpandedId(null); }, 900);
   }
 
   return (
@@ -371,7 +375,7 @@ function Roadmaps() {
         {busy ? (
           <motion.div key="busy" {...enter()} className="liquid-glass flex min-h-[240px] flex-col items-center justify-center gap-4 rounded-[1.5rem]">
             <motion.span animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.1, ease: "linear" }} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20"><Icons.Refresh className="h-4 w-4 text-white/80" /></motion.span>
-            <p className="font-heading text-2xl italic text-white">Re-thinking…</p>
+            <p className="font-heading text-2xl italic text-white">{isRegen ? "Re-thinking…" : "Finding your path…"}</p>
           </motion.div>
         ) : loadError ? (
           <motion.div key="loaderr" {...enter()} className="liquid-glass rounded-[1.5rem] px-8 py-10 text-center">

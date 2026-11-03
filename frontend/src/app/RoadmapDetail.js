@@ -45,7 +45,9 @@ function RoadmapDetail({ id }) {
   useEffect(() => {
     setChecked({});
     setText("");
-  }, [id, fusion?.roadmap.progressWeeks]);
+    // Deps: id only. Tying this to progressWeeks wiped the roadmapper's
+    // checkboxes while they were working toward the current week.
+  }, [id]);
 
   useEffect(() => {
     if (fusion) window.Ambient.setFusion(fusion.a, fusion.b);
@@ -74,6 +76,15 @@ function RoadmapDetail({ id }) {
   const current = roadmap.weeks.find((w) => w.status === "current");
   const complete = roadmap.progressWeeks > roadmap.totalWeeks;
   const pct = Math.min(100, Math.round((roadmap.progressWeeks / roadmap.totalWeeks) * 100));
+
+  // Creature evolution: completed weeks only (progressWeeks counts the
+  // current week as "not yet done"), grade pays the final 30% when >=70.
+  const completedWeeks = Math.max(0, Math.min(roadmap.progressWeeks - 1, roadmap.totalWeeks));
+  const ev = window.Creature.evolve({
+    weeksTotal: roadmap.totalWeeks,
+    weeksDone: completedWeeks,
+    grade: fusion.grade,
+  });
 
   const currentTasks = current ? current.tasks : [];
   const allDone = current ? currentTasks.every((t) => checked[t.id] === true || t.done === true) : false;
@@ -159,22 +170,26 @@ function RoadmapDetail({ id }) {
                       {currentTasks.map((t) => {
                         const on = checked[t.id] === true || t.done === true;
                         return (
-                          <button
+                          <label
                             key={t.id}
-                            type="button"
-                            onClick={() => toggleTask(t.id)}
-                            className="tappable flex items-center gap-3 text-left font-body text-sm font-light transition-colors"
+                            className="flex cursor-pointer select-none items-center gap-3 font-body text-sm font-light"
                           >
+                            <input
+                              type="checkbox"
+                              checked={on}
+                              onChange={() => toggleTask(t.id)}
+                              className="peer sr-only"
+                            />
                             <span
                               className={
-                                "flex h-5 w-5 items-center justify-center rounded-md border " +
+                                "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border " +
                                 (on ? "border-white bg-white text-black" : "border-white/30 text-transparent")
                               }
                             >
                               <Icons.Check className="h-3.5 w-3.5" />
                             </span>
                             <span className={on ? "text-white/45 line-through" : "text-white/85"}>{t.label}</span>
-                          </button>
+                          </label>
                         );
                       })}
                     </div>
@@ -245,6 +260,23 @@ function RoadmapDetail({ id }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Floating creature companion — sits on the right edge while the user
+          scrolls any week and evolves as weeks complete (fixed, not absolute). */}
+      <div className="pointer-events-none fixed bottom-8 right-8 z-40 hidden w-56 xl:block">
+        <div className="liquid-glass-strong rounded-[1.5rem] px-5 py-4 text-center">
+          <window.Creature.CreatureView a={fusion.a} b={fusion.b} score={{ value: ev.value }} size={110} third={(fusion.addedSkills && fusion.addedSkills[0]) || null} />
+          <window.Creature.EvolutionBar a={fusion.a} b={fusion.b} value={ev.value} compact />
+          <p className="mt-2 font-body text-[10px] uppercase tracking-[0.18em] text-white/45">
+            {ev.value}% evolved · {ev.stage.name}
+          </p>
+          {!complete && ev.weeksDone < ev.weeksTotal && (
+            <p className="mt-1 font-body text-[10px] font-light text-white/30">
+              +{Math.round(ev.perWeek * 100) / 100}% per week
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

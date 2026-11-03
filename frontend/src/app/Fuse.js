@@ -25,33 +25,37 @@ const VOICE_LABEL = { skeptic: "The Skeptic", oracle: "The Oracle" };
 
 function OracleBubble({ line, a, b, index }) {
   const isOracle = line.voice === "oracle";
-  const tint = F.tintStyle(a, b, 0.14);
+  const tint = F.tintStyle(a, b, isOracle ? 0.16 : 0.0);
   return (
     <motion.div
       initial={{ opacity: 0, y: 14, filter: "blur(6px)" }}
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       transition={{ duration: 0.45, ease: "easeOut", delay: 0.35 + index * 0.85 }}
-      className={"flex " + (isOracle ? "justify-end" : "justify-start")}
+      className={"flex items-start gap-2.5 " + (isOracle ? "flex-row-reverse" : "")}
     >
-      <div className={"max-w-[85%] " + (isOracle ? "text-right" : "")}>
+      {/* voice avatar: skeptic = neutral diamond, oracle = fusion-tinted star */}
+      <span
+        aria-hidden="true"
+        className={
+          "mt-4 grid h-7 w-7 shrink-0 place-items-center rounded-full border text-[11px] " +
+          (isOracle ? "border-white/25 text-white" : "border-white/10 text-white/40")
+        }
+        style={isOracle ? tint : undefined}
+      >
+        {isOracle ? "✦" : "◆"}
+      </span>
+      <div className={"flex max-w-[82%] flex-col " + (isOracle ? "items-end" : "items-start")}>
         <p className={"mb-1 font-body text-[10px] uppercase tracking-[0.18em] " + (isOracle ? "text-white/60" : "text-white/40")}>
           {VOICE_LABEL[line.voice]}
         </p>
         <p
           className={
-            (isOracle
-              ? "liquid-glass-strong text-white"
-              : "liquid-glass text-white/85") +
-            " font-body text-sm font-light leading-relaxed"
+            "w-fit rounded-2xl px-4 py-3 text-left font-body text-sm font-light leading-relaxed " +
+            (isOracle ? "liquid-glass-strong text-white" : "liquid-glass text-white/85")
           }
           style={isOracle ? tint : undefined}
         >
-          <span
-            className="rounded-2xl px-4 py-3"
-            style={{ display: "inline-block", textAlign: "left" }}
-          >
-            {line.line}
-          </span>
+          {line.line}
         </p>
       </div>
     </motion.div>

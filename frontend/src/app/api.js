@@ -438,6 +438,16 @@ window.Api = (function () {
     // Multipart project submission: FormData with fusion_id, explanation,
     // brief (JSON string), source_link and/or file. Returns {submission}.
     submitProjectWork: (formData) =>
-      request("/projects/submit", { method: "POST", body: formData, retry: false }),
+      request("/projects/submit", { method: "POST", body: formData, retry: false }).then((res) => {
+        // Grade hook: stash the fresh verdict on the fusion so the creature's
+        // evolution updates the moment a submission is graded (best-effort).
+        try {
+          const fid = formData.get("fusion_id");
+          const ms = res && res.submission && res.submission.verdict &&
+            res.submission.verdict.matchScore;
+          if (fid && typeof ms === "number") window.Store.setGrade(fid, ms);
+        } catch (e) { /* score sync must never block the submit flow */ }
+        return res;
+      }),
   };
 })();

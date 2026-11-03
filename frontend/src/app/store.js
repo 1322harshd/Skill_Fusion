@@ -498,8 +498,20 @@ window.Store = (function () {
       score: r.score,
       brief: r.brief,
       project: normalizeProject(r.project, r.a, r.b),
+      grade: typeof r.grade === "number" ? r.grade : null,
       roadmap: null,
     };
+  }
+
+  function setGrade(fusionId, matchScore) {
+    // Store the latest project grade on the fusion so the creature's final
+    // evolution gate (>=70) survives reloads via the history payload too.
+    if (!fusionId) return;
+    set({
+      fusions: state.fusions.map((x) =>
+        x.id === fusionId ? { ...x, grade: typeof matchScore === "number" ? matchScore : null } : x
+      ),
+    });
   }
 
   // GET /api/fusion/history/ -> restore the signed-in user's past fusions.
@@ -563,6 +575,7 @@ window.Store = (function () {
     sendMessage,
     getPreviewsRemote,
     loadFusions,
+    setGrade,
     chooseRoadmap,
     completeWeek,
     tweakRoadmap,

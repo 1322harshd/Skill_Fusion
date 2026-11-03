@@ -2,6 +2,7 @@ const { useEffect } = React;
 const { motion, AnimatePresence } = window.Motion;
 const { Icons } = window;
 const F = window.Fusion;
+const Creature = window.Creature;
 const Store = window.Store;
 
 const enter = window.MotionKit.enter;
@@ -199,6 +200,31 @@ function FeaturedCard({ fusion }) {
           <div className="w-40">
             <MiniSpark history={fusion.score.history} />
           </div>
+          {(() => {
+            // The creature lives here too: same evolution engine as the
+            // roadmap companion (weeks -> 70%, project >=70 -> 100%).
+            const rw = fusion.roadmap;
+            const ev = window.Creature.evolve({
+              weeksTotal: rw.totalWeeks,
+              weeksDone: Math.max(0, Math.min(rw.progressWeeks - 1, rw.totalWeeks)),
+              grade: typeof fusion.grade === "number" ? fusion.grade : null,
+            });
+            return (
+              <div className="flex w-40 flex-col items-center text-center">
+                <Creature.CreatureView
+                  a={fusion.a}
+                  b={fusion.b}
+                  score={{ value: ev.value }}
+                  size={112}
+                  third={(fusion.addedSkills && fusion.addedSkills[0]) || null}
+                />
+                <Creature.EvolutionBar a={fusion.a} b={fusion.b} value={ev.value} compact />
+                <p className="mt-2 font-body text-[10px] uppercase tracking-[0.18em] text-white/45">
+                  {ev.value}% evolved · {ev.stage.name}
+                </p>
+              </div>
+            );
+          })()}
         </div>
       </div>
     </motion.div>

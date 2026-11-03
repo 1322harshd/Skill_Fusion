@@ -34,21 +34,49 @@ window.Creature = (function () {
     return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
-  // ---- evolution stages (score 1..100) ---------------------------------
+  // ---- evolution stages (evolution % 0..100) -----------------------------
+  // Evolution is driven by PROGRESS, not the fusion score: roadmap weeks own
+  // 0-70% (70/N per completed week), a project graded >=70 pays the final 30%
+  // (see Creature.evolve). Stages add features; between stage crossings the
+  // creature still visibly grows (sparkle/stardust density scales with the %).
   const STAGES = [
-    { at: 0, name: "Spark", note: "just hatched" },
-    { at: 25, name: "Ember", note: "legs sprouted, sparkles" },
-    { at: 50, name: "Forge", note: "aura ignited, third eye opens" },
+    { at: 0, name: "Egg", note: "just hatched" },
+    { at: 10, name: "Spark", note: "eyes open, first sparkles" },
+    { at: 25, name: "Ember", note: "legs sprouted" },
+    { at: 50, name: "Forge", note: "aura ignited, third eye, orbit ring" },
     { at: 75, name: "Mythic", note: "halo, planets, stardust trail" },
   ];
 
   function stageOf(score) {
-    const v = Math.max(1, Math.min(100, Math.round((score && score.value) || 0)));
+    const v = Math.max(0, Math.min(100, Math.round((score && score.value) || 0)));
     let idx = 0;
     for (let i = STAGES.length - 1; i >= 0; i--) {
       if (v >= STAGES[i].at) { idx = i; break; }
     }
     return { ...STAGES[idx], idx, score: v };
+  }
+
+  // ---- evolution calculator ----------------------------------------------
+  // The whole evolution is 100%. Roadmap completion carries 0-70% (70 divided
+  // evenly by the roadmap's week count — an 8-week roadmap grants 8.75% per
+  // completed week) and the project carries 70-100%, paid in full only when a
+  // submission is graded >=70/100 (see ProjectSubmission.match_score).
+  function evolve({ weeksTotal = 0, weeksDone = 0, grade = null }) {
+    const total = Math.max(0, Math.round(weeksTotal));
+    const done = Math.max(0, Math.min(Math.round(weeksDone), total));
+    const weeksPart = total > 0 ? (70 * done) / total : 0;
+    const graded = typeof grade === "number" && !Number.isNaN(grade);
+    const projectPart = graded && grade >= 70 ? 30 : 0;
+    const value = Math.max(0, Math.min(100, Math.round(weeksPart + projectPart)));
+    return {
+      value,
+      weeksPart, projectPart,
+      weeksTotal: total, weeksDone: done,
+      perWeek: total > 0 ? 70 / total : 0,
+      projectGate: graded && grade >= 70,
+      grade: graded ? grade : null,
+      stage: stageOf({ value }),
+    };
   }
 
   // ---- per-category body-part vocabulary -------------------------------
@@ -192,16 +220,18 @@ window.Creature = (function () {
     const partFor = (cat, rr) => (PARTS[cat] || PARTS.tech)(rr, [c1, c2], stage.idx);
 
     let extras = "";
-    // Ember: sparkles
+    // Ember+: sparkles — density grows with evolution % (≈1 more per week-ish)
     if (stage.idx >= 1) {
-      for (let i = 0; i < 2; i++) {
+      const n = Math.min(9, 1 + Math.floor(stage.score / 9));
+      for (let i = 0; i < n; i++) {
         const x = 18 + r() * 84, y = 14 + r() * 22, s = 1.6 + r();
-        extras += `<path d="M ${x - s} ${y} L ${x + s} ${y} M ${x} ${y - s} L ${x} ${y + s}" stroke="#fff" stroke-opacity="0.8" stroke-width="0.9" stroke-linecap="round"/>`;
+        extras += `<path d="M ${x - s} ${y} L ${x + s} ${y} M ${x} ${y - s} L ${x} ${y + s}" stroke="#fff" stroke-opacity="${(0.55 + (i % 3) * 0.12).toFixed(2)}" stroke-width="0.9" stroke-linecap="round"/>`;
       }
     }
-    // Forge: stardust trail
+    // Forge: stardust trail (density scales too)
     if (stage.idx >= 2) {
-      for (let i = 0; i < 5; i++) {
+      const n = Math.min(10, 5 + Math.floor(stage.score / 25));
+      for (let i = 0; i < n; i++) {
         const x = 12 + r() * 96, y = 8 + r() * 30;
         extras += `<circle cx="${x}" cy="${y}" r="${(0.7 + r() * 1.1).toFixed(1)}" fill="${i % 2 ? c2 : "#fff"}" opacity="${(0.3 + r() * 0.5).toFixed(2)}"/>`;
       }
@@ -254,6 +284,40 @@ window.Creature = (function () {
     </svg>`;
   }
 
+  // ---- evolution progress bar --------------------------------------------
+  // Roadmap weeks own the left 70%; the thin divider marks the project
+  // gateway: a submission graded >=70/100 pays the final 30%.
+  function EvolutionBar({ a, b, value, compact = false }) {
+    const v = Math.max(0, Math.min(100, Math.round(value || 0)));
+    return (
+      <div className="w-full">
+        <div className={"relative w-full " + (compact ? "" : "pt-1")}>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+            <motion.div
+              className="h-full rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: v + "%" }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              style={{ background: `linear-gradient(90deg, ${F.colorOf(a)}, ${F.colorOf(b)})` }}
+            />
+          </div>
+          {/* project gateway divider at 70% */}
+          <span
+            aria-hidden="true"
+            className="absolute top-[-3px] h-[15px] w-px bg-white/45"
+            style={{ left: "70%" }}
+          />
+        </div>
+        {!compact && (
+          <div className="mt-1 flex items-center justify-between font-body text-[10px] font-light text-white/40">
+            <span>roadmap weeks → 70%</span>
+            <span>project ≥70/100 → 100%</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // ---- React view --------------------------------------------------------
   function CreatureView({ a, b, score, className = "", size = 120, caption = false, third = null, lineage = null }) {
     const { svg, stage } = useMemo(() => {
@@ -273,7 +337,7 @@ window.Creature = (function () {
         />
         {caption && (
           <p className="mt-1 font-body text-[11px] uppercase tracking-[0.18em] text-white/45">
-            {stage.name}-stage creature · {stage.note}
+            {stage.name}-stage creature · {stage.note} · {stage.score}% evolved
           </p>
         )}
         {lineage && (
@@ -285,5 +349,5 @@ window.Creature = (function () {
     );
   }
 
-  return { chimera, stageOf, CreatureView, STAGES };
+  return { chimera, stageOf, evolve, CreatureView, EvolutionBar, STAGES };
 })();

@@ -57,11 +57,19 @@ def fusion_history_view(request):
     keeps Roadmaps/Dashboard fed after a fresh login."""
     from .models import Fusion
     rows = Fusion.objects.filter(user=request.user)[:50]
+    # Latest project assessment per fusion -> the creature's final evolution
+    # gate and the Dashboard's grade chip. One pass, newest-last wins.
+    from projects.models import ProjectSubmission
+    grade_by_fusion = {}
+    for s in ProjectSubmission.objects.filter(
+            user=request.user, match_score__isnull=False).order_by("created_at"):
+        grade_by_fusion[s.fusion_ref] = s.match_score
     return Response({"fusions": [{
         "id": r.id, "a": r.a, "b": r.b,
         "categoryA": r.category_a, "categoryB": r.category_b,
         "score": r.score, "brief": r.brief, "project": r.project,
         "addedSkills": r.added_skills, "lineageFrom": r.lineage_from,
+        "grade": grade_by_fusion.get(r.id),
         "createdAt": r.created_at.isoformat(),
     } for r in rows]})
 

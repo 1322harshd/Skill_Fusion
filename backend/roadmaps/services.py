@@ -103,10 +103,81 @@ TWEAK_SHAPE = ('{"change_request": string, "classification": "acceptable | not_a
     '"reasoning": string, "skill_a_still_present": boolean, "skill_b_still_present": boolean, '
     '"diff": [{"field": string, "before": string, "after": string}]}')
 
-def tweak_roadmap(roadmap_record, constraints, skill_a, skill_b, request, skill_c=None):
-    """Pre-commit tweak per spec: skill-presence test, diff drives strikethrough UI."""
+TWEAK_REWRITE_SHAPE = ('{"title": string, "weeks": [{"week": integer, "topic": string, '
+    '"objectives": [string]}], "outcome_statement": string}')
+
+
+def _sanitize_weeks(raw_weeks):
+    """Coerce SF's rewritten weeks into the previews contract. Returns None on
+    any malformed input — a rewrite we can't validate must never be saved or
+    shown, or "Applied" becomes a sticker again."""
+    if not isinstance(raw_weeks, list) or not raw_weeks:
+        return None
+    out = []
+    for i, w in enumerate(raw_weeks[:24]):
+        if not isinstance(w, dict):
+            return None
+        topic = w.get("topic")
+        if not isinstance(topic, str) or not topic.strip():
+            return None
+        objectives = w.get("objectives")
+        if isinstance(objectives, str):
+            objectives = [objectives]
+        if not isinstance(objectives, list):
+            return None
+        objectives = [o.strip() for o in objectives if isinstance(o, str) and o.strip()]
+        out.append({"week": i + 1, "topic": topic.strip(), "objectives": objectives})
+    return out or None
+
+
+def _skills_present(weeks, skills):
+    """The honest-Applied gate: every one of the user's skills must actually
+    appear in the rewritten plan text. Substring, case-insensitive — "Pythonic"
+    counts for Python, "windows form" counts for Windows."""
+    text = " ".join((w["topic"] + " " + " ".join(w["objectives"])) for w in weeks).lower()
+    return all(str(s).lower() in text for s in skills)
+
+
+def _rewrite_roadmap(roadmap_record, constraints, skills, request):
+    """Second SF call that actually produces the edited plan — the judge call
+    only classifies and diffs, it never rewrites. Uses the same generator shape
+    as the previews detail call so the frontend can normalize it directly.
+    Returns (plan_dict, None) on a validated rewrite, (None, reason) otherwise."""
     import asyncio as _a, json as _j
-    from prompt_engineering.llm_client import call_sf14b_json
+    listed = _joint(skills)
+    prompt = (
+        f'Roadmap titled "{roadmap_record["title"]}" combining {listed}. '
+        f'Current weeks: {_j.dumps(roadmap_record.get("weeks", []))}. '
+        f'Accumulated constraints that must hold: {constraints if constraints else "none"}. '
+        f'Apply this change request: "{request}". '
+        'The final plan must keep every skill fully engaged and satisfy every constraint. '
+        'Return the COMPLETE updated roadmap (same week count unless the request changes it). '
+        f'Return ONLY valid JSON: {TWEAK_REWRITE_SHAPE}')
+    try:
+        parsed = _a.run(call_sf14b_json("sf-roadmap", prompt, max_tokens=3000))
+    except Exception as exc:
+        return None, f"rewrite call failed: {str(exc)[:120]}"
+    if not isinstance(parsed, dict):
+        return None, "rewrite response was not a JSON object"
+    weeks = _sanitize_weeks(parsed.get("weeks"))
+    if not weeks:
+        return None, "rewrite weeks failed validation (malformed or empty)"
+    if not _skills_present(weeks, skills):
+        return None, "the edited plan dropped one of your skills — rejected, nothing changed"
+    title = (parsed.get("title") or "").strip()
+    return ({
+        "title": title or roadmap_record["title"],
+        "weeks": weeks,
+        "outcome_statement": (parsed.get("outcome_statement") or "").strip(),
+    }, None)
+
+
+def tweak_roadmap(roadmap_record, constraints, skill_a, skill_b, request, skill_c=None):
+    """Pre-commit tweak per spec: skill-presence test, diff drives strikethrough
+    UI — and since v3 an acceptable judgment also triggers a real REWRITE: the
+    returned plan actually contains the requested change (validated weeks +
+    every-skill-still-present gate), not just a displayed diff."""
+    import asyncio as _a, json as _j
     listed = f'"{skill_a}" and "{skill_b}"' + (f' and "{skill_c}"' if skill_c else "")
     present_rule = ("still meaningfully engages BOTH original skills"
                     if not skill_c else
@@ -120,4 +191,14 @@ def tweak_roadmap(roadmap_record, constraints, skill_a, skill_b, request, skill_
         'not acceptable if it removes or effectively erases any one of them. '
         'If acceptable, list only actually-changed fields in diff. '
         f'Return ONLY valid JSON: {TWEAK_SHAPE}')
-    return _a.run(call_sf14b_json("sf-roadmap-tweak", prompt))
+    result = _a.run(call_sf14b_json("sf-roadmap-tweak", prompt))
+    if isinstance(result, dict) and result.get("classification") == "acceptable":
+        skills = [skill_a, skill_b] + ([skill_c] if skill_c else [])
+        rewritten, reason = _rewrite_roadmap(roadmap_record, constraints, skills, request)
+        if rewritten:
+            result["updated"] = rewritten
+            result["rewrite_applied"] = True
+        else:
+            result["rewrite_applied"] = False
+            result["rewrite_note"] = reason
+    return result

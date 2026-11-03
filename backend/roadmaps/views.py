@@ -152,7 +152,20 @@ def tweak_view(request):
         return Response({"error": f"SF unreachable: {str(e)[:120]}"}, status=502)
     if result.get("classification") == "acceptable":
         constraints = constraints + [new_request]
-        if rm:
+        rewritten = result.get("updated")
+        if rm and rewritten and rewritten.get("weeks"):
+            # "Applied" must mean applied: persist the validated edited plan,
+            # not just the constraint note. If the rewrite failed validation,
+            # only the (harmless) constraint accumulates and rewrite_applied
+            # tells the frontend not to claim the change.
+            rm.constraints = constraints
+            rm.weeks_json = rewritten["weeks"]
+            if rewritten.get("outcome_statement"):
+                rm.outcome_statement = rewritten["outcome_statement"]
+            if rewritten.get("title"):
+                rm.title = rewritten["title"]
+            rm.save(update_fields=["constraints", "weeks_json", "outcome_statement", "title"])
+        elif rm:
             rm.constraints = constraints
             rm.save(update_fields=["constraints"])
     return Response({**result, "updated_constraints": constraints})

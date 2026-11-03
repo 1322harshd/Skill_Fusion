@@ -126,7 +126,7 @@ function MiniWeeks({ weeks, total }) {
   );
 }
 
-function TweakPanel({ fusion, pv }) {
+function TweakPanel({ fusion, pv, onUpdated }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -139,8 +139,18 @@ function TweakPanel({ fusion, pv }) {
     try {
       const res = await Store.tweakRoadmap(fusion, pv, text.trim());
       setResult(res);
-      if (res.classification === "acceptable") {
-        window.Toast.show("Change applied to this plan — tweak again or start it", "success");
+      const patched = typeof onUpdated === "function" ? onUpdated(res) : res.rewrite_applied === true;
+      if (res.classification === "acceptable" && res.rewrite_applied === false) {
+        window.Toast.show(
+          (res.rewrite_note && res.rewrite_note.toLowerCase().includes("dropped one of your skills"))
+            ? "The edited plan would drop one of your skills — rejected, plan unchanged"
+            : "Accepted, but the edited plan failed validation — plan unchanged",
+          "error");
+      } else if (res.classification === "acceptable") {
+        window.Toast.show(
+          patched ? "Change applied — the weekly plan below is updated for real"
+                  : "Change accepted",
+          patched ? "success" : "success");
       } else {
         window.Toast.show("Rejected — the change would drop one of your skills", "error");
       }
@@ -213,8 +223,15 @@ function TweakPanel({ fusion, pv }) {
                     (result.classification === "acceptable" ? "bg-white text-black" : "bg-red-400/90 text-black")
                   }
                 >
-                  {result.classification === "acceptable" ? "Applied" : "Rejected"}
+                  {result.classification === "acceptable"
+                    ? (result.rewrite_applied === false
+                        ? "Accepted — plan unchanged"
+                        : "Applied")
+                    : "Rejected"}
                 </span>
+                {result.rewrite_applied === false && result.rewrite_note && (
+                  <p className="mt-2 font-body text-[12px] font-light text-white/50">{result.rewrite_note}</p>
+                )}
                 {(result.diff || []).length ? (
                   <ul className="mt-2 flex flex-col gap-1">
                     {result.diff.map((d, i) => (
@@ -307,6 +324,29 @@ function Roadmaps() {
     window.Router.go("/roadmaps/" + fusion.id);
   }
 
+  // A tweak that says "Applied" must change the plan below the panel — this
+  // swaps the preview's weeks for the backend's validated rewrite. Returns
+  // false when the rewrite didn't land so TweakPanel can stop claiming it did.
+  function applyTweakPatch(pv, res) {
+    if (!res || res.rewrite_applied !== true) return false;
+    const upd = res.updated;
+    if (!upd || !Array.isArray(upd.weeks) || !upd.weeks.length) return false;
+    const rm = Store.normalizeRoadmap(
+      {
+        title: upd.title || pv.title,
+        weeks: upd.weeks,
+        outcome_statement: upd.outcome_statement ||
+          (pv.roadmap && pv.roadmap.outcome_statement) || "",
+      },
+      fusion.a, fusion.b
+    );
+    rm.roadmapId = pv.roadmapId;
+    setPreviews((ps) => ps.map((p) => (p.id === pv.id
+      ? { ...p, title: upd.title || p.title, weeks: upd.weeks.length, roadmap: rm }
+      : p)));
+    return true;
+  }
+
   function regenerate() {
     if (busy) return;
     setBusy(true);
@@ -389,7 +429,7 @@ function Roadmaps() {
                           <ForestTopView a={fusion.a} b={fusion.b} />
                         </div>
                         <MiniWeeks weeks={previewWeeks} total={expandedPv.weeks} />
-                        <TweakPanel fusion={fusion} pv={expandedPv} />
+                        <TweakPanel fusion={fusion} pv={expandedPv} onUpdated={(res) => applyTweakPatch(expandedPv, res)} />
                         <div className="mt-6 flex gap-3">
                           <button type="button" onClick={()=> choose(expandedPv)} className="flex-1 flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black"><Icons.ArrowUpRight className="h-4 w-4" />Start this roadmap</button>
                           <button type="button" onClick={()=> setExpandedId(null)} className="rounded-full bg-white/10 px-6 py-3 font-body text-sm text-white/70 hover:bg-white/15 hover:text-white">Close</button>

@@ -574,6 +574,7 @@ window.Store = (function () {
     loadPosts,
     sendMessage,
     getPreviewsRemote,
+    normalizeRoadmap,
     loadFusions,
     setGrade,
     chooseRoadmap,

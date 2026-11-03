@@ -6,6 +6,7 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 
 from .models import Roadmap
+from . import services
 from authentication.models import User
 from fusion_engine.models import Fusion
 
@@ -153,6 +154,107 @@ class ChooseAndTweakTests(TestCase):
                                     {"skill_a": "A", "skill_b": "B"},
                                     format="json")
         self.assertEqual(response.status_code, 400)
+
+    def test_acceptable_tweak_rewrites_weeks_not_just_constraints(self):
+        """'Applied' must mean applied: the validated edited plan persists to
+        weeks_json/outcome/title, not merely the constraint note."""
+        self.client.force_authenticate(user=self.user)
+        old_weeks = [{"week": 1, "topic": "macOS setup", "objectives": ["Install tooling"]}]
+        self.second.weeks_json = old_weeks
+        self.second.outcome_statement = "Old outcome"
+        self.second.save(update_fields=["weeks_json", "outcome_statement"])
+        rewriting = {"title": "Path 1 (Windows edition)",
+                     "weeks": [{"week": 1, "topic": "Windows dev with Code",
+                                "objectives": ["Set up Windows tooling for Code"]}],
+                     "outcome_statement": "You can build Windows apps with Code"}
+        with patch("roadmaps.views.tweak_roadmap", return_value={
+                "classification": "acceptable", "updated": rewriting, "rewrite_applied": True}):
+            response = self.client.post(
+                "/api/roadmap/tweak/",
+                {"roadmap_id": self.second.id, "skill_a": "Design", "skill_b": "Code",
+                 "new_request": "change macOS to Windows"},
+                format="json")
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+        self.assertTrue(result["rewrite_applied"])
+        self.second.refresh_from_db()
+        self.assertEqual(self.second.weeks_json, rewriting["weeks"])
+        self.assertEqual(self.second.outcome_statement, rewriting["outcome_statement"])
+        self.assertEqual(self.second.title, rewriting["title"])
+        self.assertIn("change macOS to Windows", self.second.constraints)
+
+    def test_failed_rewrite_keeps_weeks_and_reports_honestly(self):
+        """If the rewrite fails validation, weeks_json must stay untouched and
+        the response must say rewrite_applied=False so the UI can't claim it."""
+        self.client.force_authenticate(user=self.user)
+        old_weeks = [{"week": 1, "topic": "macOS setup", "objectives": []}]
+        self.second.weeks_json = old_weeks
+        self.second.save(update_fields=["weeks_json"])
+        with patch("roadmaps.views.tweak_roadmap", return_value={
+                "classification": "acceptable", "rewrite_applied": False,
+                "rewrite_note": "the edited plan dropped one of your skills — rejected, nothing changed"}):
+            response = self.client.post(
+                "/api/roadmap/tweak/",
+                {"roadmap_id": self.second.id, "skill_a": "Design", "skill_b": "Code",
+                 "new_request": "change macOS to Windows"},
+                format="json")
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+        self.assertFalse(result["rewrite_applied"])
+        self.second.refresh_from_db()
+        self.assertEqual(self.second.weeks_json, old_weeks)  # untouched
+        self.assertEqual(result["updated_constraints"],
+                         ["change macOS to Windows"])  # constraint still accumulates
+
+
+class TweakRewriteValidationTests(TestCase):
+    """Unit tests for the second-phase rewrite gates in tweak_roadmap."""
+
+    def test_sanitize_weeks_coerces_and_rejects(self):
+        weeks = services._sanitize_weeks([
+            {"week": 9, "topic": "Windows forms  ", "objectives": ["build", 42, "ship"]},
+            {"week": 2, "topic": 5, "objectives": ["bad"]},
+        ])
+        self.assertIsNone(weeks)  # non-string topic kills the whole rewrite
+        weeks = services._sanitize_weeks([
+            {"week": 7, "topic": "Windows build", "objectives": "solo string objectives"},
+            {"week": 8, "topic": "Ship", "objectives": ["polish"]},
+            {},  # malformed tail
+        ])
+        self.assertIsNone(weeks)
+        weeks = services._sanitize_weeks([
+            {"topic": "Renumbered", "objectives": ["ok"]},
+        ])
+        self.assertEqual(weeks, [{"week": 1, "topic": "Renumbered", "objectives": ["ok"]}])
+
+    def test_skills_present_requires_every_skill(self):
+        weeks = [{"topic": "Windows dev with Code", "objectives": ["uses Code"]}]
+        self.assertTrue(services._skills_present(weeks, ["Windows", "Code"]))
+        self.assertFalse(services._skills_present(weeks, ["Windows", "Code", "Figma"]))
+        self.assertFalse(services._skills_present(weeks, ["Photoshop"]))
+
+    def test_tweak_roadmap_acceptable_triggers_rewrite_call(self):
+        """Second SF call only fires when the judge says acceptable."""
+        judged = {"classification": "acceptable", "diff": [], "reasoning": "ok"}
+        rewritten = {"title": "T", "weeks": [{"topic": "Windows week featuring Code and Design",
+                                              "objectives": ["Design a Code build on Windows"]}],
+                     "outcome_statement": "done"}
+        with patch("roadmaps.services.call_sf14b_json",
+                   side_effect=[judged, rewritten]):
+            out = services.tweak_roadmap(
+                {"title": "T", "weeks": [{"week": 1, "topic": "macOS week", "objectives": []}]},
+                [], "Design", "Code", "change macOS to Windows")
+        self.assertTrue(out["rewrite_applied"])
+        self.assertEqual(out["updated"]["weeks"][0]["topic"],
+                         "Windows week featuring Code and Design")
+
+    def test_tweak_roadmap_rejected_skips_rewrite(self):
+        judged = {"classification": "not_acceptable", "diff": [], "reasoning": "drops a skill"}
+        with patch("roadmaps.services.call_sf14b_json", side_effect=[judged]) as mock:
+            out = services.tweak_roadmap({"title": "T", "weeks": []}, [], "A", "B", "drop A entirely")
+        self.assertEqual(out["classification"], "not_acceptable")
+        self.assertNotIn("rewrite_applied", out)
+        self.assertEqual(mock.call_count, 1)  # judge only, no rewrite call
 
 
 class GetPreviewsServiceTests(TestCase):

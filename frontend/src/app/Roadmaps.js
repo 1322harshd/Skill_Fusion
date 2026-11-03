@@ -270,8 +270,17 @@ function Roadmaps() {
   const fusion = s.fusions.find((f) => f.id === fusionId) || s.fusions[0] || null;
   const selected = previews.find((p) => p.id === selectedId) || null;
 
+  // A fusion with a chosen (locked) path has nothing to choose here —
+  // regenerating three fresh options would just burn SF calls on decisions
+  // that are already made. Jump straight to its plan view instead.
+  const chosenFusionId = fusion && fusion.roadmap ? fusion.id : null;
+  useEffect(() => {
+    if (chosenFusionId) window.Router.go("/roadmaps/" + chosenFusionId);
+  }, [chosenFusionId]);
+
   useEffect(() => {
     if (!fusion) return;
+    if (fusion.roadmap) return; // chosen path — redirecting, no preview regen
     let live = true;
     setBusy(true);
     setLoadError(null);

@@ -4,6 +4,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from .services import make_project, assess_submission
+from .zip_grader import _serialize, estimate_seconds, plan_zip_review, start_zip_review, take_slot
 
 
 @api_view(["POST"])
@@ -100,11 +101,6 @@ def _extract_artifact_text(file):
         "That file type can't be attached — attach a document (.pdf, .txt, .md, "
         "code/JSON/CSV), an image (.png/.jpg) or a .zip, or paste a link instead.")
 
-    # Anything else is an unknown binary — don't silently store junk.
-    raise ValueError(
-        "That file type can't be attached — attach a document (.pdf, .docx, .txt, "
-        "code/JSON/CSV), an image (.png/.jpg) or a .zip, or paste a link instead.")
-
 
 @api_view(["POST"])
 @parser_classes([MultiPartParser, FormParser])
@@ -112,21 +108,13 @@ def _extract_artifact_text(file):
 def submit_view(request):
     """Submit work for a fused project: an attachment (any document — readable
     or kept as visual proof) and/or a source link (website, Drive, repo...).
-    Readable text is graded against the brief by SF; the verdict persists."""
-    fusion_id = request.data.get("fusion_id", "")
-    filename = file_text = attachment_note = ""
-    uploaded = request.FILES.get("file")
-    if uploaded is not None:
-        filename = uploaded.name or ""
-        try:
-            file_text, attachment_note = _extract_artifact_text(uploaded)
-        except ValueError as e:
-            return Response({"error": str(e)}, status=400)
-        file_text = file_text[:MAX_ASSESS_TEXT]
-    source_link = (request.data.get("source_link") or "").strip()
-    if not file_text and not filename and not source_link:
-        return Response({"error": "Add proof — attach any document, or paste a link (website, Drive, repo…)."}, status=400)
+    Readable text is graded against the brief by SF; the verdict persists.
 
+    A .zip gets the async path: the request answers immediately with
+    status="grading" + a measured ETA, and zip_grader grades file-by-file
+    in the background (polled via /projects/submission)."""
+    fusion_id = request.data.get("fusion_id", "")
+    source_link = (request.data.get("source_link") or "").strip()
     explanation = (request.data.get("explanation") or "").strip()
     brief = request.data.get("brief")
     if isinstance(brief, str):
@@ -141,6 +129,61 @@ def submit_view(request):
             if row is not None: brief = row.project or {}
         except Exception:
             brief = {}
+
+    filename = file_text = attachment_note = ""
+    uploaded = request.FILES.get("file")
+    if uploaded is not None:
+        filename = uploaded.name or ""
+        try:
+            file_text, attachment_note = _extract_artifact_text(uploaded)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=400)
+        ext_zip = filename.rsplit(".", 1)[-1].lower() == "zip" if "." in filename else False
+        if ext_zip:
+            plan = None
+            try:
+                plan = plan_zip_review(uploaded.read())
+            except ValueError as e:
+                return Response({"error": str(e)}, status=400)
+            if plan["readable_count"] == 0:
+                # No gradeable text inside — fall back to the visual-proof flow.
+                attachment_note = ("Archive attached as proof — no machine-readable "
+                                   "files inside. Describe the key points in your "
+                                   "explanation for full assessment.")
+                file_text = ""
+            else:
+                est = estimate_seconds(plan["readable_count"])
+                note = (f"Zip review: {plan['readable_count']} readable files "
+                        "being graded one by one.")
+                try:
+                    from .models import ProjectSubmission
+                    sub = ProjectSubmission.objects.create(
+                        user=getattr(request, "user", None) if request.user.is_authenticated else None,
+                        fusion_ref=fusion_id,
+                        filename=filename, file_text="", source_link=source_link,
+                        attachment_note=note, status="grading",
+                        est_seconds=est, file_digests=plan["files"],
+                        brief={"brief": brief, "explanation": explanation,
+                               "source_link": source_link})
+                except Exception:
+                    sub = None  # anon demo DB may not have the table yet
+                if sub is not None:
+                    est += take_slot(est)
+                    start_zip_review(sub.id)
+                    payload = {"submission": {
+                        "id": sub.id, "filename": filename,
+                        "sourceLink": source_link, "attachmentNote": note,
+                        "status": "grading", "estSeconds": est,
+                        "readableCount": plan["readable_count"],
+                        "skipped": plan["skipped"], "async": True,
+                        "verdict": None}}
+                    return Response(payload, status=status.HTTP_201_CREATED)
+                # Fallback: grade the whole readable text synchronously.
+                file_text = "\n\n".join(f["text"] for f in plan["files"])[:MAX_ASSESS_TEXT]
+        else:
+            file_text = file_text[:MAX_ASSESS_TEXT]
+    if not file_text and not filename and not source_link:
+        return Response({"error": "Add proof — attach any document, or paste a link (website, Drive, repo…)."}, status=400)
 
     verdict = {"matchScore": None, "closeness": "weak",
                "strengths": [], "gaps": [], "verdict": "Assessment couldn't run — SF unreachable. Submission saved."}
@@ -165,3 +208,40 @@ def submit_view(request):
         "id": getattr(sub, "id", None), "filename": filename,
         "sourceLink": source_link, "attachmentNote": attachment_note,
         "verdict": verdict}}, status=status.HTTP_201_CREATED)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def submission_status_view(request):
+    """Poll an (async) zip review: ?id=N → per-file digests (text stripped),
+    aggregate verdict, status. The ExplainPanel poller lives on this."""
+    sub_id = request.GET.get("id")
+    sub = None
+    if sub_id and str(sub_id).lstrip("-").isdigit():
+        from .models import ProjectSubmission
+        sub = ProjectSubmission.objects.filter(id=int(sub_id)).first()
+    if sub is None:
+        return Response({"error": "Submission not found."}, status=404)
+    return Response({"submission": _serialize(sub)})
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def regrade_view(request):
+    """Resume a dead/failed zip review: re-runs the worker for every digest
+    still missing a score (text persists on failed files for exactly this)."""
+    sub_id = request.data.get("id")
+    if not sub_id:
+        return Response({"error": "id required."}, status=400)
+    from .models import ProjectSubmission
+    sub = ProjectSubmission.objects.filter(id=int(sub_id)).first() if str(sub_id).lstrip("-").isdigit() else None
+    if sub is None:
+        return Response({"error": "Submission not found."}, status=404)
+    if (sub.status or "graded") != "grading":
+        est = estimate_seconds(len([d for d in (sub.file_digests or []) if isinstance(d, dict) and d.get("score") is None]))
+        sub.status = "grading"
+        sub.est_seconds = est
+        sub.save(update_fields=["status", "est_seconds"])
+        est += take_slot(est)
+        start_zip_review(sub.id)
+    return Response({"submission": _serialize(sub)})

@@ -449,5 +449,12 @@ window.Api = (function () {
         } catch (e) { /* score sync must never block the submit flow */ }
         return res;
       }),
+    // Async zip review: poll a grading submission (?id=) or resume a dead
+    // one. status response shape: {submission: {status, estSeconds,
+    // files: [{name, chars, score, note}...], verdict, matchScore}}.
+    submissionStatus: (id) =>
+      request("/projects/submission?id=" + encodeURIComponent(id)),
+    regradeSubmission: (id) =>
+      request("/projects/regrade", { method: "POST", body: { id } }),
   };
 })();

@@ -6,6 +6,8 @@ from django.db import models
 
 
 class UserManager(BaseUserManager):
+    """Custom manager since the User model logs in with email instead of username."""
+
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError("Users must have an email address")
@@ -16,6 +18,7 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
+        # Superusers get the admin role too, since role is otherwise just a profile field.
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("role", User.Role.ADMIN)
@@ -27,13 +30,17 @@ class User(AbstractUser):
         STUDENT = "student", "Student"
         ADMIN = "admin", "Admin"
 
+    # Django's default username field is dropped in favor of email as the login identifier.
     username = None
+    # UUID primary key instead of the default auto-incrementing id, so user ids aren't guessable.
     userId = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     fullName = models.CharField(max_length=50)
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.STUDENT)
     isEmailVerified = models.BooleanField(default=False)
 
+    # Onboarding/profile data captured as loose JSON rather than normalized tables,
+    # since the shape of personas/baseline answers/skills varies per user.
     personaTypes = models.JSONField(default=list, blank=True)
     baseline = models.JSONField(default=dict, blank=True)
     skills = models.JSONField(default=list, blank=True)

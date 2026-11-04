@@ -5,6 +5,8 @@ from django.db import models
 
 
 class GrowthLogEntry(models.Model):
+    """A single logged achievement/activity, either entered manually or imported from GitHub."""
+
     class Source(models.TextChoices):
         MANUAL = "manual", "Manual"
         GITHUB = "github", "GitHub"
@@ -34,6 +36,8 @@ class GrowthLogEntry(models.Model):
 
 
 class Credential(models.Model):
+    """A verification request/result for a growth-log entry (e.g. checking a certificate URL)."""
+
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"
         VERIFIED = "verified", "Verified"

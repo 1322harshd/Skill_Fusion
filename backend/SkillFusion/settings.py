@@ -89,6 +89,8 @@ WSGI_APPLICATION = 'SkillFusion.wsgi.application'
 
 AUTH_USER_MODEL = 'authentication.User'
 
+# DRF-wide defaults: JWT auth, verified-email required on every endpoint unless overridden,
+# and per-view rate limits (matched by `throttle_scope` on the views that use them).
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -105,6 +107,8 @@ REST_FRAMEWORK = {
     },
 }
 
+# Short-lived access tokens, long-lived refresh tokens that rotate (and blacklist the old one)
+# on every use, keyed by the custom `userId` field instead of the default `id`.
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
@@ -115,6 +119,7 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'userId',
 }
 
+# Name of the httponly cookie the refresh token is stored in (set/read in the auth views).
 REFRESH_TOKEN_COOKIE_NAME = 'refreshToken'
 
 # Frontend origin(s) allowed to make credentialed requests (cookies).

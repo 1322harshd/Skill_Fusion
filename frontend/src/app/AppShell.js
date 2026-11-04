@@ -364,6 +364,8 @@ function ProfileSheet({ open, onClose, user }) {
   );
 }
 
+// Blocks access to the app's screens until the user confirms their email,
+// with a button to resend the verification link.
 function VerifyGate({ email }) {
   const [sending, setSending] = React.useState(false);
   const [sent, setSent] = React.useState(false);
@@ -407,7 +409,9 @@ function AppShell({ route, children }) {
   const s = window.Store.useStore();
   const user = s.user;
   const [profileOpen, setProfileOpen] = React.useState(false);
+  // Gate the main content behind email verification, unless we're already on that screen.
   const needsVerification = !!user?.email && user?.isEmailVerified === false && route !== "/verify-email";
+  // Admins get an extra Moderation link in the nav.
   const navItems = user?.role === "admin" ? [...NAV, ["Moderation", "/moderation", "Shield"]] : NAV;
 
   return (
@@ -445,6 +449,7 @@ function AppShell({ route, children }) {
           })}
         </nav>
 
+        {/* Profile button is disabled/muted when there's no logged-in user (guest view) */}
         <button
           type="button"
           onClick={user?.userId ? () => setProfileOpen(true) : undefined}

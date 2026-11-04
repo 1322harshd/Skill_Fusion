@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
+# Each app exposes its own urlpatterns list so it can be mounted under its own prefix below
 from authentication.urls import auth_urlpatterns, users_urlpatterns
 from growthlog.urls import growthlog_urlpatterns
 from resume.urls import resume_urlpatterns
@@ -32,6 +33,7 @@ urlpatterns = [
     path('api/explain/', include('explain.urls')),
     path('api/llm/', include('prompt_engineering.urls')),
     path('api/infra/', include('infra.urls')),
+    # Admin site, plus the rest of the app routes
     path('admin/', admin.site.urls),
     path('api/auth/', include(auth_urlpatterns)),
     path('api/users/', include(users_urlpatterns)),

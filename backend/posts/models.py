@@ -7,6 +7,8 @@ from growthlog.models import GrowthLogEntry
 
 
 class PostDraft(models.Model):
+    """An AI-generated social post for a growth-log entry, from draft through to shared."""
+
     class Status(models.TextChoices):
         DRAFT = "draft", "Draft"
         QUEUED = "queued", "Queued"

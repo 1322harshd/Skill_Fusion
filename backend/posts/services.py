@@ -16,6 +16,8 @@ def generate_post_text(entry, tone="Warm", salt=0) -> str:
     tags = ", ".join(list(entry.skillTags) + list(entry.competencyTags))
     status = "verified" if entry.verified else "self-reported"
 
+    # Build the prompt from only the entry's own fields, so the model can't fabricate
+    # achievements; `salt`, when non-zero, asks the model to vary its phrasing on a retry.
     prompt = (
         f"Write ONE shareable social-media post (LinkedIn/X style, under 500 characters, "
         f"no hashtags unless they feel natural) summarising this learner's achievement. "
@@ -29,6 +31,7 @@ def generate_post_text(entry, tone="Warm", salt=0) -> str:
         + '\nRespond with ONLY valid JSON: {"text": "the post, ready to copy-paste"}'
     )
 
+    # The LLM call is async; run it to completion synchronously for this (sync) view.
     data = asyncio.run(call_sf14b_json("sf-post", prompt, max_tokens=1200))
     text = (data.get("text") or "").strip()
     if not text:

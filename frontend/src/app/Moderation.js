@@ -4,16 +4,21 @@ const { Icons } = window;
 
 const enter = window.MotionKit.enter;
 
+// Picks out the quoted message a report is about, if any, and labels it by
+// whether it came from an open room or a private room.
 function reportedText(report) {
   if (report.roomMessageText) return { label: "Open room", text: report.roomMessageText };
   if (report.privateMessageText) return { label: "Private room", text: report.privateMessageText };
   return null;
 }
 
+// Renders a single moderation report with warn/ban/dismiss actions.
 function ReportCard({ report, onAction }) {
-  const [acting, setActing] = useState(null);
+  const [acting, setActing] = useState(null); // which action is currently in flight, if any
   const content = reportedText(report);
 
+  // Runs a moderation action and tracks it as "in flight" so the buttons can
+  // show a loading label and disable themselves while it's pending.
   async function act(action) {
     setActing(action);
     try {
@@ -87,11 +92,14 @@ function ReportCard({ report, onAction }) {
   );
 }
 
+// Staff-only page listing pending Connect reports, with per-report actions.
 function Moderation() {
   const s = window.Store.useStore();
   const [reports, setReports] = useState([]);
   const [status, setStatus] = useState("loading"); // loading | ok | forbidden | error
 
+  // Fetches the report queue. A 403 means the signed-in user isn't staff,
+  // which gets its own "forbidden" state instead of a generic error.
   async function load() {
     try {
       const data = await window.Api.connectModerationReports();
@@ -106,6 +114,8 @@ function Moderation() {
     load();
   }, []);
 
+  // Sends the moderation decision, then drops the report from the list
+  // locally (rather than re-fetching) so the queue updates immediately.
   async function handleAction(reportId, action) {
     try {
       await window.Api.connectModerationAction(reportId, action);

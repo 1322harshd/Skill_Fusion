@@ -78,6 +78,8 @@ class AuthTests(TestCase):
         response = self.client.post("/api/auth/oauth/github/connect", {"code": "abc"}, format="json")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    # override_settings makes the OAuth-configured check pass; patching _exchange_github_code
+    # skips an actual network call to GitHub.
     @override_settings(GITHUB_OAUTH_CLIENT_ID="id", GITHUB_OAUTH_CLIENT_SECRET="secret")
     def test_github_connect_stores_verified_profile_and_token(self):
         profile = {"login": "ada", "html_url": "https://github.com/ada"}

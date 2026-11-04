@@ -1,5 +1,7 @@
 const { useEffect, useState } = React;
 
+// Landing page for the emailed "verify your email" link (?token=...).
+// Calls the API on mount and shows a checking/success/error state.
 function VerifyEmail() {
   const [status, setStatus] = useState("checking"); // checking | success | error
   const [error, setError] = useState("");
@@ -11,6 +13,8 @@ function VerifyEmail() {
       setError("This verification link is missing its token.");
       return;
     }
+    // Guards against setting state after the component has unmounted
+    // (e.g. if the user navigates away before the request resolves).
     let cancelled = false;
     window.Api.verifyEmail(token)
       .then(() => {
@@ -49,6 +53,7 @@ function VerifyEmail() {
             <p className="mt-4 font-body text-sm font-light text-white/60">
               Your email is confirmed. You're all set.
             </p>
+            {/* Send already-onboarded users to the dashboard, everyone else to onboarding */}
             <button
               type="button"
               onClick={() => {

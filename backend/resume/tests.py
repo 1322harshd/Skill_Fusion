@@ -21,6 +21,7 @@ def _pdf_bytes_with_text(text):
 
 
 def _blank_pdf_bytes():
+    # A valid PDF with a page but no text — exercises the "no extractable text" rejection path.
     writer = PdfWriter()
     writer.add_blank_page(width=200, height=200)
     buf = BytesIO()
@@ -35,6 +36,7 @@ VALID_CONTENT = {
 
 
 def _mock_chat_response(content=None, reasoning="", finish_reason="stop", status_code=200):
+    """Build a fake requests.Response shaped like the LLM chat-completions endpoint's reply."""
     response = MagicMock(status_code=status_code)
     response.json.return_value = {
         "choices": [
@@ -48,6 +50,8 @@ def _mock_chat_response(content=None, reasoning="", finish_reason="stop", status
 
 
 class JsonExtractionTests(TestCase):
+    """_extract_json_object finds a balanced {...} amid surrounding model chatter, or fails clearly."""
+
     def test_extracts_json_with_trailing_residue(self):
         text = '{"resumeSummary": "hi", "resumeBullets": [], "coverLetter": "x"}\n\nSome trailing thoughts here.'
         data = _extract_json_object(text)
@@ -67,6 +71,8 @@ class JsonExtractionTests(TestCase):
 
 
 class GenerateResumeContentTests(TestCase):
+    """generate_resume_content against various shapes/failure modes of the LLM's raw response."""
+
     @patch("resume.llm.requests.post")
     def test_parses_clean_content_field(self, post):
         import json
@@ -110,6 +116,8 @@ class GenerateResumeContentTests(TestCase):
 
 
 class GenerateResumeViewTests(TestCase):
+    """Generate endpoint: auth required, persists a document on success, 502s on LLM failure."""
+
     def setUp(self):
         self.user = User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada", isEmailVerified=True)
         self.client = APIClient()
@@ -139,6 +147,8 @@ class GenerateResumeViewTests(TestCase):
 
 
 class ResumeExportViewTests(TestCase):
+    """PDF export for both doc types, scoped so only the owner can export their document."""
+
     def setUp(self):
         self.user = User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada", isEmailVerified=True)
         self.other = User.objects.create_user(email="other@example.com", password="CorrectHorse1!", fullName="Other", isEmailVerified=True)
@@ -170,6 +180,8 @@ class ResumeExportViewTests(TestCase):
 
 
 class ResumeUploadViewTests(TestCase):
+    """Upload endpoint: accepted/rejected file types, one-upload-per-user replacement, and delete."""
+
     def setUp(self):
         self.user = User.objects.create_user(
             email="ada@example.com", password="CorrectHorse1!", fullName="Ada", isEmailVerified=True
@@ -243,6 +255,8 @@ class ResumeUploadViewTests(TestCase):
 
 
 class BuildUserPromptTests(TestCase):
+    """build_user_prompt includes the uploaded-resume section only when an upload exists."""
+
     def setUp(self):
         self.user = User.objects.create_user(
             email="ada@example.com", password="CorrectHorse1!", fullName="Ada", isEmailVerified=True

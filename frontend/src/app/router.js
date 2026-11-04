@@ -1,6 +1,7 @@
 window.Router = (function () {
   const listeners = new Set();
 
+  // The hash without its leading "#", e.g. "/log?tab=verified".
   function raw() {
     return window.location.hash.replace(/^#/, "");
   }
@@ -14,6 +15,7 @@ window.Router = (function () {
     return parse();
   }
 
+  // Query string params after the "?" in the hash, as a URLSearchParams.
   function query() {
     const qIndex = raw().indexOf("?");
     return new URLSearchParams(qIndex >= 0 ? raw().slice(qIndex + 1) : "");

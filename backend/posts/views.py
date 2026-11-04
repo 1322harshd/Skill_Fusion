@@ -12,6 +12,9 @@ from .services import generate_post_text
 
 
 class GeneratePostView(APIView):
+    """Generate (or regenerate) an AI post draft for a growth-log entry. Rate-limited since
+    each call is an LLM request."""
+
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "post-generate"
 
@@ -39,12 +42,16 @@ class GeneratePostView(APIView):
 
 
 class PostDraftListView(APIView):
+    """List all post drafts belonging to the current user."""
+
     def get(self, request):
         drafts = PostDraft.objects.filter(user=request.user)
         return Response(PostDraftSerializer(drafts, many=True).data)
 
 
 class PostDraftDetailView(APIView):
+    """Partially update a single draft (edit its text or move it to a new status)."""
+
     def patch(self, request, post_id):
         draft = get_object_or_404(PostDraft, postId=post_id, user=request.user)
         serializer = UpdatePostSerializer(data=request.data, partial=True)

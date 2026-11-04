@@ -15,6 +15,8 @@ NOUNS = [
 
 
 def generate_handle():
+    """adjective.noun42 — the default for ChatProfile.handle. Picked at
+    random rather than derived from the user's name/email on purpose."""
     return f"{random.choice(ADJECTIVES)}.{random.choice(NOUNS)}{random.randint(10, 99)}"
 
 
@@ -32,6 +34,9 @@ class ChatProfile(models.Model):
 
 
 class Presence(models.Model):
+    """Who's currently in the open room — one row per user, refreshed by a
+    heartbeat from the frontend and considered stale after a short window."""
+
     class Status(models.TextChoices):
         ACTIVE = "active", "Active"
         IDLE = "idle", "Idle"
@@ -44,6 +49,8 @@ class Presence(models.Model):
 
 
 class RoomMessage(models.Model):
+    """A message in the shared open room, visible to everyone present."""
+
     messageId = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="room_messages")
     text = models.TextField(max_length=1000)
@@ -55,11 +62,55 @@ class RoomMessage(models.Model):
         ordering = ["createdAt"]
 
 
+class Conversation(models.Model):
+    """A permanent thread between two specific people — created once, the
+    first time they accept each other, and never deleted. Multiple PeerMatch
+    "handshakes" between the same pair over time all resolve to this same
+    row, which is why message history and the identity Exchange survive
+    across them: both live here, not on the ephemeral match."""
+
+    class Status(models.TextChoices):
+        ACTIVE = "active", "Active"
+        BLOCKED = "blocked", "Blocked"
+
+    conversationId = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # Canonically ordered (userA.pk < userB.pk) at creation so the pair has
+    # exactly one row regardless of who messaged whom first.
+    userA = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="conversations_as_a")
+    userB = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="conversations_as_b")
+    fusionLabel = models.CharField(max_length=100, blank=True, default="")
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIVE)
+    blockedBy = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    createdAt = models.DateTimeField(auto_now_add=True)
+    lastMessageAt = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["userA", "userB"], name="unique_conversation_pair")]
+        ordering = ["-lastMessageAt"]
+
+    def other(self, user):
+        return self.userB if user.pk == self.userA_id else self.userA
+
+
 class PeerMatch(models.Model):
+    """The handshake that leads to a Conversation — the anonymous queue
+    (WAITING/ACTIVE) or a direct request (REQUESTED, needing accept/decline).
+    Ephemeral by design: once accepted, `conversation` is the permanent
+    record that survives; this row is just how that connection was made."""
+
     class Status(models.TextChoices):
         WAITING = "waiting", "Waiting"
+        REQUESTED = "requested", "Requested"
         ACTIVE = "active", "Active"
         CLOSED = "closed", "Closed"
+
+    class CloseReason(models.TextChoices):
+        NONE = "", "None"
+        DECLINED = "declined", "Declined"
+        REPORTED = "reported", "Reported"
+        LEFT = "left", "Left"
 
     matchId = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     fusionLabel = models.CharField(max_length=100)
@@ -68,6 +119,16 @@ class PeerMatch(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="matches_as_b", null=True, blank=True
     )
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.WAITING)
+    # Set only for a direct (click-to-message) request — whoever didn't
+    # initiate it is the one who needs to accept/decline (FR-9: two people
+    # must agree to chat before a direct conversation opens, the first time).
+    requestedBy = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    closeReason = models.CharField(max_length=10, choices=CloseReason.choices, blank=True, default=CloseReason.NONE)
+    conversation = models.ForeignKey(
+        Conversation, on_delete=models.SET_NULL, null=True, blank=True, related_name="matches"
+    )
     createdAt = models.DateTimeField(auto_now_add=True)
 
     def other(self, user):
@@ -75,8 +136,11 @@ class PeerMatch(models.Model):
 
 
 class PrivateMessage(models.Model):
+    """A message inside a Conversation — permanent, unlike the handshake
+    that led to it."""
+
     messageId = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    match = models.ForeignKey(PeerMatch, on_delete=models.CASCADE, related_name="messages")
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name="messages")
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     text = models.TextField(max_length=1000)
     createdAt = models.DateTimeField(auto_now_add=True)
@@ -88,30 +152,39 @@ class PrivateMessage(models.Model):
 
 
 class Exchange(models.Model):
+    """Mutual-consent identity reveal — tied to the permanent Conversation,
+    not a single match session, so it's remembered forever once done (FR-9.4)."""
+
     class Status(models.TextChoices):
         NONE = "none", "None"
         AWAITING_PEER = "awaiting-peer", "Awaiting peer"
         AWAITING_YOU = "awaiting-you", "Awaiting you"
         DONE = "done", "Done"
 
-    match = models.OneToOneField(PeerMatch, on_delete=models.CASCADE, related_name="exchange")
+    conversation = models.OneToOneField(Conversation, on_delete=models.CASCADE, related_name="exchange")
     proposedBy = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     confirmedA = models.BooleanField(default=False)
     confirmedB = models.BooleanField(default=False)
     createdAt = models.DateTimeField(auto_now_add=True)
 
     def status_for(self, user):
+        """The exchange's status from one specific person's point of view —
+        the same row reads as "awaiting peer" for whoever already confirmed
+        and "awaiting you" for whoever hasn't."""
         both = self.confirmedA and self.confirmedB
         if both:
             return self.Status.DONE
-        is_proposer = user.pk == self.proposedBy.pk
-        confirmed_mine = self.confirmedA if user.pk == self.match.userA.pk else self.confirmedB
+        is_proposer = user.pk == self.proposedBy_id
+        confirmed_mine = self.confirmedA if user.pk == self.conversation.userA_id else self.confirmedB
         if confirmed_mine:
             return self.Status.AWAITING_PEER
         return self.Status.AWAITING_YOU if not is_proposer else self.Status.AWAITING_PEER
 
 
 class Report(models.Model):
+    """A moderation report — either against a specific message (roomMessage
+    or privateMessage set) or against a peer generally (neither set)."""
+
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"
         REVIEWED = "reviewed", "Reviewed"

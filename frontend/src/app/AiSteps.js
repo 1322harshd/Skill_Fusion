@@ -29,6 +29,7 @@ function AiSteps({ steps, speed = 1300, onDone, loop = false, className = "", ho
     return () => clearTimeout(t);
   }, [i, speed, steps.length, loop, done, hold, pinned]);
 
+  // Only fire the completion callback for non-looping steppers.
   useEffect(() => {
     if (done && !loop) onDone?.();
   }, [done, loop]);

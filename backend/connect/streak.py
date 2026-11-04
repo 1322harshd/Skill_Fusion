@@ -17,6 +17,8 @@ def compute_streak(user) -> int:
 
     day = timezone.localdate()
     if day not in logged_dates:
+        # Nothing logged yet today doesn't break the streak — start counting
+        # from yesterday instead.
         day -= timedelta(days=1)
 
     streak = 0

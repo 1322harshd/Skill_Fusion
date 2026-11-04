@@ -10,6 +10,8 @@ window.Api = (function () {
     return accessToken;
   }
 
+  // DRF validation errors come back as {field: ["message"]} — grab the first
+  // one to show as a plain error string when there's no top-level "detail".
   function firstFieldError(data) {
     if (!data || typeof data !== "object") return null;
     for (const key of Object.keys(data)) {
@@ -20,6 +22,9 @@ window.Api = (function () {
     return null;
   }
 
+  // The one place every JSON API call goes through: attaches the bearer
+  // token, retries once after a silent token refresh on a 401, and throws a
+  // plain Error (with .status/.data attached) on any non-2xx response.
   async function request(path, { method = "GET", body, auth = true, retry = true } = {}) {
     const headers = {};
     if (body instanceof FormData) {
@@ -85,6 +90,8 @@ window.Api = (function () {
     });
   }
 
+  // ---- Auth ----
+
   function register({ name, email, password }) {
     return request("/auth/register", { method: "POST", auth: false, body: { name, email, password } }).then(
       applyAuthPayload
@@ -137,6 +144,8 @@ window.Api = (function () {
     return request("/auth/resend-verification", { method: "POST" });
   }
 
+  // ---- Growth Log ----
+
   function listGrowthLogEntries() {
     return request("/growth-log/entries");
   }
@@ -175,6 +184,8 @@ window.Api = (function () {
   function growthLogStats() {
     return request("/growth-log/stats");
   }
+
+  // ---- Resume ----
 
   function generateResume(jobListing) {
     return request("/resume/generate", { method: "POST", body: { jobListing: jobListing || "" } });
@@ -225,6 +236,8 @@ window.Api = (function () {
     return request("/resume/upload", { method: "DELETE" });
   }
 
+  // ---- Posts ----
+
   function generatePost(entryId, tone, salt) {
     return request("/posts/generate", { method: "POST", body: { entryId, tone, salt } });
   }
@@ -236,6 +249,8 @@ window.Api = (function () {
   function updatePost(postId, patch) {
     return request("/posts/" + encodeURIComponent(postId), { method: "PATCH", body: patch });
   }
+
+  // ---- Connect ----
 
   function connectMe() {
     return request("/connect/me");
@@ -269,12 +284,31 @@ window.Api = (function () {
     return request("/connect/matches/" + encodeURIComponent(matchId));
   }
 
-  function connectListMatchMessages(matchId) {
-    return request("/connect/matches/" + encodeURIComponent(matchId) + "/messages");
+  function connectGetMyMatch() {
+    return request("/connect/match");
   }
 
-  function connectSendMatchMessage(matchId, text) {
-    return request("/connect/matches/" + encodeURIComponent(matchId) + "/messages", { method: "POST", body: { text } });
+  function connectRespondToMatch(matchId, action) {
+    return request("/connect/matches/" + encodeURIComponent(matchId) + "/respond", { method: "POST", body: { action } });
+  }
+
+  function connectListConversations() {
+    return request("/connect/conversations");
+  }
+
+  function connectGetConversation(conversationId) {
+    return request("/connect/conversations/" + encodeURIComponent(conversationId));
+  }
+
+  function connectListConversationMessages(conversationId) {
+    return request("/connect/conversations/" + encodeURIComponent(conversationId) + "/messages");
+  }
+
+  function connectSendConversationMessage(conversationId, text) {
+    return request("/connect/conversations/" + encodeURIComponent(conversationId) + "/messages", {
+      method: "POST",
+      body: { text },
+    });
   }
 
   function connectReportMessage(messageType, messageId, reason) {
@@ -285,19 +319,19 @@ window.Api = (function () {
     return request("/connect/peers/" + encodeURIComponent(handle) + "/report", { method: "POST" });
   }
 
-  function connectGetExchange(matchId) {
-    return request("/connect/matches/" + encodeURIComponent(matchId) + "/exchange");
+  function connectGetExchange(conversationId) {
+    return request("/connect/conversations/" + encodeURIComponent(conversationId) + "/exchange");
   }
 
-  function connectProposeExchange(matchId) {
-    return request("/connect/matches/" + encodeURIComponent(matchId) + "/exchange", {
+  function connectProposeExchange(conversationId) {
+    return request("/connect/conversations/" + encodeURIComponent(conversationId) + "/exchange", {
       method: "POST",
       body: { action: "propose" },
     });
   }
 
-  function connectConfirmExchange(matchId) {
-    return request("/connect/matches/" + encodeURIComponent(matchId) + "/exchange", {
+  function connectConfirmExchange(conversationId) {
+    return request("/connect/conversations/" + encodeURIComponent(conversationId) + "/exchange", {
       method: "POST",
       body: { action: "confirm" },
     });
@@ -340,6 +374,8 @@ window.Api = (function () {
     URL.revokeObjectURL(url);
   }
 
+  // Called once on app load: tries to silently resume a session from the
+  // refresh cookie. Returns the signed-in user, or null if there wasn't one.
   async function bootstrap() {
     const ok = await refresh();
     if (!ok) return null;
@@ -393,8 +429,12 @@ window.Api = (function () {
     connectJoinMatch,
     connectMatchWithPeer,
     connectGetMatch,
-    connectListMatchMessages,
-    connectSendMatchMessage,
+    connectGetMyMatch,
+    connectRespondToMatch,
+    connectListConversations,
+    connectGetConversation,
+    connectListConversationMessages,
+    connectSendConversationMessage,
     connectReportMessage,
     connectReportPeer,
     connectGetExchange,

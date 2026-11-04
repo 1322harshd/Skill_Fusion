@@ -1,5 +1,6 @@
 const { useState } = React;
 
+// Password reset page, landed on from the emailed reset link (?token=...).
 function ResetPassword() {
   const token = window.Router.query().get("token") || "";
   const [password, setPassword] = useState("");
@@ -8,6 +9,7 @@ function ResetPassword() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
+  // Basic client-side checks before hitting the API.
   function validate() {
     if (!token) return "This reset link is missing its token.";
     if (password.length < 6) return "Password must be at least 6 characters";
@@ -37,6 +39,7 @@ function ResetPassword() {
     }
   }
 
+  // Confirmation screen shown once the password has actually been reset.
   if (done) {
     return (
       <section className="relative flex min-h-[70vh] items-center justify-center">

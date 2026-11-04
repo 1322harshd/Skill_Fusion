@@ -28,23 +28,31 @@ test("a zero streak and a peer with no current fusion show honest fallback text"
   await expect(page.getByText("Not fusing right now")).toBeVisible();
 });
 
-test("message privately starts a direct match and switches to the private room", async ({ page }) => {
+test("message privately sends a pending request and shows a waiting state", async ({ page }) => {
   await mockApi(page, {
     signedIn: true,
     presence: [{ handle: "quiet.owl10", status: "active", fusionLabel: "Design×AI", streak: 3 }],
+    myMatch: {
+      matchId: "m1",
+      status: "requested",
+      direction: "outgoing",
+      fusionLabel: "Design×AI",
+      peerHandle: "quiet.owl10",
+      closeReason: null,
+    },
   });
   await page.route("**/api/connect/peers/quiet.owl10/match", async (route) => {
     await route.fulfill({
       status: 201,
       contentType: "application/json",
-      body: JSON.stringify({ matchId: "m1", status: "active", fusionLabel: "Design×AI", peerHandle: "quiet.owl10" }),
+      body: JSON.stringify({
+        matchId: "m1",
+        status: "requested",
+        direction: "outgoing",
+        fusionLabel: "Design×AI",
+        peerHandle: "quiet.owl10",
+      }),
     });
-  });
-  await page.route("**/api/connect/matches/m1/messages", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([]) });
-  });
-  await page.route("**/api/connect/matches/m1/exchange", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "none" }) });
   });
 
   await page.goto("/index.html#/connect");
@@ -52,10 +60,51 @@ test("message privately starts a direct match and switches to the private room",
   await page.getByRole("button", { name: "Message privately" }).click();
 
   await expect(page.getByRole("button", { name: "Private room" })).toHaveClass(/bg-white/);
-  await expect(page.getByText("quiet.owl10").first()).toBeVisible();
+  await expect(page.getByText("Waiting for quiet.owl10…")).toBeVisible();
 });
 
-test("messaging a peer who's already busy shows an error and stays in the open room", async ({ page }) => {
+test("messaging a peer you already have a conversation with resumes it directly", async ({ page }) => {
+  await mockApi(page, {
+    signedIn: true,
+    presence: [{ handle: "quiet.owl10", status: "active", fusionLabel: "Design×AI", streak: 3 }],
+    conversations: [
+      {
+        conversationId: "c1",
+        peerHandle: "quiet.owl10",
+        fusionLabel: "Design×AI",
+        status: "active",
+        blockedByMe: false,
+        lastMessageAt: new Date().toISOString(),
+      },
+    ],
+    conversationMessages: { c1: [] },
+    conversationExchanges: { c1: { status: "none" } },
+  });
+  await page.route("**/api/connect/peers/quiet.owl10/match", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        kind: "conversation",
+        conversationId: "c1",
+        peerHandle: "quiet.owl10",
+        fusionLabel: "Design×AI",
+        status: "active",
+        blockedByMe: false,
+        lastMessageAt: new Date().toISOString(),
+      }),
+    });
+  });
+
+  await page.goto("/index.html#/connect");
+  await page.getByRole("button", { name: /quiet.owl10/ }).click();
+  await page.getByRole("button", { name: "Message privately" }).click();
+
+  await expect(page.getByRole("button", { name: "Private room" })).toHaveClass(/bg-white/);
+  await expect(page.getByPlaceholder("Message your match…")).toBeVisible();
+});
+
+test("messaging a peer whose conversation is blocked shows an error and stays in the open room", async ({ page }) => {
   await mockApi(page, {
     signedIn: true,
     presence: [{ handle: "quiet.owl10", status: "active", fusionLabel: "Design×AI", streak: 3 }],
@@ -64,7 +113,7 @@ test("messaging a peer who's already busy shows an error and stays in the open r
     await route.fulfill({
       status: 409,
       contentType: "application/json",
-      body: JSON.stringify({ detail: "That peer is already in a conversation." }),
+      body: JSON.stringify({ detail: "You can't message this peer." }),
     });
   });
 
@@ -72,7 +121,7 @@ test("messaging a peer who's already busy shows an error and stays in the open r
   await page.getByRole("button", { name: /quiet.owl10/ }).click();
   await page.getByRole("button", { name: "Message privately" }).click();
 
-  await expect(page.getByText("That peer is already in a conversation.")).toBeVisible();
+  await expect(page.getByText("You can't message this peer.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Message privately" })).toBeVisible();
 });
 

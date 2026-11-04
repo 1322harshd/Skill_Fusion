@@ -45,10 +45,13 @@ function Posts({ entryId }) {
     else if (scanEntries[0]) window.Ambient.setHex(scanEntries[0].a, scanEntries[0].b);
   }, [selectedId]);
 
+  // Load previously drafted/shared posts on mount.
   useEffect(() => {
     Store.loadPosts().catch(() => {});
   }, []);
 
+  // Asks the backend to draft a post for this entry in the given tone; `salt_`
+  // lets the caller force a different draft for the same entry/tone (redraft).
   async function generate(entry, t, salt_) {
     setGenerating(true);
     setDraft(null);
@@ -83,6 +86,7 @@ function Posts({ entryId }) {
     generate(selected, tone, next);
   }
 
+  // Saves the current draft with "shared" status.
   async function share() {
     if (!draft) return;
     setSaving(true);
@@ -96,6 +100,7 @@ function Posts({ entryId }) {
     }
   }
 
+  // Saves the current draft with "queued" status, for sharing later.
   async function queue() {
     if (!draft) return;
     setSaving(true);
@@ -159,6 +164,7 @@ function Posts({ entryId }) {
             </motion.div>
           ) : generating ? (
             <motion.div key={selectedId + "-loading"} {...enter(0.1)} className="liquid-glass-strong flex min-h-[280px] flex-col items-center justify-center gap-3 rounded-[1.5rem] p-8 text-center">
+              {/* Shown while generate() is in flight */}
               <p className="font-heading text-xl italic text-white">Drafting your post…</p>
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-white" />

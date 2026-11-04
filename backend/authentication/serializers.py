@@ -39,6 +39,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ["email", "password", "name"]
 
     def create(self, validated_data):
+        # Goes through create_user (not model.save) so the password gets hashed.
         return User.objects.create_user(
             email=validated_data["email"],
             password=validated_data["password"],
@@ -51,6 +52,8 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
+        # authenticate() checks the password against Django's auth backend;
+        # username=email because the User model's USERNAME_FIELD is email.
         user = authenticate(
             request=self.context.get("request"),
             username=attrs["email"],
@@ -69,6 +72,7 @@ class ChangePasswordSerializer(serializers.Serializer):
     new = serializers.CharField(write_only=True, validators=[validate_password])
 
     def validate_old(self, value):
+        # Confirms the caller actually knows the current password before letting them set a new one.
         user = self.context["request"].user
         if not user.check_password(value):
             raise serializers.ValidationError("Current password is incorrect.")
@@ -80,5 +84,6 @@ class ForgotPasswordSerializer(serializers.Serializer):
 
 
 class ResetPasswordSerializer(serializers.Serializer):
+    # token is the uid+token string emailed by send_password_reset_email.
     token = serializers.CharField()
     newPassword = serializers.CharField(validators=[validate_password])

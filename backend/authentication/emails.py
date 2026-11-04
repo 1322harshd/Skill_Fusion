@@ -5,6 +5,8 @@ from .tokens import make_uid_token
 
 
 def send_verification_email(user):
+    """Emails the user a link containing their uid+token, which the frontend
+    sends back to the verify-email endpoint to confirm their address."""
     token = make_uid_token(user)
     # The frontend is a hash-routed SPA, so deep links must live after the "#".
     link = f"{settings.FRONTEND_URL}/#/verify-email?token={token}"
@@ -17,6 +19,8 @@ def send_verification_email(user):
 
 
 def send_password_reset_email(user):
+    """Same idea as send_verification_email, but the link lands on the reset-password
+    screen so the token can be exchanged for a new password instead."""
     token = make_uid_token(user)
     link = f"{settings.FRONTEND_URL}/#/reset-password?token={token}"
     send_mail(

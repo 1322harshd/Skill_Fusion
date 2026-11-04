@@ -126,7 +126,8 @@ function ModBanner() {
   );
 }
 
-function ChatBubble({ msg, reported, onReport, onAvatarClick }) {
+function ChatBubble({ msg, reported, onReport, onAvatarClick, displayName }) {
+  const shownName = displayName || msg.handle;
   if (reported) {
     return (
       <div className="flex justify-start">
@@ -140,7 +141,7 @@ function ChatBubble({ msg, reported, onReport, onAvatarClick }) {
     <div className={"group flex items-start gap-3 " + (msg.self ? "justify-end" : "justify-start")}>
       {!msg.self && (
         <button type="button" onClick={onAvatarClick} aria-label={"View " + msg.handle} className="tappable shrink-0">
-          <Avatar handle={msg.handle} name={msg.handle.split(".")[0]} size="sm" />
+          <Avatar handle={msg.handle} name={shownName.split(" ")[0] || shownName} size="sm" />
         </button>
       )}
       <div className={msg.self ? "flex max-w-[75%] flex-col items-end gap-1" : "flex max-w-[75%] flex-col items-start gap-1"}>
@@ -148,7 +149,7 @@ function ChatBubble({ msg, reported, onReport, onAvatarClick }) {
           {msg.text}
         </div>
         <div className="flex items-center gap-3 font-body text-[10px] font-light text-white/35">
-          <span>{msg.self ? "you" : msg.handle}</span>
+          <span>{msg.self ? "you" : shownName}</span>
           <span>·</span>
           <span>{msg.ts}</span>
         </div>
@@ -283,23 +284,25 @@ function ConnectOpenRoom({ onOpenPrivate }) {
   );
 }
 
-function PrivateChat({ matchId }) {
+// The message thread for one open conversation — polls for new messages
+// while mounted, and swaps the composer for a read-only note once blocked.
+function PrivateChat({ conversationId, readOnly, peerDisplayName }) {
   const s = Store.useStore();
   const [draft, setDraft] = useState("");
   const reported = new Set(s.reportedMessages);
 
   useEffect(() => {
-    Store.loadMatchMessages().catch(() => {});
-    const t = setInterval(() => Store.loadMatchMessages().catch(() => {}), ROOM_POLL_MS);
+    Store.loadConversationMessages().catch(() => {});
+    const t = setInterval(() => Store.loadConversationMessages().catch(() => {}), ROOM_POLL_MS);
     return () => clearInterval(t);
-  }, [matchId]);
+  }, [conversationId]);
 
   async function send() {
     if (!draft.trim()) return;
     const text = draft;
     setDraft("");
     try {
-      await Store.sendMatchMessage(text);
+      await Store.sendConversationMessage(text);
     } catch (e) {
       setDraft(text);
       window.Toast.show(e.message || "Couldn't send that — try again", "error");
@@ -317,53 +320,67 @@ function PrivateChat({ matchId }) {
             key={m.id}
             msg={m}
             reported={reported.has(m.id)}
-            onReport={() => Store.reportMatchMessage(m.id).catch(() => {})}
+            onReport={() => Store.reportPrivateMessage(m.id).catch(() => {})}
+            displayName={!m.self ? peerDisplayName : null}
           />
         ))}
       </div>
-      <div className="flex items-center gap-3 border-t border-white/10 p-4">
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && send()}
-          placeholder="Message your match…"
-          className="liquid-glass-strong flex-1 rounded-full px-5 py-2.5 font-body text-sm text-white outline-none placeholder:text-white/30"
-        />
-        <motion.button
-          type="button"
-          onClick={send}
-          disabled={!draft.trim()}
-          whileTap={{ scale: 0.97 }}
-          className={
-            (draft.trim() ? "bg-white text-black" : "liquid-glass text-white/50") +
-            " flex items-center gap-2 rounded-full px-5 py-2.5 font-body text-sm font-medium disabled:cursor-not-allowed"
-          }
-        >
-          <Icons.Send className="h-4 w-4" />
-        </motion.button>
-      </div>
+      {readOnly ? (
+        <div className="flex items-center justify-center gap-2 border-t border-white/10 p-4 font-body text-[12px] font-light text-white/40">
+          <Icons.Lock className="h-3.5 w-3.5" />
+          This conversation is closed — the history stays, but you can't send new messages.
+        </div>
+      ) : (
+        <div className="flex items-center gap-3 border-t border-white/10 p-4">
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && send()}
+            placeholder="Message your match…"
+            className="liquid-glass-strong flex-1 rounded-full px-5 py-2.5 font-body text-sm text-white outline-none placeholder:text-white/30"
+          />
+          <motion.button
+            type="button"
+            onClick={send}
+            disabled={!draft.trim()}
+            whileTap={{ scale: 0.97 }}
+            className={
+              (draft.trim() ? "bg-white text-black" : "liquid-glass text-white/50") +
+              " flex items-center gap-2 rounded-full px-5 py-2.5 font-body text-sm font-medium disabled:cursor-not-allowed"
+            }
+          >
+            <Icons.Send className="h-4 w-4" />
+          </motion.button>
+        </div>
+      )}
     </div>
   );
 }
 
-function ExchangePanel({ peer }) {
+// The mutual-consent identity reveal, as a small pill under the chat rather
+// than a full card — propose/awaiting/confirm/done, one state at a time.
+function ExchangePanel({ peer, conversationId, disabled }) {
   const s = Store.useStore();
-  const ex = s.exchanges.find((x) => x.handle === peer.handle);
+  const exRaw = s.exchanges.find((x) => x.conversationId === conversationId);
+  // A fetched-but-empty exchange ({status: "none"}) must behave the same as
+  // no exchange at all — otherwise it's truthy and none of the branches
+  // below match, silently rendering nothing once the fetch resolves.
+  const ex = exRaw && exRaw.status !== "none" ? exRaw : null;
 
   useEffect(() => {
     Store.loadExchange().catch(() => {});
-  }, [peer.handle]);
+  }, [conversationId]);
 
   useEffect(() => {
     if (ex && ex.status === "awaiting-peer") {
       const t = setInterval(() => Store.loadExchange().catch(() => {}), EXCHANGE_POLL_MS);
       return () => clearInterval(t);
     }
-  }, [ex && ex.status, peer.handle]);
+  }, [ex && ex.status, conversationId]);
 
   async function propose() {
     try {
-      await Store.proposeExchange(peer.handle);
+      await Store.proposeExchange();
     } catch (e) {
       window.Toast.show(e.message || "Couldn't propose an exchange", "error");
     }
@@ -371,87 +388,76 @@ function ExchangePanel({ peer }) {
 
   async function finalize() {
     try {
-      await Store.finalizeExchange(peer.handle);
-      window.Toast.show("Exchange started with " + peer.handle, "success");
+      await Store.finalizeExchange();
+      window.Toast.show("Identities revealed", "success");
     } catch (e) {
       window.Toast.show(e.message || "Couldn't confirm the exchange", "error");
     }
   }
 
-  return (
-    <div className="liquid-glass-strong mt-8 rounded-[1.5rem] p-8 md:p-10">
-      <div className="flex items-center gap-3">
-        <Avatar handle={peer.handle} name={peer.handle.split(".")[0]} size="md" />
-        <div>
-          <p className="font-heading text-lg italic leading-none text-white">{peer.handle}</p>
-          <p className="mt-1 font-body text-[11px] font-light text-white/50">{peer.fusionLabel} · skill exchange</p>
-        </div>
+  // A small pill, not a card — the exchange is a secondary, occasional
+  // action, so it shouldn't compete with the chat for visual weight.
+  if (ex && ex.status === "done") {
+    return (
+      <div className="mt-3 flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2">
+        <Icons.Check className="h-3.5 w-3.5 shrink-0 text-white/60" />
+        <p className="truncate font-body text-[12px] font-light text-white/60">
+          Identities revealed
+          {ex.peer && (
+            <>
+              {" — you're chatting with "}
+              <span className="font-medium text-white/85">{ex.peer.fullName}</span>
+            </>
+          )}
+        </p>
       </div>
+    );
+  }
 
-      <div className="mt-6 border-t border-white/10 pt-6">
-        {!ex && (
-          <>
-            <p className="font-body text-sm font-light leading-relaxed text-white/70">
-              Trade notes with {peer.handle.split(".")[0]}: you bring your {s.user.skills?.[0]?.label || "edge"}, they bring their
-              {peer.fusionLabel.split("×")[1] || "edge"}. Both sides confirm before it starts.
-            </p>
-            <motion.button
-              type="button"
-              onClick={propose}
-              whileTap={{ scale: 0.97 }}
-              className="mt-5 flex items-center gap-2 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black"
-            >
-              <Icons.UserPlus className="h-4 w-4" />
-              Propose exchange
-            </motion.button>
-          </>
-        )}
+  if (disabled) return null;
 
-        {ex && ex.status === "awaiting-peer" && (
-          <div className="flex flex-col items-center gap-3 py-2 text-center">
-            <motion.p
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
-              className="font-body text-sm font-medium text-white/85"
-            >
-              {peer.handle} is confirming…
-            </motion.p>
-            <p className="font-body text-xs font-light text-white/45">First of two confirms — both sides, then it's on.</p>
-          </div>
-        )}
+  if (!ex) {
+    return (
+      <motion.button
+        type="button"
+        onClick={propose}
+        whileTap={{ scale: 0.97 }}
+        className="tappable mt-3 flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 font-body text-[12px] font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+      >
+        <Icons.UserPlus className="h-3.5 w-3.5" />
+        Propose identity exchange
+      </motion.button>
+    );
+  }
 
-        {ex && ex.status === "awaiting-you" && (
-          <div className="flex flex-col items-center gap-4 py-2 text-center">
-            <p className="font-body text-sm font-light leading-relaxed text-white/75">
-              {peer.handle} confirmed. It's your turn to seal it.
-            </p>
-            <motion.button
-              type="button"
-              onClick={finalize}
-              whileTap={{ scale: 0.97 }}
-              className="flex items-center gap-2 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black"
-            >
-              <Icons.Check className="h-4 w-4" />
-              Finalize exchange
-            </motion.button>
-          </div>
-        )}
-
-        {ex && ex.status === "done" && (
-          <div className="flex flex-col items-center gap-3 py-2 text-center">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black">
-              <Icons.Check className="h-5 w-5" />
-            </span>
-            <p className="font-heading text-xl italic text-white">Exchange started</p>
-            <p className="max-w-sm font-body text-[13px] font-light text-white/55">
-              You and {peer.handle} are swapping notes on {peer.fusionLabel}.
-              {ex.peer && <> That's {ex.peer.fullName} ({ex.peer.email}).</>}
-            </p>
-          </div>
-        )}
+  if (ex.status === "awaiting-peer") {
+    return (
+      <div className="mt-3 flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2">
+        <motion.span
+          animate={{ opacity: [0.4, 1, 0.4] }}
+          transition={{ repeat: Infinity, duration: 1.4, ease: "easeInOut" }}
+          className="h-1.5 w-1.5 shrink-0 rounded-full bg-white/50"
+        />
+        <p className="truncate font-body text-[12px] font-light text-white/50">Waiting for {peer.handle} to confirm the exchange…</p>
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (ex.status === "awaiting-you") {
+    return (
+      <motion.button
+        type="button"
+        onClick={finalize}
+        whileTap={{ scale: 0.97 }}
+        className="tappable mt-3 flex items-center gap-2 rounded-full bg-white px-4 py-2 font-body text-[12px] font-medium text-black"
+      >
+        <Icons.Check className="h-3.5 w-3.5" />
+        {peer.handle} confirmed — confirm to reveal identities
+      </motion.button>
+    );
+  }
+
+  return null;
 }
 
 function FindMatch() {
@@ -507,11 +513,6 @@ function FindMatch() {
 }
 
 function WaitingForMatch() {
-  useEffect(() => {
-    const t = setInterval(() => Store.refreshMatch().catch(() => {}), MATCH_POLL_MS);
-    return () => clearInterval(t);
-  }, []);
-
   return (
     <motion.div
       {...enter(0.1)}
@@ -532,14 +533,192 @@ function WaitingForMatch() {
   );
 }
 
-function ConnectPrivateRoom() {
+function WaitingForAccept({ peer }) {
+  return (
+    <motion.div
+      {...enter(0.1)}
+      className="liquid-glass-strong mx-auto flex max-w-md flex-col items-center gap-4 rounded-[1.5rem] p-10 text-center"
+    >
+      <div className="relative">
+        <Avatar handle={peer.handle} name={peer.handle.split(".")[0]} size="lg" />
+        <motion.span
+          animate={{ opacity: [0.4, 1, 0.4] }}
+          transition={{ repeat: Infinity, duration: 1.4, ease: "easeInOut" }}
+          className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-black bg-white/60"
+        />
+      </div>
+      <p className="font-heading text-2xl italic text-white">Waiting for {peer.handle}…</p>
+      <p className="font-body text-sm font-light leading-relaxed text-white/60">
+        They need to agree before the chat opens. We'll let you know the moment they accept.
+      </p>
+    </motion.div>
+  );
+}
+
+function IncomingRequest({ peer, onRespond }) {
+  const [responding, setResponding] = useState(null);
+
+  async function respond(action) {
+    setResponding(action);
+    try {
+      await onRespond(action);
+    } catch (e) {
+      window.Toast.show(e.message || "Couldn't respond to that request", "error");
+      setResponding(null);
+    }
+  }
+
+  return (
+    <motion.div
+      {...enter(0.1)}
+      className="liquid-glass-strong mx-auto flex max-w-md flex-col items-center gap-4 rounded-[1.5rem] p-10 text-center"
+    >
+      <Avatar handle={peer.handle} name={peer.handle.split(".")[0]} size="lg" />
+      <p className="font-heading text-2xl italic text-white">{peer.handle} wants to chat</p>
+      <p className="font-body text-sm font-light leading-relaxed text-white/60">
+        {peer.fusionLabel ? `They're fusing ${peer.fusionLabel}.` : ""} Accepting opens a private, anonymous room — just between you two.
+      </p>
+      <div className="mt-2 flex gap-2">
+        <motion.button
+          type="button"
+          onClick={() => respond("accept")}
+          disabled={!!responding}
+          whileTap={{ scale: 0.97 }}
+          className="tappable flex items-center gap-2 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black disabled:opacity-60"
+        >
+          <Icons.Check className="h-4 w-4" />
+          {responding === "accept" ? "Accepting…" : "Accept"}
+        </motion.button>
+        <motion.button
+          type="button"
+          onClick={() => respond("decline")}
+          disabled={!!responding}
+          whileTap={{ scale: 0.97 }}
+          className="tappable liquid-glass flex items-center gap-2 rounded-full px-6 py-3 font-body text-sm font-medium text-white/85 disabled:opacity-60"
+        >
+          {responding === "decline" ? "Declining…" : "Decline"}
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+}
+
+function closeReasonText(reason, direction) {
+  if (reason === "declined") {
+    // direction "incoming" here means the viewer received the request —
+    // i.e. they're the one who just declined it.
+    return direction === "incoming"
+      ? "You declined the request. No hard feelings — the room's still full of other people to talk to."
+      : "They declined your chat request. No hard feelings — the room's still full of other people to talk to.";
+  }
+  if (reason === "reported") return "You reported this peer and the conversation was closed.";
+  if (reason === "left") return "That conversation has ended.";
+  return "That conversation has ended. Your standing in the room isn't affected.";
+}
+
+function ClosedNote({ reason, direction, onFindAnother }) {
+  return (
+    <motion.div
+      {...enter(0.1)}
+      className="liquid-glass-strong mx-auto flex max-w-md flex-col items-center gap-4 rounded-[1.5rem] p-10 text-center"
+    >
+      <span className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 text-white/50">
+        <Icons.Lock className="h-5 w-5" />
+      </span>
+      <p className="font-heading text-2xl italic text-white">Conversation closed</p>
+      <p className="font-body text-sm font-light leading-relaxed text-white/60">
+        {closeReasonText(reason, direction)}
+      </p>
+      <motion.button
+        type="button"
+        onClick={onFindAnother}
+        whileTap={{ scale: 0.97 }}
+        className="tappable mt-2 flex items-center gap-2 rounded-full bg-white px-6 py-3 font-body text-sm font-medium text-black"
+      >
+        Find another match
+        <Icons.ArrowUpRight className="h-4 w-4" />
+      </motion.button>
+    </motion.div>
+  );
+}
+
+function ConversationRow({ convo, onClick }) {
   const s = Store.useStore();
-  const peer = s.privatePeer;
+  const blocked = convo.status === "blocked";
+  // Reflects whatever this session already knows — the exchange for a
+  // conversation only gets fetched once it's been opened, so a never-opened
+  // thread still shows the handle until then.
+  const exRaw = s.exchanges.find((x) => x.conversationId === convo.conversationId);
+  const revealedPeer = exRaw && exRaw.status === "done" ? exRaw.peer : null;
+  const displayName = revealedPeer ? revealedPeer.fullName : convo.peerHandle;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="tappable flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left transition-colors hover:bg-white/5"
+    >
+      <div className={blocked ? "opacity-50" : ""}>
+        <Avatar handle={convo.peerHandle} name={displayName} size="md" />
+      </div>
+      <div className={"min-w-0 flex-1 " + (blocked ? "opacity-50" : "")}>
+        <p className="truncate font-heading text-base italic leading-none text-white">{displayName}</p>
+        <p className="mt-1 truncate font-body text-[12px] font-light text-white/45">
+          {blocked ? "Conversation closed" : convo.fusionLabel || "Fusing together"}
+        </p>
+      </div>
+      {blocked && <Icons.Lock className="h-3.5 w-3.5 shrink-0 text-white/30" />}
+    </button>
+  );
+}
+
+// The DM inbox — every conversation the viewer has, most recent first.
+function ConversationList({ onFindPeer }) {
+  const s = Store.useStore();
+  const sorted = [...s.conversations].sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt));
+
+  return (
+    <div className="liquid-glass mt-4 overflow-hidden rounded-[1.5rem]">
+      <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+        <p className="font-body text-[11px] uppercase tracking-[0.18em] text-white/40">Your conversations</p>
+        <button
+          type="button"
+          onClick={onFindPeer}
+          className="tappable font-body text-[12px] font-medium text-white/70 transition-colors hover:text-white"
+        >
+          + Find a peer
+        </button>
+      </div>
+      <div className="flex flex-col gap-1 p-2">
+        {sorted.length === 0 && (
+          <p className="px-4 py-6 text-center font-body text-[13px] font-light text-white/40">
+            No conversations yet — find a peer to get started.
+          </p>
+        )}
+        {sorted.map((c) => (
+          <ConversationRow key={c.conversationId} convo={c} onClick={() => Store.openConversation(c.conversationId)} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// One open conversation: header (with the report menu), the chat, and the
+// exchange pill. Takes over the whole private-room view while open.
+function ConversationDetail({ convo, onBack }) {
+  const s = Store.useStore();
   const [menuOpen, setMenuOpen] = useState(false);
+  const blocked = convo.status === "blocked";
+  // Once both sides have confirmed the identity exchange, the anonymous
+  // handle gives way to the real name everywhere in this thread — this
+  // state is shared across the app (ExchangePanel's effect fetches it), so
+  // it just needs reading here, not fetching again.
+  const exRaw = s.exchanges.find((x) => x.conversationId === convo.conversationId);
+  const revealedPeer = exRaw && exRaw.status === "done" ? exRaw.peer : null;
+  const displayName = revealedPeer ? revealedPeer.fullName : convo.peerHandle;
 
   async function doReportPeer() {
     try {
-      await Store.reportPeer(peer.handle);
+      await Store.reportPeer(convo.peerHandle);
       setMenuOpen(false);
       window.Toast.show("Reported — conversation closed", "success");
     } catch (e) {
@@ -548,72 +727,151 @@ function ConnectPrivateRoom() {
   }
 
   return (
+    <div className="mt-6">
+      <button
+        type="button"
+        onClick={onBack}
+        className="tappable mb-4 flex items-center gap-1.5 font-body text-[12px] font-medium text-white/50 transition-colors hover:text-white"
+      >
+        <Icons.ArrowLeft className="h-3.5 w-3.5" />
+        All conversations
+      </button>
+      {/* The dropdown is a sibling of the liquid-glass card, not nested
+          inside it — that class sets overflow:hidden (for its edge-glow
+          effect), which was clipping almost the entire menu to a sliver. */}
+      <div className="relative">
+        <div className="liquid-glass flex items-center justify-between rounded-[1.5rem] p-5">
+          <div className="flex items-center gap-4">
+            <Avatar handle={convo.peerHandle} name={displayName} size="lg" />
+            <div>
+              <p className="font-heading text-xl italic leading-none text-white">{displayName}</p>
+              <p className="mt-1 font-body text-xs font-light text-white/50">
+                {blocked ? "Conversation closed" : revealedPeer ? revealedPeer.email : convo.fusionLabel || "Private conversation"}
+              </p>
+            </div>
+          </div>
+          {!blocked && (
+            <button
+              type="button"
+              aria-label="Report menu"
+              onClick={() => setMenuOpen((v) => !v)}
+              className="tappable flex h-9 w-9 items-center justify-center rounded-full text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              <Icons.Dots className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -6, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -6, scale: 0.98 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="liquid-glass-strong absolute right-0 top-full z-20 mt-2 w-48 rounded-2xl p-1.5"
+            >
+              <button
+                type="button"
+                onClick={doReportPeer}
+                className="tappable flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left font-body text-sm font-medium text-white/85 transition-colors hover:bg-white/10"
+              >
+                <Icons.Flag className="h-4 w-4 text-white/60" />
+                Report {displayName}
+              </button>
+              <p className="px-3 pb-1.5 pt-1 font-body text-[11px] font-light text-white/40">
+                Reports are private and reviewed by our team.
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+      <PrivateChat conversationId={convo.conversationId} readOnly={blocked} peerDisplayName={displayName} />
+      <ExchangePanel
+        peer={{ handle: convo.peerHandle, fusionLabel: convo.fusionLabel }}
+        conversationId={convo.conversationId}
+        disabled={blocked}
+      />
+    </div>
+  );
+}
+
+const PRIVATE_TABS = [
+  ["conversations", "Conversations"],
+  ["requests", "Requests"],
+];
+
+function ConnectPrivateRoom() {
+  const s = Store.useStore();
+  const peer = s.privatePeer;
+  // Whichever sub-tab already has something to show when this view first
+  // mounts wins — e.g. landing here with an incoming request waiting should
+  // show it immediately, not hide it behind an extra click.
+  const [tab, setTab] = useState(() => (s.matchStatus === "none" ? "conversations" : "requests"));
+  const activeConvo = s.conversations.find((c) => c.conversationId === s.activeConversationId);
+  const hasIncomingRequest = s.matchStatus === "requested" && s.matchDirection === "incoming";
+
+  useEffect(() => {
+    Store.loadConversations().catch(() => {});
+  }, []);
+
+  function backToList() {
+    Store.closeConversationView();
+  }
+
+  const pendingContent =
+    s.matchStatus === "waiting" ? (
+      <WaitingForMatch />
+    ) : s.matchStatus === "requested" && s.matchDirection === "outgoing" && peer ? (
+      <WaitingForAccept peer={peer} />
+    ) : s.matchStatus === "requested" && s.matchDirection === "incoming" && peer ? (
+      <IncomingRequest peer={peer} onRespond={(action) => Store.respondToMatch(action)} />
+    ) : s.matchStatus === "closed" ? (
+      <ClosedNote reason={s.matchCloseReason} direction={s.matchDirection} onFindAnother={() => Store.dismissClosedMatch()} />
+    ) : null;
+
+  return (
     <div className="mx-auto max-w-2xl">
       <div className="flex flex-col items-center gap-3 text-center">
         <span className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 font-body text-[11px] font-medium text-white/85">
           <Icons.Lock className="h-3.5 w-3.5" />
-          Private room · one-on-one
+          Private room · your conversations
         </span>
         <p className="font-body text-sm font-light leading-relaxed text-white/60">
-          Sparse by design. One conversation, no audience.
+          Every conversation here stays — pick up right where you left off.
         </p>
       </div>
 
-      {s.matchStatus === "waiting" ? (
-        <div className="mt-10">
-          <WaitingForMatch />
-        </div>
-      ) : !peer ? (
-        <div className="mt-10">
-          <FindMatch />
-        </div>
+      {activeConvo ? (
+        <ConversationDetail convo={activeConvo} onBack={backToList} />
       ) : (
-        <div className="mt-10">
-          <div className="liquid-glass flex items-center justify-between rounded-[1.5rem] p-5">
-            <div className="flex items-center gap-4">
-              <Avatar handle={peer.handle} name={peer.handle.split(".")[0]} size="lg" />
-              <div>
-                <p className="font-heading text-xl italic leading-none text-white">{peer.handle}</p>
-                <p className="mt-1 font-body text-xs font-light text-white/50">{peer.fusionLabel}</p>
-              </div>
-            </div>
-            <div className="relative">
+        <>
+          <div className="mt-8 flex justify-center gap-1.5">
+            {PRIVATE_TABS.map(([key, label]) => (
               <button
+                key={key}
                 type="button"
-                aria-label="Report menu"
-                onClick={() => setMenuOpen((v) => !v)}
-                className="tappable flex h-9 w-9 items-center justify-center rounded-full text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+                onClick={() => setTab(key)}
+                className={
+                  (tab === key ? "bg-white text-black" : "liquid-glass text-white/85 hover:text-white") +
+                  " tappable relative flex items-center gap-2 rounded-full px-5 py-2.5 font-body text-sm font-medium transition-colors"
+                }
               >
-                <Icons.Dots className="h-4 w-4" />
-              </button>
-              <AnimatePresence>
-                {menuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -6, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -6, scale: 0.98 }}
-                    transition={{ duration: 0.2, ease: "easeOut" }}
-                    className="liquid-glass-strong absolute right-0 top-11 z-20 w-48 rounded-2xl p-1.5"
-                  >
-                    <button
-                      type="button"
-                      onClick={doReportPeer}
-                      className="tappable flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left font-body text-sm font-medium text-white/85 transition-colors hover:bg-white/10"
-                    >
-                      <Icons.Flag className="h-4 w-4 text-white/60" />
-                      Report {peer.handle}
-                    </button>
-                    <p className="px-3 pb-1.5 pt-1 font-body text-[11px] font-light text-white/40">
-                      Reports are private and reviewed by our team.
-                    </p>
-                  </motion.div>
+                {label}
+                {key === "requests" && hasIncomingRequest && (
+                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[var(--color-status-active)]" />
                 )}
-              </AnimatePresence>
-            </div>
+              </button>
+            ))}
           </div>
-          <PrivateChat matchId={s.connectMatchId} />
-          <ExchangePanel peer={peer} />
-        </div>
+
+          <div className="mt-6">
+            {tab === "conversations" ? (
+              <ConversationList onFindPeer={() => setTab("requests")} />
+            ) : (
+              pendingContent || <FindMatch />
+            )}
+          </div>
+        </>
       )}
     </div>
   );
@@ -621,7 +879,9 @@ function ConnectPrivateRoom() {
 
 function Connect() {
   const [room, setRoom] = useState("open");
-  const fusion = Store.useStore().fusions[0];
+  const s = Store.useStore();
+  const fusion = s.fusions[0];
+  const hasIncomingRequest = s.matchStatus === "requested" && s.matchDirection === "incoming";
 
   useEffect(() => {
     Store.loadConnectProfile().catch(() => {});
@@ -633,6 +893,15 @@ function Connect() {
     if (fusion) window.Ambient.setFusion(fusion.a, fusion.b);
     else window.Ambient.clear();
   }, [fusion?.id]);
+
+  // Polls for the viewer's own match situation regardless of which tab
+  // they're on — this is the only way an incoming chat request (someone
+  // else clicked "Message privately" on them) ever gets discovered.
+  useEffect(() => {
+    Store.loadMyMatch().catch(() => {});
+    const t = setInterval(() => Store.loadMyMatch().catch(() => {}), MATCH_POLL_MS);
+    return () => clearInterval(t);
+  }, []);
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -648,11 +917,14 @@ function Connect() {
             onClick={() => setRoom(key)}
             className={
               (room === key ? "bg-white text-black" : "liquid-glass text-white/85 hover:text-white") +
-              " tappable flex items-center gap-2 rounded-full px-5 py-2.5 font-body text-sm font-medium transition-colors"
+              " tappable relative flex items-center gap-2 rounded-full px-5 py-2.5 font-body text-sm font-medium transition-colors"
             }
           >
             {key === "open" ? <Icons.Users className="h-4 w-4" /> : <Icons.Lock className="h-4 w-4" />}
             {label}
+            {key === "private" && hasIncomingRequest && (
+              <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[var(--color-status-active)]" />
+            )}
           </button>
         ))}
       </motion.div>

@@ -6,9 +6,11 @@ __pycache__/
 *.pyo
 *.egg-info/
 
+# local secrets + the dev-only sqlite db
 .env
 db.sqlite3
 
+# Django-generated output, not source
 staticfiles/
 media/
 
@@ -21,6 +23,7 @@ build/
 *.bak
 
 
+# Playwright test artifacts
 test-results/
 playwright-report
 backend/.venv/

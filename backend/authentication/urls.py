@@ -2,6 +2,7 @@ from django.urls import path
 
 from . import views
 
+# Mounted under /api/auth/ in the project urlconf.
 auth_urlpatterns = [
     path("register", views.RegisterView.as_view()),
     path("login", views.LoginView.as_view()),
@@ -19,6 +20,7 @@ auth_urlpatterns = [
     path("oauth/google", views.GoogleOAuthView.as_view()),
 ]
 
+# Same MeView also exposed under /api/users/, for other apps that expect a users endpoint.
 users_urlpatterns = [
     path("me", views.MeView.as_view()),
 ]

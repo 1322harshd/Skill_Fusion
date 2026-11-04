@@ -11,6 +11,8 @@ from .models import PostDraft
 
 
 class GeneratePostViewTests(TestCase):
+    """Post generation: auth/ownership checks, redraft-replaces-draft, and failure handling."""
+
     def setUp(self):
         self.user = User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada", isEmailVerified=True)
         self.other = User.objects.create_user(email="other@example.com", password="CorrectHorse1!", fullName="Other", isEmailVerified=True)
@@ -68,6 +70,8 @@ class GeneratePostViewTests(TestCase):
 
 
 class PostDraftListAndUpdateTests(TestCase):
+    """Listing and patching drafts is scoped to the owning user."""
+
     def setUp(self):
         self.user = User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada", isEmailVerified=True)
         self.other = User.objects.create_user(email="other@example.com", password="CorrectHorse1!", fullName="Other", isEmailVerified=True)

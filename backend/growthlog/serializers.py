@@ -4,6 +4,8 @@ from .models import Credential, GrowthLogEntry
 
 
 class CredentialSerializer(serializers.ModelSerializer):
+    """Read-only view of a credential — verification fields are set by the server, not the client."""
+
     class Meta:
         model = Credential
         fields = ["credentialId", "issuer", "verificationUrl", "verificationStatus", "requestedAt", "verifiedAt"]
@@ -32,6 +34,8 @@ class GrowthLogEntrySerializer(serializers.ModelSerializer):
 
 
 class CreateEntrySerializer(serializers.ModelSerializer):
+    """Input serializer for manually-created entries; forces source to MANUAL and owner to the caller."""
+
     class Meta:
         model = GrowthLogEntry
         fields = ["title", "description", "sourceUrl", "skillTags", "competencyTags"]

@@ -77,6 +77,7 @@ function Onboarding() {
       .catch(() => {});
   }, []);
 
+  // Uploads the chosen resume file and marks "resume" as the baseline method on success.
   async function handleResumeFile(e) {
     const file = e.target.files && e.target.files[0];
     e.target.value = "";
@@ -112,6 +113,7 @@ function Onboarding() {
     setPersonas((xs) => (xs.includes(p) ? xs.filter((x) => x !== p) : [...xs, p]));
   }
 
+  // Syncs a freshly authenticated user's data from the API into the store.
   function applyAuthedUser(user) {
     Store.updateUser({
       userId: user.userId,
@@ -128,6 +130,8 @@ function Onboarding() {
     });
   }
 
+  // Registers or logs in depending on the current auth mode, then jumps ahead to
+  // whichever onboarding step the user hasn't completed yet.
   async function handleAuthNext() {
     const err = validateAuth();
     if (err) { setAuthError(err); window.Toast.show(err, "error"); return; }
@@ -166,6 +170,8 @@ function Onboarding() {
     }
   }
 
+  // Always shows the same success message whether or not the email exists,
+  // so we don't leak which emails are registered.
   async function handleForgotPassword() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       window.Toast.show("Enter your email above first", "error");
@@ -263,6 +269,7 @@ function Onboarding() {
                       {isSignup ? "Log in" : "Sign up"}
                     </button>
                   </div>
+                  {/* Only relevant when logging in, not signing up */}
                   {!isSignup && (
                     <div className="flex items-center justify-center pt-0.5">
                       <button type="button" onClick={handleForgotPassword} className="font-body text-xs font-light text-white/50 hover:text-white hover:underline">
@@ -330,6 +337,7 @@ function Onboarding() {
                 <p className="mt-4 text-center font-body text-sm font-light text-white/60">
                   Upload a resume — or skip it and prove each skill with a quick quiz instead.
                 </p>
+                {/* Hidden native file input, triggered via fileInputRef.current.click() */}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -374,6 +382,7 @@ function Onboarding() {
                     );
                   })}
                 </div>
+                {/* Surfaces the upload failure message set in handleResumeFile */}
                 {resumeError && (
                   <p className="mt-3 text-center font-body text-xs text-red-300">{resumeError}</p>
                 )}

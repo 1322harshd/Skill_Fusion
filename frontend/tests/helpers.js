@@ -26,6 +26,9 @@ async function mockApi(
     moderationReports = [],
     moderationForbidden = false,
     myMatch = { status: "none" },
+    conversations = [],
+    conversationMessages = {},
+    conversationExchanges = {},
   } = {}
 ) {
   const baseUser = {
@@ -42,6 +45,8 @@ async function mockApi(
     ...user,
   };
 
+  // Intercepts every API call the app makes and fakes a response from the
+  // fixture data passed in above, matching on URL (and sometimes method).
   await page.route("**/api/**", async (route) => {
     const url = route.request().url();
     const json = (status, body) =>
@@ -54,6 +59,8 @@ async function mockApi(
       return signedIn ? json(200, { user: baseUser }) : json(401, { detail: "Not authenticated." });
     }
     if (url.includes("/verify-credential")) {
+      // Pulls the entry id out of the URL and echoes back the matching
+      // fixture entry (if any) merged with the credential verdict.
       const body = route.request().postDataJSON();
       const match = url.match(/entries\/([^/]+)\/verify-credential/);
       const entryId = match ? match[1] : "e-created";
@@ -94,6 +101,8 @@ async function mockApi(
       return json(200, roadmap ? { roadmap } : {});
     }
     if (url.includes("/api/growth-log/entries")) {
+      // POST creates a new manual entry from the request body; GET just
+      // returns the fixture list.
       if (route.request().method() === "POST") {
         const body = route.request().postDataJSON();
         return json(201, {
@@ -121,6 +130,8 @@ async function mockApi(
         : json(502, { detail: "Could not reach the LLM service." });
     }
     if (url.includes("/api/resume/upload")) {
+      // Same endpoint handles upload (POST), delete (DELETE), and
+      // fetching the current upload's metadata (GET).
       const method = route.request().method();
       if (method === "POST") {
         return uploadResult === "success"
@@ -141,6 +152,8 @@ async function mockApi(
     if (url.includes("/api/posts/")) {
       const method = route.request().method();
       if (method === "PATCH") {
+        // Merges the patch body onto whichever fixture post matches the id
+        // in the URL (falling back to the draft), so edits are reflected.
         const body = route.request().postDataJSON();
         const match = url.match(/\/api\/posts\/([^/?]+)/);
         const existing = postHistory.find((p) => p.postId === (match && match[1])) || postDraft || {};
@@ -165,7 +178,33 @@ async function mockApi(
     if (url.includes("/api/connect/match") && !url.includes("/api/connect/matches") && route.request().method() === "GET") {
       return json(200, myMatch);
     }
+    if (url.includes("/api/connect/conversations")) {
+      // Sub-routes on a single conversation: /messages (chat history,
+      // keyed by conversationId) and /exchange (the mutual-confirm flow).
+      // Falling through with no match means "list all conversations".
+      const match = url.match(/\/conversations\/([^/]+)\/(messages|exchange)/);
+      if (match) {
+        const [, conversationId, kind] = match;
+        if (kind === "messages") {
+          if (route.request().method() === "POST") {
+            const body = route.request().postDataJSON();
+            return json(201, { id: "pm-created", handle: connectHandle, text: body.text, ts: "now", self: true });
+          }
+          return json(200, conversationMessages[conversationId] || []);
+        }
+        if (route.request().method() === "POST") {
+          // Confirming moves the exchange to "done"; anything else just
+          // flips it to "awaiting-peer" until the other side confirms too.
+          const body = route.request().postDataJSON();
+          const action = body.action === "confirm" ? "done" : "awaiting-peer";
+          return json(200, { status: action });
+        }
+        return json(200, conversationExchanges[conversationId] || { status: "none" });
+      }
+      return json(200, conversations);
+    }
     if (url.includes("/api/connect/moderation/reports")) {
+      // Lets tests simulate a non-staff user hitting the moderation API.
       if (moderationForbidden) return json(403, { detail: "You do not have permission to perform this action." });
       const match = url.match(/\/moderation\/reports\/([^/]+)\/action/);
       if (match) {
@@ -179,6 +218,8 @@ async function mockApi(
   });
 }
 
+// Fixture factories below: sensible defaults for each document type,
+// overridable per-test so each spec only states what it cares about.
 function resumeDoc(overrides = {}) {
   return {
     documentId: "r1",

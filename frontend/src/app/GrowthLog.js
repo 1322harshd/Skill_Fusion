@@ -26,6 +26,7 @@ const CONTRIBUTION_LEVELS = [
   "rgba(255,255,255,0.9)",
 ];
 
+// Buckets a day's contribution count into one of 5 shading levels for the activity graph.
 function levelFor(count) {
   if (count <= 0) return 0;
   if (count <= 2) return 1;
@@ -36,6 +37,8 @@ function levelFor(count) {
 
 const ACTIVITY_WEEKS = 14;
 
+// Builds an empty activity grid: the last `weeksCount` weeks, every day zeroed out,
+// grouped into weeks of 7 so the graph can render column-by-column.
 function buildEmptyWeeks(weeksCount = ACTIVITY_WEEKS) {
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
@@ -50,6 +53,8 @@ function buildEmptyWeeks(weeksCount = ACTIVITY_WEEKS) {
   return weeks;
 }
 
+// Overlays manually-logged entries onto the base weeks (GitHub commits or an empty
+// grid), so the activity graph reflects both sources together.
 function buildCombinedWeeks(baseWeeks, entries) {
   if (!baseWeeks) return null;
   const manualCounts = {};
@@ -63,6 +68,7 @@ function buildCombinedWeeks(baseWeeks, entries) {
   );
 }
 
+// Renders the GitHub-style contribution grid, one cell per day shaded by level.
 function ActivityGraph({ weeks }) {
   if (!weeks) {
     return <p className="font-body text-xs font-light text-white/40">Loading activity…</p>;
@@ -116,6 +122,8 @@ function GrowthLog() {
     { label: "Verified", value: s.logEntries.filter((e) => e.source === "verified").length },
     { label: "Pending verification", value: s.logEntries.filter((e) => e.source === "pending").length },
   ];
+  // Use real GitHub contributions as the base grid when connected, otherwise an empty one,
+  // then layer the user's manually logged entries on top.
   const baseWeeks = s.user.githubUrl ? s.githubContributions : buildEmptyWeeks();
   const activityWeeks = buildCombinedWeeks(baseWeeks, s.logEntries);
 
@@ -123,6 +131,7 @@ function GrowthLog() {
     setSel((xs) => (xs.some((x) => x.label === t.label) ? xs.filter((x) => x.label !== t.label) : [...xs, t]));
   }
 
+  // Lets the user add a skill/competency tag that isn't in the preset lists.
   function addCustomTag(kind) {
     const value = kind === "skill" ? customSkill : customCompetency;
     const label = value.trim();
@@ -134,6 +143,8 @@ function GrowthLog() {
     else setCustomCompetency("");
   }
 
+  // Saves a new log entry, and if a certificate link was provided, tries to verify
+  // it right away so the entry can be marked verified instead of pending.
   async function saveEntry() {
     if (!title.trim()) return;
     setSaving(true);
@@ -170,6 +181,7 @@ function GrowthLog() {
     }
   }
 
+  // Submits a verification link for an existing entry that's pending/self-reported/failed.
   async function verify() {
     if (!verifyTarget || !link.trim()) return;
     setVerifying(true);
@@ -188,6 +200,7 @@ function GrowthLog() {
     }
   }
 
+  // Pulls in the user's GitHub repos as verified log entries.
   async function sync() {
     setSyncing(true);
     try {
@@ -204,6 +217,8 @@ function GrowthLog() {
     }
   }
 
+  // Kicks off the GitHub OAuth flow: stash a random state value to check against the
+  // callback later, then redirect the user to GitHub's authorize screen.
   async function connectGithub() {
     setConnecting(true);
     try {
@@ -468,6 +483,7 @@ function GrowthLog() {
           </div>
         </div>
 
+        {/* Chips for currently-selected tags, removable by clicking them */}
         {sel.length > 0 && (
           <div className="mt-4">
             <p className="mb-2 font-body text-[11px] uppercase tracking-[0.18em] text-white/50">Selected</p>
@@ -495,6 +511,7 @@ function GrowthLog() {
           className="mt-4 w-full rounded-xl bg-black/40 px-4 py-3 font-body text-sm text-white outline-none ring-1 ring-white/15 focus:ring-white/40"
         />
 
+        {/* Optional certificate link — lets saveEntry() try to auto-verify the new entry */}
         <div className="mt-4 border-t border-white/10 pt-4">
           <p className="mb-2 font-body text-[11px] uppercase tracking-[0.18em] text-white/50">
             Certificate or credential (optional)
@@ -563,6 +580,7 @@ function GrowthLog() {
           We'll pull your repos in as verified evidence, including private ones — GitHub will ask you to
           approve read access to your repositories.
         </p>
+        {/* Connect GitHub first if not already linked, otherwise offer to sync now */}
         {!s.user.githubConnected ? (
           <button
             type="button"

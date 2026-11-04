@@ -49,6 +49,8 @@ test("reloading straight into the dashboard restores real fusions, not the empty
   await expect(page.getByText("The UI Engineer Roadmap").first()).toBeVisible();
 });
 
+// Evidence matching is by shared skill tag: an entry only shows up under a
+// fusion card if at least one of its skillTags overlaps with the fusion's skills.
 test("a fusion card shows real Growth Log evidence that shares one of its skills", async ({ page }) => {
   await mockApi(page, {
     signedIn: true,

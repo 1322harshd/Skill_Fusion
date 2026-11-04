@@ -2,6 +2,7 @@ from django.urls import path
 
 from . import views
 
+# Routes for growth-log entries, credential verification, and GitHub-based import/stats.
 growthlog_urlpatterns = [
     path("entries", views.EntryListCreateView.as_view()),
     path("entries/<uuid:entry_id>", views.EntryDetailView.as_view()),

@@ -66,12 +66,18 @@ function buildSeed() {
     presence: [],
     roomMessages: [],
     connectProfile: null,
+    // Pending handshake (not yet a permanent conversation) — an anonymous
+    // queue wait or a direct request still needing accept/decline.
     connectMatchId: null,
     matchStatus: "none",
     matchDirection: null,
     matchCloseReason: null,
     dismissedMatchId: null,
     privatePeer: null,
+    // Permanent conversations (FR-9.x: a DM inbox, many at once, never
+    // deleted — history stays visible even once blocked/closed).
+    conversations: [],
+    activeConversationId: null,
     privateMessages: [],
     exchanges: [],
     blocked: [],
@@ -312,30 +318,71 @@ window.Store = (function () {
     await window.Api.connectReportMessage("room", id);
   }
 
+  // Inserts a conversation into the list, or merges into the existing row
+  // if it's already there — used both after loading the full list and after
+  // a local action (accept/message) resolves one conversation on its own.
+  function upsertConversation(convo) {
+    const idx = state.conversations.findIndex((c) => c.conversationId === convo.conversationId);
+    set({
+      conversations:
+        idx === -1
+          ? [convo, ...state.conversations]
+          : state.conversations.map((c) => (c.conversationId === convo.conversationId ? { ...c, ...convo } : c)),
+    });
+  }
+
+  async function loadConversations() {
+    const rows = await window.Api.connectListConversations();
+    set({ conversations: rows });
+    return rows;
+  }
+
+  function openConversation(conversationId) {
+    set({ activeConversationId: conversationId, privateMessages: [] });
+  }
+
+  function closeConversationView() {
+    set({ activeConversationId: null, privateMessages: [] });
+  }
+
   function applyMatch(data) {
     // A closed match the viewer already dismissed (clicked "Find another
     // match") must not keep reappearing just because it's still the most
     // recent row the backend has for them — treat it the same as "none"
     // until a genuinely new match replaces it.
     if (data.status === "none" || (data.status === "closed" && data.matchId === state.dismissedMatchId)) {
+      set({ connectMatchId: null, matchStatus: "none", matchDirection: null, matchCloseReason: null, privatePeer: null });
+      return;
+    }
+    if (data.conversationId) {
+      // The handshake resolved — hand off to the permanent conversation
+      // (FR-9.x) and stop treating this as a pending request.
+      upsertConversation({
+        conversationId: data.conversationId,
+        peerHandle: data.peerHandle,
+        fusionLabel: data.fusionLabel,
+        status: "active",
+        blockedByMe: false,
+        lastMessageAt: new Date().toISOString(),
+      });
       set({
         connectMatchId: null,
         matchStatus: "none",
         matchDirection: null,
         matchCloseReason: null,
         privatePeer: null,
+        activeConversationId: data.conversationId,
         privateMessages: [],
       });
       return;
     }
-    const showPeer = (data.status === "active" || data.status === "requested") && data.peerHandle;
+    const showPeer = data.status === "requested" && data.peerHandle;
     set({
       connectMatchId: data.matchId,
       matchStatus: data.status,
       matchDirection: data.direction || null,
       matchCloseReason: data.closeReason || null,
       privatePeer: showPeer ? { handle: data.peerHandle, fusionLabel: data.fusionLabel } : null,
-      privateMessages: data.status === "active" ? state.privateMessages : [],
     });
   }
 
@@ -347,13 +394,20 @@ window.Store = (function () {
 
   async function messagePeer(handle) {
     const data = await window.Api.connectMatchWithPeer(handle);
+    if (data.kind === "conversation") {
+      const { kind, ...convo } = data;
+      upsertConversation(convo);
+      set({ activeConversationId: convo.conversationId, privateMessages: [] });
+      return data;
+    }
     applyMatch(data);
     return data;
   }
 
-  // Polls for the viewer's current match situation from either side — this
-  // is how an incoming chat request (someone else messaged them) actually
-  // gets discovered, since nothing else tells them about it.
+  // Polls for the viewer's current pending handshake from either side —
+  // this is how an incoming chat request (someone else messaged them)
+  // actually gets discovered, since nothing else tells them about it.
+  // Once accepted it stops showing up here; it lives in `conversations`.
   async function loadMyMatch() {
     const data = await window.Api.connectGetMyMatch();
     applyMatch(data);
@@ -375,66 +429,68 @@ window.Store = (function () {
       matchDirection: null,
       matchCloseReason: null,
       privatePeer: null,
-      privateMessages: [],
     });
   }
 
-  async function loadMatchMessages() {
-    if (!state.connectMatchId) return;
-    const rows = await window.Api.connectListMatchMessages(state.connectMatchId);
+  async function loadConversationMessages() {
+    if (!state.activeConversationId) return;
+    const rows = await window.Api.connectListConversationMessages(state.activeConversationId);
     set({ privateMessages: rows });
   }
 
-  async function sendMatchMessage(text) {
+  async function sendConversationMessage(text) {
     const trimmed = text.trim();
-    if (!trimmed || !state.connectMatchId) return null;
-    const msg = await window.Api.connectSendMatchMessage(state.connectMatchId, trimmed);
+    if (!trimmed || !state.activeConversationId) return null;
+    const msg = await window.Api.connectSendConversationMessage(state.activeConversationId, trimmed);
     set({ privateMessages: [...state.privateMessages, msg] });
     return msg;
   }
 
-  async function reportMatchMessage(id) {
+  async function reportPrivateMessage(id) {
     if (state.reportedMessages.includes(id)) return;
     set({ reportedMessages: [...state.reportedMessages, id] });
     await window.Api.connectReportMessage("private", id);
   }
 
-  function setExchangeFor(handle, data) {
-    if (!handle) return;
-    const next = { handle, status: data.status, peer: data.peer || null };
-    const existing = state.exchanges.find((x) => x.handle === handle);
+  // Keeps one exchange entry per conversation in state.exchanges, replacing
+  // it in place if that conversation already has one.
+  function setExchangeFor(conversationId, data) {
+    if (!conversationId) return;
+    const next = { conversationId, status: data.status, peer: data.peer || null };
+    const existing = state.exchanges.find((x) => x.conversationId === conversationId);
     set({
       exchanges: existing
-        ? state.exchanges.map((x) => (x.handle === handle ? next : x))
+        ? state.exchanges.map((x) => (x.conversationId === conversationId ? next : x))
         : [...state.exchanges, next],
     });
   }
 
   async function loadExchange() {
-    if (!state.connectMatchId || !state.privatePeer) return;
-    const data = await window.Api.connectGetExchange(state.connectMatchId);
-    setExchangeFor(state.privatePeer.handle, data);
+    if (!state.activeConversationId) return;
+    const data = await window.Api.connectGetExchange(state.activeConversationId);
+    setExchangeFor(state.activeConversationId, data);
   }
 
-  async function proposeExchange(handle) {
-    const data = await window.Api.connectProposeExchange(state.connectMatchId);
-    setExchangeFor(handle, data);
+  async function proposeExchange() {
+    if (!state.activeConversationId) return;
+    const data = await window.Api.connectProposeExchange(state.activeConversationId);
+    setExchangeFor(state.activeConversationId, data);
   }
 
-  async function finalizeExchange(handle) {
-    const data = await window.Api.connectConfirmExchange(state.connectMatchId);
-    setExchangeFor(handle, data);
+  async function finalizeExchange() {
+    if (!state.activeConversationId) return;
+    const data = await window.Api.connectConfirmExchange(state.activeConversationId);
+    setExchangeFor(state.activeConversationId, data);
   }
 
   async function reportPeer(handle) {
     await window.Api.connectReportPeer(handle);
+    const conversationId = state.activeConversationId;
     set({
       blocked: [...state.blocked, handle],
-      privatePeer: null,
-      matchStatus: "closed",
-      matchCloseReason: "reported",
-      privateMessages: [],
-      exchanges: state.exchanges.filter((x) => x.handle !== handle),
+      conversations: state.conversations.map((c) =>
+        c.conversationId === conversationId ? { ...c, status: "blocked", blockedByMe: true } : c
+      ),
     });
   }
 
@@ -620,9 +676,12 @@ window.Store = (function () {
     loadMyMatch,
     respondToMatch,
     dismissClosedMatch,
-    loadMatchMessages,
-    sendMatchMessage,
-    reportMatchMessage,
+    loadConversations,
+    openConversation,
+    closeConversationView,
+    loadConversationMessages,
+    sendConversationMessage,
+    reportPrivateMessage,
     loadExchange,
     proposeExchange,
     finalizeExchange,

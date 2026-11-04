@@ -8,8 +8,11 @@ BANNED_WORDS = [
     "kill yourself", "kys",
 ]
 
+# One compiled pattern matching any banned word as a whole word, case-insensitive.
 _PATTERN = re.compile(r"\b(" + "|".join(re.escape(w) for w in BANNED_WORDS) + r")", re.IGNORECASE)
 
 
 def contains_banned_content(text: str) -> bool:
+    """True if `text` contains any banned word — used to auto-hide a message
+    on send and flag it for moderator review."""
     return bool(_PATTERN.search(text or ""))

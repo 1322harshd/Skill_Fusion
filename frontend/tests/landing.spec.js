@@ -1,6 +1,7 @@
 const { test, expect } = require("@playwright/test");
 const { mockApi } = require("./helpers");
 
+// Table-driven: runs the same "nav link scrolls to section" check for each entry.
 const NAV_SECTIONS = [
   ["How It Works", "how-it-works"],
   ["Features", "capabilities"],

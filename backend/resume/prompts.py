@@ -7,6 +7,8 @@ MAX_UPLOADED_TEXT_CHARS = 6000
 
 
 def _skill_labels(skills):
+    """Normalize the user's `skills` field into a flat list of display strings — it can hold
+    either plain strings or {"label"/"name": ...} dicts depending on where it was set from."""
     labels = []
     for s in skills or []:
         if isinstance(s, dict):
@@ -17,6 +19,15 @@ def _skill_labels(skills):
 
 
 def build_user_prompt(user, job_listing: str) -> str:
+    """Assemble the user-message half of the resume-generation prompt (the system prompt in
+    llm.py sets the rules; this supplies the learner's actual evidence to write from).
+
+    Pulls together, in order: the learner's name and declared skills, the text of any resume
+    they already uploaded (capped so it can't blow out the prompt), their most recent Growth
+    Log entries (capped at MAX_ENTRIES, newest first) each tagged verified/self-reported, and
+    finally the target job listing if one was given — otherwise the model is told to write a
+    general-purpose version instead of guessing at a role.
+    """
     entries = GrowthLogEntry.objects.filter(user=user).order_by("-loggedAt")[:MAX_ENTRIES]
 
     lines = [f"Learner name: {user.fullName}"]

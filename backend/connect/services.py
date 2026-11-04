@@ -1,12 +1,12 @@
 from django.db import models, transaction
 from django.utils import timezone
 
-from .models import ChatProfile, PeerMatch, Report
+from .models import ChatProfile, Conversation, PeerMatch, Report
 
 
 class PeerBusyError(Exception):
-    """Raised when a targeted direct-match request's peer already has an
-    active conversation (with someone else)."""
+    """Raised when trying to message a peer whose Conversation with `user`
+    is BLOCKED (one of them reported the other)."""
 
 
 class InvalidResponseError(Exception):
@@ -19,66 +19,40 @@ def get_or_create_chat_profile(user) -> ChatProfile:
     return profile
 
 
-def _open_match_for(user):
-    return PeerMatch.objects.filter(
-        status__in=[PeerMatch.Status.WAITING, PeerMatch.Status.REQUESTED, PeerMatch.Status.ACTIVE]
-    ).filter(models.Q(userA=user) | models.Q(userB=user))
+def _ordered_pair(user_x, user_y):
+    """Sorts two users by pk so a pair always maps to the same (userA,
+    userB) order regardless of who's asking — what makes Conversation's
+    unique constraint on (userA, userB) actually work."""
+    return (user_x, user_y) if str(user_x.pk) < str(user_y.pk) else (user_y, user_x)
+
+
+def conversation_between(user_x, user_y):
+    a, b = _ordered_pair(user_x, user_y)
+    return Conversation.objects.filter(userA=a, userB=b).first()
+
+
+@transaction.atomic
+def get_or_create_conversation(user_x, user_y, fusion_label: str = "") -> Conversation:
+    """The one permanent thread between these two people — created the first
+    time they connect, reused forever after regardless of how many separate
+    PeerMatch handshakes happen between them over time."""
+    a, b = _ordered_pair(user_x, user_y)
+    convo, _ = Conversation.objects.get_or_create(userA=a, userB=b, defaults={"fusionLabel": fusion_label})
+    return convo
 
 
 def current_match_for(user):
-    """The one open (or just-closed) match this user is part of, from either
-    side — whether they started it (queue or direct request) or someone
-    else's direct request is waiting on them. Precedence: an ACTIVE chat
-    outranks a pending REQUESTED one, which outranks an anonymous WAITING
-    queue entry, which outranks a just-CLOSED one (shown once, then gone)."""
+    """The user's one pending handshake, if any: an anonymous WAITING queue
+    entry, a REQUESTED direct ask (incoming or outgoing), or — shown once —
+    a just-CLOSED request so a decline doesn't pass silently. Once accepted,
+    a match resolves into a permanent Conversation and stops showing up
+    here; ongoing chats live in the conversation list instead."""
     rows = PeerMatch.objects.filter(models.Q(userA=user) | models.Q(userB=user))
-    for s in (PeerMatch.Status.ACTIVE, PeerMatch.Status.REQUESTED, PeerMatch.Status.WAITING):
+    for s in (PeerMatch.Status.REQUESTED, PeerMatch.Status.WAITING):
         match = rows.filter(status=s).order_by("-createdAt").first()
         if match:
             return match
     return rows.filter(status=PeerMatch.Status.CLOSED).order_by("-createdAt").first()
-
-
-@transaction.atomic
-def start_direct_match(user, target_user, fusion_label: str) -> PeerMatch:
-    """Click-to-message a specific online peer (as opposed to the anonymous
-    fusion-label queue in find_or_create_match). Both sides must agree
-    before the chat opens (FR-9): this creates a REQUESTED match that the
-    target has to accept, rather than connecting them immediately — unless
-    the target already sent `user` a request of their own, in which case
-    messaging them back counts as accepting it. Refuses with PeerBusyError
-    if the target is already ACTIVELY talking to someone else; being merely
-    WAITING in the anonymous queue doesn't count as busy."""
-    if user.pk == target_user.pk:
-        raise ValueError("Can't message yourself.")
-
-    existing_with_target = PeerMatch.objects.filter(
-        status__in=[PeerMatch.Status.REQUESTED, PeerMatch.Status.ACTIVE]
-    ).filter(models.Q(userA=user, userB=target_user) | models.Q(userA=target_user, userB=user)).first()
-    if existing_with_target:
-        if (
-            existing_with_target.status == PeerMatch.Status.REQUESTED
-            and existing_with_target.requestedBy_id == target_user.pk
-        ):
-            existing_with_target.status = PeerMatch.Status.ACTIVE
-            existing_with_target.save(update_fields=["status"])
-        return existing_with_target
-
-    target_active = PeerMatch.objects.filter(status=PeerMatch.Status.ACTIVE).filter(
-        models.Q(userA=target_user) | models.Q(userB=target_user)
-    ).exists()
-    if target_active:
-        raise PeerBusyError("That peer is already in a conversation.")
-
-    _open_match_for(user).update(status=PeerMatch.Status.CLOSED, closeReason=PeerMatch.CloseReason.LEFT)
-
-    return PeerMatch.objects.create(
-        userA=user,
-        userB=target_user,
-        fusionLabel=fusion_label,
-        status=PeerMatch.Status.REQUESTED,
-        requestedBy=user,
-    )
 
 
 @transaction.atomic
@@ -89,13 +63,46 @@ def respond_to_match(user, match: PeerMatch, accept: bool) -> PeerMatch:
         raise InvalidResponseError("You can't accept or decline your own request.")
 
     if accept:
+        convo = get_or_create_conversation(match.userA, match.userB, match.fusionLabel)
         match.status = PeerMatch.Status.ACTIVE
-        match.save(update_fields=["status"])
+        match.conversation = convo
+        match.save(update_fields=["status", "conversation"])
     else:
         match.status = PeerMatch.Status.CLOSED
         match.closeReason = PeerMatch.CloseReason.DECLINED
         match.save(update_fields=["status", "closeReason"])
     return match
+
+
+@transaction.atomic
+def start_direct_match(user, target_user, fusion_label: str):
+    """Click-to-message a specific peer. Returns a Conversation directly if
+    one already exists between them (from any past accepted match — no
+    repeat consent needed, same as messaging an existing contact on any
+    other platform) and a PeerMatch otherwise: resuming a pending request,
+    auto-accepting if the target already asked `user` first, or opening a
+    fresh REQUESTED handshake for a brand-new pair."""
+    if user.pk == target_user.pk:
+        raise ValueError("Can't message yourself.")
+
+    existing_convo = conversation_between(user, target_user)
+    if existing_convo:
+        if existing_convo.status == Conversation.Status.BLOCKED:
+            raise PeerBusyError("You can't message this peer.")
+        return existing_convo
+
+    existing_request = PeerMatch.objects.filter(status=PeerMatch.Status.REQUESTED).filter(
+        models.Q(userA=user, userB=target_user) | models.Q(userA=target_user, userB=user)
+    ).first()
+    if existing_request:
+        if existing_request.requestedBy_id == target_user.pk:
+            return respond_to_match(user, existing_request, accept=True)
+        return existing_request
+
+    return PeerMatch.objects.create(
+        userA=user, userB=target_user, fusionLabel=fusion_label,
+        status=PeerMatch.Status.REQUESTED, requestedBy=user,
+    )
 
 
 @transaction.atomic
@@ -126,13 +133,14 @@ def apply_moderation_action(report: Report, action: str) -> Report:
 @transaction.atomic
 def find_or_create_match(user, fusion_label: str) -> PeerMatch:
     """Anonymous peer matching by shared skill fusion (FR-9.1). Joins an
-    existing WAITING match for the same fusion (started by someone else),
-    or opens a new one to wait for a peer."""
-    existing_open = PeerMatch.objects.filter(
-        status=PeerMatch.Status.ACTIVE, userA=user
-    ).first() or PeerMatch.objects.filter(status=PeerMatch.Status.ACTIVE, userB=user).first()
-    if existing_open:
-        return existing_open
+    existing WAITING match for the same fusion (started by someone else) and
+    immediately resolves it into a permanent Conversation, or opens a new
+    one to wait for a peer."""
+    own_waiting = PeerMatch.objects.filter(
+        status=PeerMatch.Status.WAITING, userA=user, fusionLabel=fusion_label
+    ).first()
+    if own_waiting:
+        return own_waiting
 
     waiting = (
         PeerMatch.objects.select_for_update()
@@ -142,15 +150,11 @@ def find_or_create_match(user, fusion_label: str) -> PeerMatch:
         .first()
     )
     if waiting:
+        convo = get_or_create_conversation(waiting.userA, user, fusion_label)
         waiting.userB = user
         waiting.status = PeerMatch.Status.ACTIVE
-        waiting.save(update_fields=["userB", "status"])
+        waiting.conversation = convo
+        waiting.save(update_fields=["userB", "status", "conversation"])
         return waiting
-
-    own_waiting = PeerMatch.objects.filter(
-        status=PeerMatch.Status.WAITING, userA=user, fusionLabel=fusion_label
-    ).first()
-    if own_waiting:
-        return own_waiting
 
     return PeerMatch.objects.create(userA=user, fusionLabel=fusion_label, status=PeerMatch.Status.WAITING)

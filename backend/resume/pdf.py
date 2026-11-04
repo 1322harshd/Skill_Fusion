@@ -25,6 +25,8 @@ def render_pdf(title: str, paragraphs: list[str]) -> bytes:
     for p in paragraphs:
         if not p:
             continue
+        # Paragraph() parses its text as a small HTML-like markup, so escape it first and
+        # then turn real newlines into <br/> tags to preserve line breaks.
         safe = p.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         story.append(Paragraph(safe.replace("\n", "<br/>"), body_style))
     if not paragraphs:

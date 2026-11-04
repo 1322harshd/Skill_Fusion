@@ -16,6 +16,8 @@ from .verification import verify_credential
 
 
 class EntryListCreateView(APIView):
+    """List the current user's growth-log entries, or create a new manual one."""
+
     def get(self, request):
         entries = GrowthLogEntry.objects.filter(user=request.user)
         return Response(GrowthLogEntrySerializer(entries, many=True).data)
@@ -28,6 +30,8 @@ class EntryListCreateView(APIView):
 
 
 class EntryDetailView(APIView):
+    """Fetch or delete a single entry, scoped to its owner."""
+
     def get(self, request, entry_id):
         entry = get_object_or_404(GrowthLogEntry, entryId=entry_id, user=request.user)
         return Response(GrowthLogEntrySerializer(entry).data)
@@ -39,11 +43,14 @@ class EntryDetailView(APIView):
 
 
 class VerifyCredentialView(APIView):
+    """Submit (or resubmit) a verification URL for an entry, and attempt to verify it immediately."""
+
     def post(self, request, entry_id):
         entry = get_object_or_404(GrowthLogEntry, entryId=entry_id, user=request.user)
         serializer = VerifyCredentialSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        # Re-verifying replaces any existing credential for this entry rather than stacking duplicates.
         credential, _ = Credential.objects.update_or_create(
             entry=entry,
             defaults={
@@ -59,6 +66,8 @@ class VerifyCredentialView(APIView):
 
 
 class GithubImportView(APIView):
+    """Trigger a pull of the user's GitHub repos into growth-log entries (requires GitHub OAuth)."""
+
     def post(self, request):
         if not request.user.githubAccessToken:
             return Response(
@@ -72,6 +81,9 @@ class GithubImportView(APIView):
 
 
 class GithubContributionsView(APIView):
+    """Return the user's GitHub contribution calendar, caching results per profile URL for an hour
+    to avoid hammering GitHub's GraphQL API on every page load."""
+
     def get(self, request):
         github_url = request.user.githubUrl
         if not github_url:
@@ -93,6 +105,8 @@ class GithubContributionsView(APIView):
 
 
 class StatsView(APIView):
+    """Summary counts (total/verified/pending) of the user's growth-log entries."""
+
     def get(self, request):
         entries = GrowthLogEntry.objects.filter(user=request.user)
         total = entries.count()

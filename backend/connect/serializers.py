@@ -2,6 +2,10 @@ from rest_framework import serializers
 
 from .models import Report, RoomMessage
 
+# Plain input validators for the Connect endpoints — none of these map to a
+# model directly, so they're declared with serializers.Serializer rather than
+# ModelSerializer.
+
 
 class SendMessageSerializer(serializers.Serializer):
     text = serializers.CharField(max_length=1000)
@@ -27,6 +31,8 @@ class ModerationActionSerializer(serializers.Serializer):
 
 
 def room_message_dict(msg: RoomMessage, viewer, handle_by_user_id):
+    # handle_by_user_id is precomputed by the caller (one query for a whole
+    # page of messages) rather than looked up here per-message.
     return {
         "id": str(msg.messageId),
         "handle": handle_by_user_id.get(msg.user_id, "anonymous"),
@@ -38,6 +44,8 @@ def room_message_dict(msg: RoomMessage, viewer, handle_by_user_id):
 
 
 def report_dict(r: Report):
+    # A report is either about a room message or a private one, never both —
+    # the unused side's id/text fields just come back null.
     return {
         "reportId": str(r.reportId),
         "reason": r.reason,

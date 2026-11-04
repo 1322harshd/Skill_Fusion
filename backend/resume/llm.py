@@ -93,6 +93,8 @@ def generate_resume_content(user_prompt: str) -> dict:
     if choice.get("finish_reason") == "length":
         raise LlmError("Model response was cut off before completing (increase max_tokens).")
 
+    # The JSON answer can land in either field depending on how the model split its
+    # output, so check both and let _extract_json_object find the object in whichever has it.
     content = (message.get("content") or "") + (message.get("reasoning") or "")
     data = _extract_json_object(content)
 

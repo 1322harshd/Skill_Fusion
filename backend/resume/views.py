@@ -19,6 +19,9 @@ from .serializers import (
 
 
 class GenerateResumeView(APIView):
+    """Generate a new tailored resume + cover letter from the user's Growth Log evidence
+    (and uploaded resume, if any). Rate-limited since each call is an LLM request."""
+
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "resume-generate"
 
@@ -44,6 +47,8 @@ class GenerateResumeView(APIView):
 
 
 class ResumeUploadView(APIView):
+    """View, replace, or remove the learner's uploaded base resume."""
+
     def get(self, request):
         upload = ResumeUpload.objects.filter(user=request.user).first()
         if not upload:
@@ -60,6 +65,7 @@ class ResumeUploadView(APIView):
         except ExtractionError as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Each user has at most one resume upload — a new upload replaces the old one.
         upload, _ = ResumeUpload.objects.update_or_create(
             user=request.user,
             defaults={"filename": uploaded_file.name, "extractedText": text},
@@ -72,12 +78,17 @@ class ResumeUploadView(APIView):
 
 
 class ResumeDocumentListView(APIView):
+    """List all previously generated resume documents for the current user."""
+
     def get(self, request):
         documents = ResumeDocument.objects.filter(user=request.user)
         return Response(ResumeDocumentSerializer(documents, many=True).data)
 
 
 class ResumeExportView(APIView):
+    """Render a generated document to a downloadable PDF — either the resume or the cover
+    letter, chosen via the `doc` query param."""
+
     def get(self, request, document_id):
         document = get_object_or_404(ResumeDocument, documentId=document_id, user=request.user)
         doc_type = request.query_params.get("doc", "resume")

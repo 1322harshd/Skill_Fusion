@@ -26,20 +26,30 @@ test("an incoming chat request shows accept/decline, not the chat itself", async
 });
 
 test("accepting an incoming request opens the chat", async ({ page }) => {
-  await mockApi(page, {
-    signedIn: true,
-    myMatch: {
-      matchId: "m1",
-      status: "requested",
-      direction: "incoming",
-      fusionLabel: "Design×AI",
-      peerHandle: "bold.hawk21",
-      closeReason: null,
-    },
+  await mockApi(page, { signedIn: true });
+  let accepted = false;
+  // GET /connect/match must reflect the handshake resolving (a real backend
+  // stops surfacing an ACTIVE match there once it hands off to a
+  // Conversation) — a static mock would re-show the stale incoming request
+  // on the next poll and clobber the just-accepted state.
+  await page.route("**/api/connect/match", async (route) => {
+    if (route.request().method() !== "GET") return route.fallback();
+    const body = accepted
+      ? { status: "none" }
+      : {
+          matchId: "m1",
+          status: "requested",
+          direction: "incoming",
+          fusionLabel: "Design×AI",
+          peerHandle: "bold.hawk21",
+          closeReason: null,
+        };
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
   });
   await page.route("**/api/connect/matches/m1/respond", async (route) => {
     const body = route.request().postDataJSON();
     expect(body.action).toBe("accept");
+    accepted = true;
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -50,13 +60,14 @@ test("accepting an incoming request opens the chat", async ({ page }) => {
         fusionLabel: "Design×AI",
         peerHandle: "bold.hawk21",
         closeReason: null,
+        conversationId: "c1",
       }),
     });
   });
-  await page.route("**/api/connect/matches/m1/messages", async (route) => {
+  await page.route("**/api/connect/conversations/c1/messages", async (route) => {
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([]) });
   });
-  await page.route("**/api/connect/matches/m1/exchange", async (route) => {
+  await page.route("**/api/connect/conversations/c1/exchange", async (route) => {
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "none" }) });
   });
 
@@ -139,8 +150,10 @@ test("the requester whose request was declined sees it from their own side", asy
 
   await expect(page.getByText("They declined your chat request.")).toBeVisible();
 
+  // Dismissing stays on the Requests tab — that's where "find another
+  // match" belongs, not back in the Conversations list.
   await page.getByRole("button", { name: "Find another match" }).click();
-  await expect(page.getByText("Find a peer")).toBeVisible();
+  await expect(page.getByText("Find a peer", { exact: true })).toBeVisible();
 });
 
 test("messages can't be sent until the request is accepted (backend also enforces this)", async ({ page }) => {

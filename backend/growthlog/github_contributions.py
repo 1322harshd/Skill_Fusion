@@ -5,6 +5,7 @@ from .github_import import extract_github_username
 
 WEEKS_TO_SHOW = 14
 
+# GraphQL query for a user's public contribution calendar (the GitHub profile "heatmap").
 CONTRIBUTIONS_QUERY = """
 query($login: String!) {
   user(login: $login) {
@@ -59,8 +60,10 @@ def fetch_contribution_weeks(github_url: str) -> list[list[dict]]:
         raise GithubContributionsError(f"No GitHub user found for '{username}'.")
 
     weeks = user["contributionsCollection"]["contributionCalendar"]["weeks"]
+    # GitHub returns the full year; keep only the most recent WEEKS_TO_SHOW weeks.
     weeks = weeks[-WEEKS_TO_SHOW:]
 
+    # Flatten GitHub's {contributionDays: [...]} shape into plain date/count pairs.
     return [
         [{"date": day["date"], "count": day["contributionCount"]} for day in week["contributionDays"]]
         for week in weeks

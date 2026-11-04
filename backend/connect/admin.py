@@ -3,6 +3,11 @@ from django.contrib import admin
 from .models import ChatProfile, Report
 from .services import apply_moderation_action
 
+# A superuser reviews reports here, in Django's built-in admin, rather than a
+# custom moderation screen — bulk warn/ban/dismiss actions below all funnel
+# through apply_moderation_action() so this and the REST moderation
+# endpoints can never apply different logic for the same action.
+
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
@@ -36,6 +41,8 @@ class ReportAdmin(admin.ModelAdmin):
 
     @admin.display(description="Target")
     def target_handle(self, report):
+        # Falls back to the real email only if the user somehow has no
+        # ChatProfile yet (shouldn't normally happen once they've used Connect).
         profile = getattr(report.targetUser, "chat_profile", None)
         return profile.handle if profile else report.targetUser.email
 
@@ -45,6 +52,8 @@ class ReportAdmin(admin.ModelAdmin):
 
     @admin.display(description="Reported content")
     def reportedContent(self, report):
+        # A report always points at exactly one of these, or neither (a bare
+        # "report this peer" action with no specific message attached).
         if report.roomMessage_id:
             return f"[Open room] {report.roomMessage.text}"
         if report.privateMessage_id:
@@ -52,6 +61,9 @@ class ReportAdmin(admin.ModelAdmin):
         return "(peer report — no specific message)"
 
     def _apply(self, request, queryset, action, verb):
+        # Shared by all three bulk actions below — only acts on still-pending
+        # reports so re-running an action on an already-reviewed one is a
+        # harmless no-op, not a double warn/ban.
         pending = queryset.filter(status="pending")
         for report in pending:
             apply_moderation_action(report, action)

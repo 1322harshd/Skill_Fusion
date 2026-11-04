@@ -8,6 +8,7 @@ MAX_REPOS = 10
 
 
 def extract_github_username(github_url: str) -> str:
+    """Pull the username out of a GitHub profile URL, e.g. "github.com/foo" -> "foo"."""
     match = re.search(r"github\.com/([^/?#]+)", github_url or "")
     return match.group(1) if match else ""
 
@@ -31,6 +32,7 @@ def import_github_entries(user) -> list[GrowthLogEntry]:
     if response.status_code != 200:
         return []
 
+    # Repos already imported for this user, so re-running the import doesn't duplicate entries.
     existing_urls = set(
         GrowthLogEntry.objects.filter(user=user, source=GrowthLogEntry.Source.GITHUB).values_list(
             "sourceUrl", flat=True

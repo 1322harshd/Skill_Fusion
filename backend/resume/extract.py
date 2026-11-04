@@ -12,6 +12,7 @@ class ExtractionError(Exception):
 
 
 def _extension(filename: str) -> str:
+    """Lowercased file extension without the dot, or "" if there isn't one."""
     return filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
 
 

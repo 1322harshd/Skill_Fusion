@@ -30,6 +30,9 @@ function VerifiedBadge({ verified = true, label, className = "" }) {
   );
 }
 
+// Picks the right badge for a Growth Log entry based on its verification state:
+// verified/self-reported reuse VerifiedBadge, failed shows an error pill, and
+// anything still pending shows a countdown ring until auto-verification.
 function LogSourceBadge({ entry }) {
   if (entry.source === "verified") return <VerifiedBadge verified label="Verified" />;
   if (entry.source === "self-reported") return <VerifiedBadge verified={false} label="Self-reported" />;

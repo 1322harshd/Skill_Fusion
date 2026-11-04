@@ -32,6 +32,7 @@ test("Sync modal offers Sync now when GitHub is connected", async ({ page }) => 
 test("activity graph renders one cell per day for 14 weeks", async ({ page }) => {
   await mockApi(page, { signedIn: true, user: { githubConnected: false } });
   await page.goto("/index.html#/log");
+  // 14 weeks x 7 days = 98 cells.
   await expect(page.locator('[title$="contributions"], [title$="contribution"]')).toHaveCount(98);
 });
 

@@ -39,6 +39,9 @@ test("a verified user sees the dashboard normally", async ({ page }) => {
   await expect(page.getByText("Verify your email")).not.toBeVisible();
 });
 
+// Where "Continue" lands depends on how far the user already got in
+// onboarding before verifying: no personas picked yet -> persona step,
+// personas picked but no baseline -> resume/quiz step.
 test("after verifying, continuing resumes onboarding at persona selection, not the sign-up form", async ({ page }) => {
   await mockApi(page, { signedIn: true, user: { isEmailVerified: false, personaTypes: [], baseline: null } });
   await page.goto("/index.html#/verify-email?token=abc123");

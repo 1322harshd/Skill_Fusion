@@ -23,6 +23,9 @@ from .tokens import resolve_uid_token
 
 
 def _auth_payload(user, status_code):
+    """Shared response shape for register/login/OAuth: issues a fresh refresh+access
+    token pair, puts the refresh token in an httponly cookie, and returns the access
+    token + user profile in the JSON body."""
     refresh = RefreshToken.for_user(user)
     response = Response(
         {"user": UserSerializer(user).data, "accessToken": str(refresh.access_token)},
@@ -58,6 +61,9 @@ def _exchange_github_code(code):
 
 
 def _get_or_create_oauth_user(email, full_name, github_url=""):
+    """Looks up a user by the email an OAuth provider vouched for, or creates one.
+    New accounts are pre-verified (the provider already confirmed the email) and
+    get no usable password, since they can only log in via OAuth."""
     user, created = User.objects.get_or_create(
         email=email,
         defaults={
@@ -76,6 +82,8 @@ class RegisterView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        # New users are logged in immediately (via _auth_payload) rather than being
+        # forced to verify their email first; IsEmailVerified gates feature access instead.
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
@@ -85,6 +93,7 @@ class RegisterView(APIView):
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
+    # Rate-limited (see "login" scope in settings) to slow down password-guessing attempts.
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "login"
 
@@ -96,6 +105,9 @@ class LoginView(APIView):
 
 
 class RefreshView(APIView):
+    """Exchanges the httponly refresh cookie for a new access token, rotating
+    the refresh token (and blacklisting the old one) in the process."""
+
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -113,6 +125,8 @@ class RefreshView(APIView):
             try:
                 old_refresh.blacklist()
             except AttributeError:
+                # Blacklist app not installed/enabled — rotation still works, just without
+                # invalidating the old token.
                 pass
 
         new_refresh = RefreshToken.for_user(user)
@@ -128,6 +142,7 @@ class LogoutView(APIView):
         raw_token = request.COOKIES.get(settings.REFRESH_TOKEN_COOKIE_NAME)
         if raw_token:
             try:
+                # Blacklist so the refresh token can't be reused even if it leaks.
                 RefreshToken(raw_token).blacklist()
             except TokenError:
                 pass
@@ -137,6 +152,9 @@ class LogoutView(APIView):
 
 
 class MeView(APIView):
+    """Get/update/delete the logged-in user's own profile. Partial patch means
+    callers can send just the fields they're changing (e.g. just `skills`)."""
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -192,6 +210,9 @@ class ResetPasswordView(APIView):
 
 
 class VerifyEmailView(APIView):
+    """Hit by the link in the verification email; AllowAny because the user
+    isn't logged in yet when they click it — the token itself is the proof."""
+
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -206,6 +227,7 @@ class VerifyEmailView(APIView):
 
 class ResendVerificationEmailView(APIView):
     permission_classes = [IsAuthenticated]
+    # Rate-limited so a user (or attacker) can't spam themselves/others with verification emails.
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "resend-verification"
 
@@ -217,6 +239,9 @@ class ResendVerificationEmailView(APIView):
 
 
 class GithubOAuthView(APIView):
+    """Sign-up/login via GitHub: exchanges an OAuth code for a token+profile and
+    either logs the matching user in or creates a new account for them."""
+
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -236,6 +261,8 @@ class GithubOAuthView(APIView):
 
         email = profile.get("email")
         if not email:
+            # GitHub only includes email in the profile if the user made it public;
+            # fall back to the emails endpoint and pick their verified primary address.
             emails = requests.get(
                 "https://api.github.com/user/emails",
                 headers={"Authorization": f"Bearer {access_token}"},
@@ -259,6 +286,9 @@ class GithubOAuthView(APIView):
 
 
 class GithubOAuthConfigView(APIView):
+    """Lets the frontend fetch the GitHub OAuth client id at runtime instead of
+    hardcoding it, without exposing the client secret."""
+
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -298,6 +328,8 @@ class GithubConnectView(APIView):
 
 
 class GoogleOAuthView(APIView):
+    """Sign-up/login via Google, mirroring GithubOAuthView's code-exchange flow."""
+
     permission_classes = [AllowAny]
 
     def post(self, request):

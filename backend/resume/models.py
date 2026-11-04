@@ -19,6 +19,8 @@ class ResumeUpload(models.Model):
 
 
 class ResumeDocument(models.Model):
+    """One generated resume/cover-letter pairing, tailored to a specific job listing."""
+
     documentId = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="resume_documents"

@@ -11,6 +11,8 @@ from .models import GrowthLogEntry
 
 
 class GrowthLogOwnershipTests(TestCase):
+    """Users can only see, open, and delete their own growth-log entries."""
+
     def setUp(self):
         self.client = APIClient()
         self.owner = User.objects.create_user(email="owner@example.com", password="CorrectHorse1!", fullName="Owner", isEmailVerified=True)
@@ -46,6 +48,8 @@ class GrowthLogOwnershipTests(TestCase):
 
 
 class GithubImportTests(TestCase):
+    """GitHub repo import: requires a token, skips forks, tags private repos, and never duplicates."""
+
     def setUp(self):
         self.user = User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada", isEmailVerified=True)
         self.client = APIClient()
@@ -103,6 +107,8 @@ class GithubImportTests(TestCase):
 
 
 class VerifyCredentialTests(TestCase):
+    """Credential verification input is bounded (no 500s on oversized values) and works end to end."""
+
     def setUp(self):
         self.user = User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada", isEmailVerified=True)
         self.client = APIClient()
@@ -142,6 +148,8 @@ class VerifyCredentialTests(TestCase):
 
 
 class ContributionsTests(TestCase):
+    """Contribution calendar endpoint requires the user to have a GitHub URL set."""
+
     def setUp(self):
         self.client = APIClient()
 

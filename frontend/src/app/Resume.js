@@ -34,6 +34,7 @@ function Resume() {
     else window.Ambient.clear();
   }, []);
 
+  // If a resume/cover letter was already generated before, load it straight into "done".
   useEffect(() => {
     window.Api
       .listResumeDocuments()
@@ -46,6 +47,7 @@ function Resume() {
       .catch(() => {});
   }, []);
 
+  // Check whether the user already has a resume on file, for the upload banner.
   useEffect(() => {
     window.Api
       .getResumeUpload()
@@ -53,6 +55,7 @@ function Resume() {
       .catch(() => {});
   }, []);
 
+  // Uploads a resume file to ground the generated resume/cover letter in it.
   async function handleResumeFile(e) {
     const file = e.target.files && e.target.files[0];
     e.target.value = "";
@@ -69,6 +72,8 @@ function Resume() {
     }
   }
 
+  // Generates a resume/cover letter from the (optional) job listing and the user's
+  // Growth Log, falling back to the input step if it fails.
   async function generate() {
     setTab("resume");
     setPhase("loading");
@@ -82,6 +87,7 @@ function Resume() {
     }
   }
 
+  // Downloads the currently viewed tab (resume or cover letter) as a PDF.
   async function download() {
     setDownloading(true);
     try {
@@ -95,6 +101,7 @@ function Resume() {
   }
 
   function copy() {
+    // Build the plain-text version of whichever tab (resume or cover letter) is showing.
     const text =
       tab === "resume"
         ? [res.resumeSummary, "", ...res.resumeBullets.map((b) => "• " + b)].join("\n")
@@ -111,6 +118,7 @@ function Resume() {
         </h1>
       </motion.div>
 
+      {/* Resume-on-file banner: upload/replace a resume to ground generation in it */}
       <div className="mt-6 liquid-glass flex flex-wrap items-center justify-between gap-3 rounded-2xl px-5 py-3.5">
         <p className="font-body text-sm text-white/80">
           {resumeUploading
@@ -171,6 +179,7 @@ function Resume() {
                 <div className="border-b border-white/10 px-6 py-6 text-center">
                   <p className="font-heading text-2xl italic text-white">Drafting your document</p>
                 </div>
+                {/* Looping step indicator since generation time is unpredictable */}
                 <AiSteps steps={RESUME_LOADING_STEPS} speed={1400} loop />
                 <div className="flex items-center justify-center gap-2 border-t border-white/10 px-6 py-5">
                   <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-white" />

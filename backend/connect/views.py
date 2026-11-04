@@ -1,3 +1,4 @@
+from django.db import models as db_models
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import status
@@ -5,7 +6,7 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import ChatProfile, Exchange, PeerMatch, Presence, PrivateMessage, Report, RoomMessage
+from .models import ChatProfile, Conversation, Exchange, PeerMatch, Presence, PrivateMessage, Report, RoomMessage
 from .moderation import contains_banned_content
 from .serializers import (
     HeartbeatSerializer,
@@ -20,6 +21,7 @@ from .services import (
     InvalidResponseError,
     PeerBusyError,
     apply_moderation_action,
+    conversation_between,
     current_match_for,
     find_or_create_match,
     get_or_create_chat_profile,
@@ -28,11 +30,15 @@ from .services import (
 )
 from .streak import compute_streak
 
+# A heartbeat older than this is treated as "gone" from the open room.
 PRESENCE_WINDOW_SECONDS = 90
+# How many distinct reports on one message before it's auto-hidden pending review.
 REPORT_AUTO_HIDE_THRESHOLD = 2
 
 
 def _ban_check(user):
+    """Call at the top of any POST that lets a user act in Connect — returns
+    a 403 Response to short-circuit the view if they're banned, else None."""
     profile = get_or_create_chat_profile(user)
     if profile.isBanned:
         return Response({"detail": "You're banned from Connect."}, status=status.HTTP_403_FORBIDDEN)
@@ -57,6 +63,22 @@ def _match_payload(match: PeerMatch, requester):
         "peerHandle": peer_handle,
         "direction": direction,
         "closeReason": match.closeReason if match.status == PeerMatch.Status.CLOSED else None,
+        # Once accepted, the handshake hands off to the permanent thread —
+        # the frontend should stop polling this match and open the
+        # conversation instead.
+        "conversationId": str(match.conversation_id) if match.conversation_id else None,
+    }
+
+
+def _conversation_payload(convo: Conversation, viewer):
+    peer = convo.other(viewer)
+    return {
+        "conversationId": str(convo.conversationId),
+        "peerHandle": get_or_create_chat_profile(peer).handle,
+        "fusionLabel": convo.fusionLabel,
+        "status": convo.status,
+        "blockedByMe": convo.blockedBy_id == viewer.pk if convo.blockedBy_id else False,
+        "lastMessageAt": convo.lastMessageAt.isoformat(),
     }
 
 
@@ -101,6 +123,8 @@ class RoomMessagesView(APIView):
         handle_by_user_id = {
             cp.user_id: cp.handle for cp in ChatProfile.objects.filter(user_id__in=user_ids)
         }
+        # Anyone who posted before ever getting a ChatProfile created still
+        # needs a handle shown for their messages — create it lazily here.
         missing = user_ids - set(handle_by_user_id)
         for uid in missing:
             from authentication.models import User
@@ -127,10 +151,10 @@ class RoomMessagesView(APIView):
 
 class MatchView(APIView):
     def get(self, request):
-        """The caller's current match situation, from either side — whether
-        they started it themselves or someone else's direct request is
-        waiting on them. Lets the frontend discover incoming chat requests
-        without already knowing a matchId."""
+        """The caller's current pending handshake, if any — whether they
+        started it themselves or someone else's direct request is waiting
+        on them. Ongoing conversations (already accepted) live in the
+        conversation list instead, not here."""
         match = current_match_for(request.user)
         if not match:
             return Response({"status": "none"})
@@ -163,10 +187,13 @@ class MatchWithPeerView(APIView):
         fusion_label = presence.fusionLabel if presence else ""
 
         try:
-            match = start_direct_match(request.user, target_user, fusion_label)
+            result = start_direct_match(request.user, target_user, fusion_label)
         except PeerBusyError as e:
             return Response({"detail": str(e)}, status=status.HTTP_409_CONFLICT)
-        return Response(_match_payload(match, request.user), status=status.HTTP_201_CREATED)
+
+        if isinstance(result, Conversation):
+            return Response({"kind": "conversation", **_conversation_payload(result, request.user)}, status=status.HTTP_200_OK)
+        return Response({"kind": "match", **_match_payload(result, request.user)}, status=status.HTTP_201_CREATED)
 
 
 class MatchDetailView(APIView):
@@ -179,7 +206,7 @@ class MatchDetailView(APIView):
 
 class MatchRespondView(APIView):
     """Accept or decline a pending direct chat request (FR-9: two people
-    must agree before a direct conversation opens)."""
+    must agree before a direct conversation opens, the first time)."""
 
     def post(self, request, match_id):
         match = get_object_or_404(PeerMatch, matchId=match_id)
@@ -193,18 +220,37 @@ class MatchRespondView(APIView):
         return Response(_match_payload(match, request.user))
 
 
-class MatchMessagesView(APIView):
-    def _get_match(self, request, match_id):
-        match = get_object_or_404(PeerMatch, matchId=match_id)
-        if request.user.pk not in (match.userA_id, match.userB_id):
-            return None
-        return match
+class ConversationListView(APIView):
+    """Every permanent thread the caller has, active or blocked — the DM
+    inbox (FR-9.x: many ongoing conversations, not one ephemeral slot)."""
 
-    def get(self, request, match_id):
-        match = self._get_match(request, match_id)
-        if not match:
+    def get(self, request):
+        convos = Conversation.objects.filter(
+            db_models.Q(userA=request.user) | db_models.Q(userB=request.user)
+        )
+        return Response([_conversation_payload(c, request.user) for c in convos])
+
+
+class ConversationDetailView(APIView):
+    def get(self, request, conversation_id):
+        convo = get_object_or_404(Conversation, conversationId=conversation_id)
+        if request.user.pk not in (convo.userA_id, convo.userB_id):
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
-        msgs = match.messages.filter(hidden=False).select_related("sender")[:200]
+        return Response(_conversation_payload(convo, request.user))
+
+
+class ConversationMessagesView(APIView):
+    def _get_conversation(self, request, conversation_id):
+        convo = get_object_or_404(Conversation, conversationId=conversation_id)
+        if request.user.pk not in (convo.userA_id, convo.userB_id):
+            return None
+        return convo
+
+    def get(self, request, conversation_id):
+        convo = self._get_conversation(request, conversation_id)
+        if not convo:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        msgs = convo.messages.filter(hidden=False).select_related("sender")[:200]
         handle_by_user_id = {
             cp.user_id: cp.handle for cp in ChatProfile.objects.filter(user_id__in={m.sender_id for m in msgs})
         }
@@ -220,20 +266,21 @@ class MatchMessagesView(APIView):
         ]
         return Response(out)
 
-    def post(self, request, match_id):
+    def post(self, request, conversation_id):
         ban = _ban_check(request.user)
         if ban:
             return ban
-        match = self._get_match(request, match_id)
-        if not match:
+        convo = self._get_conversation(request, conversation_id)
+        if not convo:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
-        if match.status != PeerMatch.Status.ACTIVE:
-            return Response({"detail": "This chat hasn't been accepted yet."}, status=status.HTTP_400_BAD_REQUEST)
+        if convo.status == Conversation.Status.BLOCKED:
+            return Response({"detail": "This conversation is closed."}, status=status.HTTP_400_BAD_REQUEST)
         serializer = SendMessageSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         text = serializer.validated_data["text"]
         flagged = contains_banned_content(text)
-        msg = PrivateMessage.objects.create(match=match, sender=request.user, text=text, hidden=flagged)
+        msg = PrivateMessage.objects.create(conversation=convo, sender=request.user, text=text, hidden=flagged)
+        Conversation.objects.filter(pk=convo.pk).update(lastMessageAt=timezone.now())
         if flagged:
             Report.objects.create(
                 reporter=None, targetUser=request.user, privateMessage=msg, autoFlagged=True, reason="Auto-flagged by filter"
@@ -246,6 +293,10 @@ class MatchMessagesView(APIView):
 
 
 class ReportView(APIView):
+    """Reports a single message (room or private) — distinct from
+    ReportPeerView, which reports a peer generally without pointing at any
+    one message."""
+
     def post(self, request):
         serializer = ReportSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -263,8 +314,8 @@ class ReportView(APIView):
             )
         else:
             msg = get_object_or_404(PrivateMessage, messageId=data["messageId"])
-            match = msg.match
-            if request.user.pk not in (match.userA_id, match.userB_id):
+            convo = msg.conversation
+            if request.user.pk not in (convo.userA_id, convo.userB_id):
                 return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
             msg.reportCount += 1
             if msg.reportCount >= REPORT_AUTO_HIDE_THRESHOLD:
@@ -278,71 +329,73 @@ class ReportView(APIView):
 
 
 class ReportPeerView(APIView):
-    """Report + close the conversation, matching the frontend's single
-    'Report {handle}' action in the private room."""
+    """Report + block the permanent conversation, matching the frontend's
+    single 'Report {handle}' action in the private room."""
 
     def post(self, request, handle):
         target_profile = get_object_or_404(ChatProfile, handle=handle)
         target_user = target_profile.user
-        match = (
-            PeerMatch.objects.filter(status=PeerMatch.Status.ACTIVE)
-            .filter(userA=request.user, userB=target_user)
-            .first()
-            or PeerMatch.objects.filter(status=PeerMatch.Status.ACTIVE)
-            .filter(userA=target_user, userB=request.user)
-            .first()
+        convo = conversation_between(request.user, target_user)
+        if not convo:
+            return Response({"detail": "No conversation with that peer."}, status=status.HTTP_404_NOT_FOUND)
+        convo.status = Conversation.Status.BLOCKED
+        convo.blockedBy = request.user
+        convo.save(update_fields=["status", "blockedBy"])
+        PeerMatch.objects.filter(status=PeerMatch.Status.ACTIVE, conversation=convo).update(
+            status=PeerMatch.Status.CLOSED, closeReason=PeerMatch.CloseReason.REPORTED
         )
-        if not match:
-            return Response({"detail": "No active match with that peer."}, status=status.HTTP_404_NOT_FOUND)
-        match.status = PeerMatch.Status.CLOSED
-        match.closeReason = PeerMatch.CloseReason.REPORTED
-        match.save(update_fields=["status", "closeReason"])
         report = Report.objects.create(reporter=request.user, targetUser=target_user, reason="Reported from private room")
         return Response(report_dict(report), status=status.HTTP_201_CREATED)
 
 
 class ExchangeView(APIView):
-    def _get_match(self, request, match_id):
-        match = get_object_or_404(PeerMatch, matchId=match_id)
-        if request.user.pk not in (match.userA_id, match.userB_id):
-            return None
-        return match
+    """Mutual-consent identity reveal — permanent on the Conversation
+    (FR-9.4: once done, it's remembered forever, not per-session)."""
 
-    def _payload(self, exchange, match, user):
+    def _get_conversation(self, request, conversation_id):
+        convo = get_object_or_404(Conversation, conversationId=conversation_id)
+        if request.user.pk not in (convo.userA_id, convo.userB_id):
+            return None
+        return convo
+
+    def _payload(self, exchange, convo, user):
         if not exchange:
             return {"status": "none"}
         s = exchange.status_for(user)
         payload = {"status": s}
         if s == Exchange.Status.DONE:
-            peer = match.other(user)
+            peer = convo.other(user)
             payload["peer"] = {"fullName": peer.fullName, "email": peer.email}
         return payload
 
-    def get(self, request, match_id):
-        match = self._get_match(request, match_id)
-        if not match:
+    def get(self, request, conversation_id):
+        convo = self._get_conversation(request, conversation_id)
+        if not convo:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
-        exchange = getattr(match, "exchange", None)
-        return Response(self._payload(exchange, match, request.user))
+        exchange = getattr(convo, "exchange", None)
+        return Response(self._payload(exchange, convo, request.user))
 
-    def post(self, request, match_id):
-        match = self._get_match(request, match_id)
-        if not match:
+    def post(self, request, conversation_id):
+        convo = self._get_conversation(request, conversation_id)
+        if not convo:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
         action = request.data.get("action")
 
-        exchange = getattr(match, "exchange", None)
+        exchange = getattr(convo, "exchange", None)
         if action == "propose":
+            # Re-proposing an already-proposed exchange is a harmless no-op —
+            # just return its current status instead of erroring.
             if exchange:
-                return Response(self._payload(exchange, match, request.user))
-            is_a = request.user.pk == match.userA_id
+                return Response(self._payload(exchange, convo, request.user))
+            # Proposing counts as that side's own confirmation already.
+            is_a = request.user.pk == convo.userA_id
             exchange = Exchange.objects.create(
-                match=match, proposedBy=request.user, confirmedA=is_a, confirmedB=not is_a
+                conversation=convo, proposedBy=request.user, confirmedA=is_a, confirmedB=not is_a
             )
         elif action == "confirm":
             if not exchange:
                 return Response({"detail": "No exchange proposed yet."}, status=status.HTTP_400_BAD_REQUEST)
-            is_a = request.user.pk == match.userA_id
+            is_a = request.user.pk == convo.userA_id
             if is_a:
                 exchange.confirmedA = True
             else:
@@ -351,7 +404,7 @@ class ExchangeView(APIView):
         else:
             return Response({"detail": "action must be 'propose' or 'confirm'."}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(self._payload(exchange, match, request.user))
+        return Response(self._payload(exchange, convo, request.user))
 
 
 class ModerationReportsView(APIView):

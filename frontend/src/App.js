@@ -85,6 +85,8 @@ function App() {
   const isLanding = LANDING.has(route);
 
   useEffect(() => {
+    // Landing page anchor routes (e.g. "/pricing") should scroll to that
+    // section instead of resetting to the top of the page.
     if (isLanding && route !== "/" && route !== "/top") {
       const el = document.getElementById(route.slice(1));
       if (el) {
@@ -95,6 +97,9 @@ function App() {
     window.scrollTo(0, 0);
   }, [route, isLanding]);
 
+  // Handle the redirect back from GitHub's OAuth flow: pull the code/state
+  // out of the URL, verify it against what we stashed before redirecting,
+  // then exchange the code for a connected GitHub account.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
@@ -121,6 +126,8 @@ function App() {
       });
   }, []);
 
+  // On first mount, load the current session (if any), sync the user into
+  // the store, and bounce already-onboarded users straight to the dashboard.
   useEffect(() => {
     window.Api.bootstrap().then((user) => {
       if (!user) return;

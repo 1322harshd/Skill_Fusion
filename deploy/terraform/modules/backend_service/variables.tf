@@ -1,0 +1,55 @@
+variable "name_prefix" {
+  type = string
+}
+
+variable "vpc_id" {
+  type = string
+}
+
+variable "public_subnet_ids" {
+  type = list(string)
+}
+
+variable "alb_security_group_id" {
+  type = string
+}
+
+variable "backend_security_group_id" {
+  type = string
+}
+
+variable "db_secret_arn" {
+  type = string
+}
+
+variable "app_port" {
+  type    = number
+  default = 8000
+}
+
+variable "task_cpu" {
+  description = "256 = 0.25 vCPU, the smallest valid Fargate size."
+  type        = string
+  default     = "256"
+}
+
+variable "task_memory" {
+  description = "512MB, the smallest size Fargate allows paired with 256 CPU units."
+  type        = string
+  default     = "512"
+}
+
+variable "desired_count" {
+  type    = number
+  default = 1
+}
+
+variable "backend_image" {
+  description = "Full ECR image URI including tag, e.g. <account>.dkr.ecr.<region>.amazonaws.com/<repo>:<tag>. Supplied by the CD pipeline on each deploy."
+  type        = string
+}
+
+variable "frontend_origin" {
+  description = "The frontend's CloudFront URL, used for CORS_ALLOWED_ORIGINS and FRONTEND_URL."
+  type        = string
+}

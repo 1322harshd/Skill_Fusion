@@ -7,6 +7,12 @@
   <meta name="description" content="Combine any two skills and our AI builds your personalized roadmap, a real project, and a data-backed score of how rare your combination actually is." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='16' fill='%23000'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-style='italic' font-size='20' fill='%23fff' text-anchor='middle'%3Es%3C/text%3E%3C/svg%3E" />
 
+  <!-- env.js sets window.API_BASE_URL for non-local deployments — generated
+       by the CD pipeline at deploy time (not committed to git), so it's
+       simply absent in local dev and the fallback below applies instead.
+       It must load BEFORE the inline script, so that script's `||` sees the
+       real value already set rather than overwriting it. -->
+  <script src="env.js"></script>
   <script>
     // Points the app at the Django API. Override by setting this before
     // index.html loads (e.g. a small env.js) for non-local deployments.

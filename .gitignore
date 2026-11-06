@@ -10,6 +10,10 @@ __pycache__/
 .env
 db.sqlite3
 
+# generated at deploy time by the CD pipeline, points the deployed frontend
+# at the real backend URL — never exists in local dev or in git
+frontend/env.js
+
 # Django-generated output, not source
 staticfiles/
 media/
@@ -29,3 +33,12 @@ playwright-report
 backend/.venv/
 *.log
 test-results/
+
+# Terraform — the provider binary cache and any local state/plan files.
+# .terraform.lock.hcl IS committed (pins provider versions for everyone).
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+!*.tfvars.example

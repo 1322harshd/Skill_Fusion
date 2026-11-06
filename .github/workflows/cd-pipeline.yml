@@ -1,0 +1,127 @@
+name: CD Pipeline (AWS)
+
+# Deploys on every push to `shared` — builds+pushes the backend image, runs
+# `terraform apply` (which updates the ECS task definition to that image and
+# reconciles any other infra drift), then syncs the frontend to S3 and
+# invalidates CloudFront. Can also be run by hand from the Actions tab.
+on:
+  push:
+    branches: [shared]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "deploy/terraform/**"
+      - ".github/workflows/cd-pipeline.yml"
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-southeast-2
+  TF_WORKING_DIR: deploy/terraform
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # TODO: swap for OIDC (aws-actions/configure-aws-credentials with
+      # role-to-assume) once this is worth the setup — no long-lived keys
+      # sitting in GitHub secrets. Static keys are the simpler starting point.
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.16.5"
+
+      - name: Terraform init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init
+
+      # The image needs the ECR repo to exist, and the repo is created BY
+      # this same Terraform config — so the very first run on a brand new
+      # AWS account won't have anywhere to push to yet. `-target` creates
+      # just the repo first; every run after that, it's a no-op (already
+      # exists) and this step is effectively skipped.
+      - name: Ensure ECR repository exists
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform apply -auto-approve -target=module.backend_service.aws_ecr_repository.backend
+
+      - name: Build and push backend image
+        working-directory: backend
+        run: |
+          ECR_URI="$(cd ../${{ env.TF_WORKING_DIR }} && terraform output -raw ecr_repository_url)"
+          IMAGE="$ECR_URI:${{ github.sha }}"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
+          echo "backend_image=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Terraform apply
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform apply -auto-approve -var="backend_image=${{ env.backend_image }}"
+
+      - name: Capture Terraform outputs
+        id: tf-outputs
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          echo "cluster=$(terraform output -raw ecs_cluster_name)" >> "$GITHUB_OUTPUT"
+          echo "service=$(terraform output -raw ecs_service_name)" >> "$GITHUB_OUTPUT"
+          echo "bucket=$(terraform output -raw frontend_bucket_name)" >> "$GITHUB_OUTPUT"
+          echo "distribution_id=$(terraform output -raw frontend_distribution_id)" >> "$GITHUB_OUTPUT"
+          echo "backend_url=$(terraform output -raw backend_api_url)" >> "$GITHUB_OUTPUT"
+          echo "frontend_url=$(terraform output -raw frontend_url)" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for the new backend task to become healthy
+        run: |
+          aws ecs wait services-stable \
+            --cluster "${{ steps.tf-outputs.outputs.cluster }}" \
+            --services "${{ steps.tf-outputs.outputs.service }}"
+
+      - name: Generate env.js
+        run: |
+          # index.html loads this before its own inline script, which only
+          # falls back to localhost if window.API_BASE_URL isn't already
+          # set — this is what actually points the deployed frontend at the
+          # real backend instead of the visitor's own machine.
+          echo "window.API_BASE_URL = \"${{ steps.tf-outputs.outputs.backend_url }}/api\";" > frontend/env.js
+
+      - name: Sync frontend to S3
+        run: |
+          # videos/ is NOT excluded — src/videos.js (window.VIDEOS) points the
+          # landing page's Hero/Capabilities/HowItWorks/CTA sections and
+          # Connect's open room at videos/*.mp4 directly, so those are real
+          # runtime assets, not just reference material like wireframes/.
+          aws s3 sync frontend/ "s3://${{ steps.tf-outputs.outputs.bucket }}/" \
+            --delete \
+            --exclude "node_modules/*" \
+            --exclude "tests/*" \
+            --exclude "test-results/*" \
+            --exclude "playwright-report/*" \
+            --exclude "wireframes/*" \
+            --exclude "package*.json" \
+            --exclude "eslint.config.js" \
+            --exclude "playwright.config.js"
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ steps.tf-outputs.outputs.distribution_id }}" \
+            --paths "/*"
+
+      - name: Summary
+        run: |
+          echo "Backend:  ${{ steps.tf-outputs.outputs.backend_url }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Frontend: ${{ steps.tf-outputs.outputs.frontend_url }}" >> "$GITHUB_STEP_SUMMARY"

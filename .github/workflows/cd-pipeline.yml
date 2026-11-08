@@ -66,6 +66,7 @@ jobs:
         run: |
           echo "ses_verification=$(terraform output -raw domain_verification_record)" >> "$GITHUB_OUTPUT"
           echo "ses_dkim=$(terraform output -json dkim_cname_records | jq -r 'join(",")')" >> "$GITHUB_OUTPUT"
+          echo "nameservers=$(terraform output -json route53_name_servers | jq -r 'join(",")')" >> "$GITHUB_OUTPUT"
 
       - name: Terraform init
         working-directory: ${{ env.TF_WORKING_DIR }}
@@ -154,4 +155,10 @@ jobs:
           IFS=',' read -ra TOKENS <<< "${{ steps.email-outputs.outputs.ses_dkim }}"
           for t in "${TOKENS[@]}"; do
             echo "- CNAME \`$t._domainkey.skillfusion.shop\` -> \`$t.dkim.amazonses.com\`" >> "$GITHUB_STEP_SUMMARY"
+          done
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Route53 nameservers (set at GoDaddy, once)" >> "$GITHUB_STEP_SUMMARY"
+          IFS=',' read -ra NS <<< "${{ steps.email-outputs.outputs.nameservers }}"
+          for n in "${NS[@]}"; do
+            echo "- $n" >> "$GITHUB_STEP_SUMMARY"
           done

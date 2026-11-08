@@ -15,3 +15,8 @@ output "dkim_cname_records" {
   description = "Add each token as a CNAME: name `<token>._domainkey.<domain>`, value `<token>.dkim.amazonses.com`."
   value       = aws_ses_domain_dkim.main.dkim_tokens
 }
+
+output "route53_name_servers" {
+  description = "Set these as the domain's nameservers at GoDaddy (Domain Settings -> Nameservers -> Custom) to put DNS under Route53's control."
+  value       = aws_route53_zone.main.name_servers
+}

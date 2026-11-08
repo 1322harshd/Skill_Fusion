@@ -38,7 +38,24 @@ resource "aws_cloudfront_distribution" "backend" {
     }
   }
 
-  viewer_certificate {
-    cloudfront_default_certificate = true
+  aliases = var.custom_domain_aliases
+
+  # Falls back to the default *.cloudfront.net cert when no custom domain
+  # is wired up yet — CloudFront rejects an empty acm_certificate_arn, so
+  # this can't just always reference it.
+  dynamic "viewer_certificate" {
+    for_each = var.acm_certificate_arn == "" ? [1] : []
+    content {
+      cloudfront_default_certificate = true
+    }
+  }
+
+  dynamic "viewer_certificate" {
+    for_each = var.acm_certificate_arn == "" ? [] : [1]
+    content {
+      acm_certificate_arn      = var.acm_certificate_arn
+      ssl_support_method       = "sni-only"
+      minimum_protocol_version = "TLSv1.2_2021"
+    }
   }
 }

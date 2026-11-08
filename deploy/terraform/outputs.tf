@@ -1,9 +1,9 @@
 output "frontend_url" {
-  value = module.frontend.site_url
+  value = "https://${var.domain_name}"
 }
 
 output "backend_api_url" {
-  value = module.backend_service.api_url
+  value = "https://api.${var.domain_name}"
 }
 
 output "ecr_repository_url" {

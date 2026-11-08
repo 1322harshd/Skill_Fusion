@@ -15,6 +15,11 @@ output "api_url" {
   value       = "https://${aws_cloudfront_distribution.backend.domain_name}"
 }
 
+output "domain_name" {
+  description = "Raw CloudFront domain, for Route53 alias records."
+  value       = aws_cloudfront_distribution.backend.domain_name
+}
+
 output "alb_dns_name" {
   value = aws_lb.backend.dns_name
 }

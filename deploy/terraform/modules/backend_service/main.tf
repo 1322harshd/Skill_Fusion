@@ -115,8 +115,8 @@ resource "aws_ecs_task_definition" "backend" {
         # Host, so this has to stay permissive for now. Tighten this to the
         # real domain(s) once one exists.
         { name = "ALLOWED_HOSTS", value = "*" },
-        { name = "CORS_ALLOWED_ORIGINS", value = var.frontend_origin },
-        { name = "FRONTEND_URL", value = var.frontend_origin },
+        { name = "CORS_ALLOWED_ORIGINS", value = var.cors_allowed_origins },
+        { name = "FRONTEND_URL", value = var.frontend_url },
         { name = "EMAIL_BACKEND", value = "django.core.mail.backends.smtp.EmailBackend" },
         { name = "EMAIL_HOST", value = var.email_smtp_endpoint },
         { name = "EMAIL_PORT", value = "587" },

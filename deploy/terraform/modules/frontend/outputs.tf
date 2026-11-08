@@ -9,3 +9,8 @@ output "distribution_id" {
 output "site_url" {
   value = "https://${aws_cloudfront_distribution.frontend.domain_name}"
 }
+
+output "domain_name" {
+  description = "Raw CloudFront domain, for Route53 alias records."
+  value       = aws_cloudfront_distribution.frontend.domain_name
+}

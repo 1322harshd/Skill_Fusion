@@ -49,9 +49,26 @@ variable "backend_image" {
   type        = string
 }
 
-variable "frontend_origin" {
-  description = "The frontend's CloudFront URL, used for CORS_ALLOWED_ORIGINS and FRONTEND_URL."
+variable "cors_allowed_origins" {
+  description = "Comma-separated list of origins allowed to make credentialed requests (Django's Csv() cast splits this)."
   type        = string
+}
+
+variable "frontend_url" {
+  description = "Canonical frontend URL used to build links in emails."
+  type        = string
+}
+
+variable "custom_domain_aliases" {
+  description = "Extra hostnames the CloudFront distribution should answer for, e.g. api.skillfusion.shop. Empty until the ACM cert backing acm_certificate_arn is validated."
+  type        = list(string)
+  default     = []
+}
+
+variable "acm_certificate_arn" {
+  description = "us-east-1 ACM cert ARN. Empty string until custom_domain_aliases is non-empty."
+  type        = string
+  default     = ""
 }
 
 variable "email_secret_arn" {

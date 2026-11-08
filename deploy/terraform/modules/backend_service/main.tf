@@ -31,6 +31,11 @@ resource "random_password" "django_secret_key" {
 
 resource "aws_secretsmanager_secret" "django" {
   name = "${var.name_prefix}-django-secret-key"
+
+  # Same reasoning as force_destroy on the frontend bucket — the default
+  # 30-day recovery window would block an immediate re-apply after a
+  # destroy with "already scheduled for deletion".
+  recovery_window_in_days = 0
 }
 
 resource "aws_secretsmanager_secret_version" "django" {

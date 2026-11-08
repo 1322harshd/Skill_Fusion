@@ -47,6 +47,12 @@ data "external" "smtp_password" {
 
 resource "aws_secretsmanager_secret" "ses_smtp" {
   name = "${var.name_prefix}-ses-smtp"
+
+  # Same reasoning as force_destroy on the frontend bucket — this secret
+  # gets destroyed and recreated across iteration cycles; the default
+  # 30-day recovery window would block an immediate re-apply with
+  # "already scheduled for deletion" (as happened once already).
+  recovery_window_in_days = 0
 }
 
 resource "aws_secretsmanager_secret_version" "ses_smtp" {

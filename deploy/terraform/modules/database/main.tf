@@ -46,6 +46,11 @@ resource "aws_db_instance" "main" {
 
 resource "aws_secretsmanager_secret" "db" {
   name = "${var.name_prefix}-db-credentials"
+
+  # Same reasoning as force_destroy on the frontend bucket — the default
+  # 30-day recovery window would block an immediate re-apply after a
+  # destroy with "already scheduled for deletion".
+  recovery_window_in_days = 0
 }
 
 resource "aws_secretsmanager_secret_version" "db" {

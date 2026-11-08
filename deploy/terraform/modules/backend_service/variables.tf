@@ -53,3 +53,18 @@ variable "frontend_origin" {
   description = "The frontend's CloudFront URL, used for CORS_ALLOWED_ORIGINS and FRONTEND_URL."
   type        = string
 }
+
+variable "email_secret_arn" {
+  description = "Secrets Manager ARN holding the SES SMTP USER/PASSWORD, from the email module."
+  type        = string
+}
+
+variable "email_smtp_endpoint" {
+  description = "Region-specific SES SMTP endpoint, e.g. email-smtp.ap-southeast-2.amazonaws.com."
+  type        = string
+}
+
+variable "email_from_address" {
+  description = "Value for DEFAULT_FROM_EMAIL — must be on the SES-verified domain."
+  type        = string
+}

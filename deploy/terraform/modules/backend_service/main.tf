@@ -66,7 +66,7 @@ resource "aws_iam_role_policy_attachment" "ecs_execution_managed" {
 data "aws_iam_policy_document" "ecs_execution_secrets" {
   statement {
     actions   = ["secretsmanager:GetSecretValue"]
-    resources = [var.db_secret_arn, aws_secretsmanager_secret.django.arn]
+    resources = [var.db_secret_arn, aws_secretsmanager_secret.django.arn, var.email_secret_arn]
   }
 }
 
@@ -112,6 +112,11 @@ resource "aws_ecs_task_definition" "backend" {
         { name = "ALLOWED_HOSTS", value = "*" },
         { name = "CORS_ALLOWED_ORIGINS", value = var.frontend_origin },
         { name = "FRONTEND_URL", value = var.frontend_origin },
+        { name = "EMAIL_BACKEND", value = "django.core.mail.backends.smtp.EmailBackend" },
+        { name = "EMAIL_HOST", value = var.email_smtp_endpoint },
+        { name = "EMAIL_PORT", value = "587" },
+        { name = "EMAIL_USE_TLS", value = "True" },
+        { name = "DEFAULT_FROM_EMAIL", value = var.email_from_address },
       ]
       secrets = [
         { name = "SECRET_KEY", valueFrom = aws_secretsmanager_secret.django.arn },
@@ -120,6 +125,8 @@ resource "aws_ecs_task_definition" "backend" {
         { name = "DB_NAME", valueFrom = "${var.db_secret_arn}:DB_NAME::" },
         { name = "DB_USER", valueFrom = "${var.db_secret_arn}:DB_USER::" },
         { name = "DB_PASSWORD", valueFrom = "${var.db_secret_arn}:DB_PASSWORD::" },
+        { name = "EMAIL_HOST_USER", valueFrom = "${var.email_secret_arn}:USER::" },
+        { name = "EMAIL_HOST_PASSWORD", valueFrom = "${var.email_secret_arn}:PASSWORD::" },
       ]
       logConfiguration = {
         logDriver = "awslogs"

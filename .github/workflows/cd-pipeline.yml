@@ -1,12 +1,12 @@
 name: CD Pipeline (AWS)
 
-# Deploys on every push to `shared` — builds+pushes the backend image, runs
+# Deploys on every push to `main` — builds+pushes the backend image, runs
 # `terraform apply` (which updates the ECS task definition to that image and
 # reconciles any other infra drift), then syncs the frontend to S3 and
 # invalidates CloudFront. Can also be run by hand from the Actions tab.
 on:
   push:
-    branches: [shared]
+    branches: [main]
     paths:
       - "backend/**"
       - "frontend/**"
@@ -17,6 +17,7 @@ on:
 env:
   AWS_REGION: ap-southeast-2
   TF_WORKING_DIR: deploy/terraform
+  TF_EMAIL_DIR: deploy/terraform/email
 
 permissions:
   contents: read
@@ -46,6 +47,25 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.16.5"
+
+      # Separate state from the main stack on purpose (see email/backend.tf)
+      # — applied every run, but a no-op after the first since nothing here
+      # changes between deploys. Must run before the main stack, which reads
+      # its outputs (the SMTP secret ARN) via terraform_remote_state.
+      - name: Terraform init (email)
+        working-directory: ${{ env.TF_EMAIL_DIR }}
+        run: terraform init
+
+      - name: Terraform apply (email)
+        working-directory: ${{ env.TF_EMAIL_DIR }}
+        run: terraform apply -auto-approve
+
+      - name: Capture email outputs
+        id: email-outputs
+        working-directory: ${{ env.TF_EMAIL_DIR }}
+        run: |
+          echo "ses_verification=$(terraform output -raw domain_verification_record)" >> "$GITHUB_OUTPUT"
+          echo "ses_dkim=$(terraform output -json dkim_cname_records | jq -r 'join(",")')" >> "$GITHUB_OUTPUT"
 
       - name: Terraform init
         working-directory: ${{ env.TF_WORKING_DIR }}
@@ -125,3 +145,13 @@ jobs:
         run: |
           echo "Backend:  ${{ steps.tf-outputs.outputs.backend_url }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Frontend: ${{ steps.tf-outputs.outputs.frontend_url }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          # Only need re-adding at the registrar if the SES identity was
+          # just (re)created — a no-op to check otherwise, since the values
+          # are stable once DNS has them.
+          echo "### SES DNS records" >> "$GITHUB_STEP_SUMMARY"
+          echo "- TXT \`_amazonses.skillfusion.shop\` -> \`${{ steps.email-outputs.outputs.ses_verification }}\`" >> "$GITHUB_STEP_SUMMARY"
+          IFS=',' read -ra TOKENS <<< "${{ steps.email-outputs.outputs.ses_dkim }}"
+          for t in "${TOKENS[@]}"; do
+            echo "- CNAME \`$t._domainkey.skillfusion.shop\` -> \`$t.dkim.amazonses.com\`" >> "$GITHUB_STEP_SUMMARY"
+          done

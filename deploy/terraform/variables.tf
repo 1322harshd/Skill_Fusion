@@ -14,6 +14,12 @@ variable "frontend_bucket_name" {
   default     = "skillfusion-frontend-013364996908"
 }
 
+variable "domain_name" {
+  description = "Domain SES sends email from and (later) the custom domain for the frontend/API. DNS for it lives at the registrar, not in this Terraform config."
+  type        = string
+  default     = "skillfusion.shop"
+}
+
 variable "backend_image" {
   description = "Full ECR image URI including tag. The CD pipeline passes this on every deploy; locally it defaults to a placeholder so `terraform plan` doesn't fail before the first image exists."
   type        = string

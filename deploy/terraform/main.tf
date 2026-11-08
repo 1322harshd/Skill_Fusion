@@ -16,6 +16,18 @@ module "frontend" {
   bucket_name = var.frontend_bucket_name
 }
 
+# The email stack (deploy/terraform/email/) has its own state on purpose —
+# see its backend.tf — so a destroy/rebuild of this main stack doesn't
+# regenerate SES's DKIM keys. Reached read-only here via remote state.
+data "terraform_remote_state" "email" {
+  backend = "s3"
+  config = {
+    bucket = "skillfusion-terraform-state-013364996908"
+    key    = "skillfusion/email.tfstate"
+    region = "ap-southeast-2"
+  }
+}
+
 module "backend_service" {
   source                    = "./modules/backend_service"
   name_prefix               = var.name_prefix
@@ -26,4 +38,7 @@ module "backend_service" {
   db_secret_arn             = module.database.db_secret_arn
   backend_image             = var.backend_image
   frontend_origin           = module.frontend.site_url
+  email_secret_arn          = data.terraform_remote_state.email.outputs.smtp_secret_arn
+  email_smtp_endpoint       = data.terraform_remote_state.email.outputs.smtp_endpoint
+  email_from_address        = "noreply@${var.domain_name}"
 }

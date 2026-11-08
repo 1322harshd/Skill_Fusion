@@ -98,6 +98,13 @@ jobs:
       - name: Check for missing migrations
         run: python manage.py makemigrations --check --dry-run
 
+      # WhiteNoise's manifest storage (settings.py STORAGES) needs this to
+      # have already run, same as the Dockerfile does at build time —
+      # without it, any test touching an admin/static-rendering page fails
+      # with "Missing staticfiles manifest entry".
+      - name: Collect static files
+        run: python manage.py collectstatic --noinput
+
       - name: Run tests with coverage
         run: |
           coverage run manage.py test

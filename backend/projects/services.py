@@ -74,7 +74,7 @@ def assess_submission(brief, explanation, artifact_text, source_link=""):
         "well; gaps: 2 concrete things missing or unproven; verdict: 1-2 sentence "
         "assessment in plain words.\n"
         f'Return ONLY valid JSON, no markdown fencing, matching exactly: {ASSESS_SHAPE}\n\n'
-        "PROJECT BRIEF:\n" + str(brief)[:1500] + "\n\n"
+        "PROJECT BRIEF (plus the weekly plan the student followed — grade against BOTH):\n" + str(brief)[:3200] + "\n\n"
         "STUDENT EXPLANATION:\n" + str(explanation)[:1500] + "\n\n"
         "SUBMITTED ARTIFACT TEXT:\n" + str(artifact_text)[:6000]
         + ("\n\nSOURCE LINK: " + source_link if source_link else "")

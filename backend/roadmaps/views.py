@@ -151,7 +151,7 @@ def tweak_view(request):
     except Exception as e:
         return Response({"error": f"SF unreachable: {str(e)[:120]}"}, status=502)
     if result.get("classification") == "acceptable":
-        constraints = constraints + [new_request]
+        constraints = list(dict.fromkeys(constraints + [new_request]))
         rewritten = result.get("updated")
         if rm and rewritten and rewritten.get("weeks"):
             # "Applied" must mean applied: persist the validated edited plan,

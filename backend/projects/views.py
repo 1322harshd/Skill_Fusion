@@ -102,6 +102,31 @@ def _extract_artifact_text(file):
         "code/JSON/CSV), an image (.png/.jpg) or a .zip, or paste a link instead.")
 
 
+def _roadmap_context(fusion_id):
+    """The CURRENT weekly plan for this fusion — the chosen row first, else the
+    latest row — so grading judges the artifact against what the user actually
+    tuned (roadmap Tweak edits persist on the row: weeks_json + constraints).
+    Returns None for anon/local fusions that never persisted a roadmap."""
+    from roadmaps.models import Roadmap
+    if not fusion_id:
+        return None
+    row = (Roadmap.objects.filter(fusion_id=fusion_id, chosen=True)
+           .order_by("-created_at").first()
+           or Roadmap.objects.filter(fusion_id=fusion_id)
+                .order_by("-created_at").first())
+    if row is None:
+        return None
+    weeks = []
+    for w in (row.weeks_json or [])[:12]:
+        if not isinstance(w, dict):
+            continue
+        weeks.append({"week": w.get("week"), "topic": str(w.get("topic", ""))[:160],
+                      "objectives": [str(o)[:160] for o in (w.get("objectives") or [])[:4]]})
+    if not weeks:
+        return None
+    return {"plan_title": row.title, "weeks": weeks, "tweaks": (row.constraints or [])[:8]}
+
+
 @api_view(["POST"])
 @parser_classes([MultiPartParser, FormParser])
 @permission_classes([AllowAny])
@@ -129,6 +154,17 @@ def submit_view(request):
             if row is not None: brief = row.project or {}
         except Exception:
             brief = {}
+
+    # Grading must judge against the plan the user is actually following:
+    # the fusion-time project brief PLUS the current weekly roadmap row —
+    # including any Tweak edits persisted on it. Without this, a tweak would
+    # show in the plan but never influence what the grader rewards.
+    try:
+        rm_ctx = _roadmap_context(fusion_id)
+        if rm_ctx and isinstance(brief, dict):
+            brief = {**brief, "roadmap_plan": rm_ctx}
+    except Exception:
+        pass  # grading still proceeds on the brief alone
 
     filename = file_text = attachment_note = ""
     uploaded = request.FILES.get("file")

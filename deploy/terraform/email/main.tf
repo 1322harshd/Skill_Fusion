@@ -21,8 +21,13 @@ resource "aws_iam_user" "ses_smtp" {
 
 data "aws_iam_policy_document" "ses_send" {
   statement {
-    actions   = ["ses:SendRawEmail", "ses:SendEmail"]
-    resources = [aws_ses_domain_identity.main.arn]
+    actions = ["ses:SendRawEmail", "ses:SendEmail"]
+    # Scoping this to just the domain identity isn't enough — in SES
+    # sandbox mode, sending to an individually-verified test recipient
+    # also gets checked against *that* identity's own ARN, which isn't
+    # knowable ahead of time. Already scoped tightly by the actions above,
+    # so "*" here just means "any SES identity in this account".
+    resources = ["*"]
   }
 }
 

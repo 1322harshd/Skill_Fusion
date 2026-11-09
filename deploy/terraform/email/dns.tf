@@ -12,6 +12,25 @@ resource "aws_route53_zone" "main" {
   name = var.domain_name
 }
 
+# Without these, mail from a brand-new domain gets silently dropped or
+# junked by stricter providers (Outlook/Hotmail especially) even though
+# SES itself accepts and sends it without error.
+resource "aws_route53_record" "spf" {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = var.domain_name
+  type    = "TXT"
+  ttl     = 300
+  records = ["v=spf1 include:amazonses.com ~all"]
+}
+
+resource "aws_route53_record" "dmarc" {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = "_dmarc.${var.domain_name}"
+  type    = "TXT"
+  ttl     = 300
+  records = ["v=DMARC1; p=quarantine;"]
+}
+
 # One cert, three names — CloudFront needs the cert attached to a
 # distribution to cover every alias that distribution answers for, and the
 # frontend answers for both the apex and www.

@@ -232,7 +232,7 @@ function TweakPanel({ fusion, pv, onUpdated }) {
                 {result.rewrite_applied === false && result.rewrite_note && (
                   <p className="mt-2 font-body text-[12px] font-light text-white/50">{result.rewrite_note}</p>
                 )}
-                {(result.diff || []).length ? (
+                {(result.rewrite_applied === true && (result.diff || []).length) ? (
                   <ul className="mt-2 flex flex-col gap-1">
                     {result.diff.map((d, i) => (
                       <li key={i} className="font-body text-[12px] font-light text-white/70">
@@ -242,8 +242,6 @@ function TweakPanel({ fusion, pv, onUpdated }) {
                       </li>
                     ))}
                   </ul>
-                ) : result.reasoning ? (
-                  <p className="mt-2 font-body text-[12px] font-light text-white/65">{result.reasoning}</p>
                 ) : null}
               </motion.div>
             )}

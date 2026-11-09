@@ -132,24 +132,40 @@ def _sanitize_weeks(raw_weeks):
 
 def _skills_present(weeks, skills):
     """The honest-Applied gate: every one of the user's skills must actually
-    appear in the rewritten plan text. Substring, case-insensitive — "Pythonic"
-    counts for Python, "windows form" counts for Windows."""
+    appear in the rewritten plan text. Matched on lowercase substring with a
+    single-trailing-s stem so plural skills match singular usage: "Ceramics"
+    stays engaged by objectives that say "ceramic kiln", "Pythonic" still
+    lands for "Python"."""
     text = " ".join((w["topic"] + " " + " ".join(w["objectives"])) for w in weeks).lower()
-    return all(str(s).lower() in text for s in skills)
+    for skill in skills:
+        k = str(skill).lower().strip()
+        stem = k[:-1] if k.endswith("s") and len(k) > 4 else k
+        if k in text or (stem and stem != k and stem in text):
+            continue
+        return False
+    return True
 
 
-def _rewrite_roadmap(roadmap_record, constraints, skills, request):
+def _rewrite_roadmap(roadmap_record, constraints, skills, request, nudge=False):
     """Second SF call that actually produces the edited plan — the judge call
     only classifies and diffs, it never rewrites. Uses the same generator shape
     as the previews detail call so the frontend can normalize it directly.
-    Returns (plan_dict, None) on a validated rewrite, (None, reason) otherwise."""
+    Returns (plan_dict, None) on a validated rewrite, (None, reason) otherwise.
+    `nudge` (retry pass) warns the model to literally name the skills — the
+    common failure is a valid rewrite that paraphrases "Ceramics" away."""
     import asyncio as _a, json as _j
     listed = _joint(skills)
+    nudge_txt = (
+        " IMPORTANT: literally use the exact words "
+        f"{', '.join(f'\"{s}\"' for s in skills)} inside week topics or objectives "
+        "(singular or plural is fine) so both skills read as engaged. "
+    ) if nudge else ""
     prompt = (
         f'Roadmap titled "{roadmap_record["title"]}" combining {listed}. '
         f'Current weeks: {_j.dumps(roadmap_record.get("weeks", []))}. '
         f'Accumulated constraints that must hold: {constraints if constraints else "none"}. '
         f'Apply this change request: "{request}". '
+        f'{nudge_txt}'
         'The final plan must keep every skill fully engaged and satisfy every constraint. '
         'Return the COMPLETE updated roadmap (same week count unless the request changes it). '
         f'Return ONLY valid JSON: {TWEAK_REWRITE_SHAPE}')
@@ -195,6 +211,15 @@ def tweak_roadmap(roadmap_record, constraints, skill_a, skill_b, request, skill_
     if isinstance(result, dict) and result.get("classification") == "acceptable":
         skills = [skill_a, skill_b] + ([skill_c] if skill_c else [])
         rewritten, reason = _rewrite_roadmap(roadmap_record, constraints, skills, request)
+        if not rewritten:
+            # The rewrite exists but a validation layer rejected it. One guided
+            # retry before giving up: the usual cause is a valid edit that
+            # paraphrased a skill word away ("ceramic" for "Ceramics").
+            rewritten, reason2 = _rewrite_roadmap(roadmap_record, constraints, skills, request, nudge=True)
+            if rewritten:
+                reason = None
+            else:
+                reason = reason2 or reason
         if rewritten:
             result["updated"] = rewritten
             result["rewrite_applied"] = True

@@ -17,6 +17,11 @@ class ProjectSubmission(models.Model):
     attachment_note = models.CharField(max_length=300, blank=True)  # e.g. image kept as visual proof
     verdict = models.JSONField(default=dict, blank=True)  # {matchScore, closeness, strengths, gaps, verdict}
     match_score = models.IntegerField(null=True, blank=True)
+    # --- async zip review (projects/zip_grader.py) ---
+    status = models.CharField(max_length=16, default="graded")  # graded | grading | failed
+    est_seconds = models.IntegerField(null=True, blank=True)    # promised ETA incl. queue wait
+    file_digests = models.JSONField(default=list, blank=True)   # per-file: name/ext/chars/text/score…
+    brief = models.JSONField(default=dict, blank=True)          # {brief, explanation, source_link} for worker + regrade
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

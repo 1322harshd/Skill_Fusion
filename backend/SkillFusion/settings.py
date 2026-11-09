@@ -220,6 +220,31 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Django's own default logging config only mails ADMINS on a 500 (which
+# isn't set up) — with DEBUG off, that left every unhandled exception
+# completely invisible, including in CloudWatch. This routes them to
+# stderr instead, which the ECS task's awslogs driver already captures.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
+}
+
 # ---- Kunal: SF + scoring infra (aligned to LLM_API_URL used by resume) ----
 EMBED_URL = config('EMBED_URL', default='http://localhost:11434')
 EMBED_MODEL = config('EMBED_MODEL', default='nomic-embed-text')

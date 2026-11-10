@@ -27,7 +27,7 @@ variable "backend_image" {
 }
 
 variable "llm_api_url" {
-  description = "The AI model's Tailscale address, e.g. http://friends-laptop.tailxxxx.ts.net:8081. Empty default so apply doesn't fail before this is known — AI features just won't work until it's set."
+  description = "The AI model's Tailscale address — a friend's laptop, reached through the Tailscale sidecar's proxy."
   type        = string
-  default     = ""
+  default     = "http://100.95.8.56:8081"
 }

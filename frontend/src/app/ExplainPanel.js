@@ -11,6 +11,7 @@ function ExplainPanel({ a, b, fusionId, logTitle, logTags = [], placeholder, but
   const [file, setFile] = useState(null);
   const [sourceLink, setSourceLink] = useState("");
   const [assessment, setAssessment] = useState(null);
+  const [zip, setZip] = useState(null); // async zip review: seed after submit, live status after that
   const fileInput = React.useRef(null);
 
   async function submit() {
@@ -18,6 +19,7 @@ function ExplainPanel({ a, b, fusionId, logTitle, logTags = [], placeholder, but
     setSending(true);
     try {
       let result = null;
+      let asyncSub = null;
       if (submitMode && (file || sourceLink.trim())) {
         const fd = new FormData();
         fd.append("fusion_id", fusionId || "");
@@ -26,27 +28,63 @@ function ExplainPanel({ a, b, fusionId, logTitle, logTags = [], placeholder, but
         if (projectBrief) fd.append("brief", JSON.stringify(projectBrief));
         if (file) fd.append("file", file);
         result = await window.Api.submitProjectWork(fd);
-        setAssessment(result && result.submission ? result.submission : null);
+        const sub = result && result.submission;
+        asyncSub = sub && sub.async ? sub : null;
+        if (asyncSub) {
+          // Zip with gradeable files: SF reads them one by one in the
+          // background — the card below polls and reports per file.
+          setZip({ ...asyncSub, explanation: text.trim() });
+          window.Toast.show(
+            "Attachment submitted — grading " + asyncSub.readableCount +
+            " file" + (asyncSub.readableCount === 1 ? "" : "s") + " (~" +
+            Math.max(1, Math.round((asyncSub.estSeconds || 0) / 60)) +
+            " min). Scores appear here as they land.", "success");
+        } else if (sub) {
+          setAssessment(sub);
+        }
       } else {
-        const res = await Store.explainFeedback(a, b, text);
+        const res = await Store.explainFeedback(a, b, text.trim());
         setFb(res || {});
       }
-      const assessed = result && result.submission ? result.submission : null;
-      Store.addLog({
-        fusionId,
-        title: logTitle,
-        description: text.trim() + (assessed && assessed.verdict
-          ? `\n\nAssessment: ${assessed.verdict.verdict} (${assessed.verdict.matchScore === null ? "n/a" : assessed.verdict.matchScore + "/100"})` : ""),
-        date: "Today",
-        tags: logTags,
-        source: assessed ? (assessed.filename || assessed.sourceLink || "artifact") : "self-reported",
-      });
-      window.Toast.show(assessed ? "Work submitted and assessed — logged to your Growth Log" : "Logged to your Growth Log", "success");
+      if (!asyncSub) {
+        const assessed = result && result.submission ? result.submission : null;
+        Store.addLog({
+          fusionId,
+          title: logTitle,
+          description: text.trim() + (assessed && assessed.verdict
+            ? `\n\nAssessment: ${assessed.verdict.verdict} (${assessed.verdict.matchScore === null ? "n/a" : assessed.verdict.matchScore + "/100"})` : ""),
+          date: "Today",
+          tags: logTags,
+          source: assessed ? (assessed.filename || assessed.sourceLink || "artifact") : "self-reported",
+        });
+        window.Toast.show(assessed ? "Work submitted and assessed — logged to your Growth Log" : "Logged to your Growth Log", "success");
+      }
     } catch (e) {
       window.Toast.show((e && e.message) || "Feedback unreachable — check the AI service and retry", "error");
     } finally {
       setSending(false);
     }
+  }
+
+  function onZipDone(s) {
+    const exp = (zip && zip.explanation) || "";
+    setZip(s);
+    if (s.verdict) {
+      setAssessment(s);
+      if (fusionId && typeof s.verdict.matchScore === "number") {
+        Store.setGrade(fusionId, s.verdict.matchScore);
+      }
+    }
+    const score = s.verdict && typeof s.verdict.matchScore === "number" ? s.verdict.matchScore + "/100" : "n/a";
+    window.Toast.show("Zip graded — " + score, "success");
+    Store.addLog({
+      fusionId,
+      title: logTitle,
+      description: exp + (s.verdict ? `\n\nAssessment: ${s.verdict.verdict} (${score})` : ""),
+      date: "Today",
+      tags: logTags,
+      source: (s.files && s.files.length ? s.files.length + " zip files" : (s.filename || "artifact")),
+    });
   }
 
   return (
@@ -114,6 +152,14 @@ function ExplainPanel({ a, b, fusionId, logTitle, logTags = [], placeholder, but
       </div>
 
       <AnimatePresence>
+        {zip && (
+          <ZipGradingCard
+            seed={zip}
+            logTitle={logTitle}
+            logTags={logTags}
+            onDone={onZipDone}
+          />
+        )}
         {assessment && assessment.verdict && (
           <motion.div
             initial={{ opacity: 0, filter: "blur(8px)", y: 10 }}
@@ -169,6 +215,124 @@ function ExplainPanel({ a, b, fusionId, logTitle, logTags = [], placeholder, but
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+function ZipGradingCard({ seed, fusionId, logTitle, logTags, onDone }) {
+  const [sub, setSub] = useState(seed);
+  const [stale, setStale] = useState(false);
+  const [resuming, setResuming] = useState(false);
+
+  React.useEffect(() => {
+    if (!sub || !sub.id || sub.status !== "grading" || stale) return undefined;
+    let alive = true;
+    const started = Date.now();
+    const iv = setInterval(async () => {
+      if (Date.now() - started > 10 * 60 * 1000) {
+        if (alive) setStale(true);
+        clearInterval(iv);
+        return;
+      }
+      try {
+        const res = await window.Api.submissionStatus(sub.id);
+        if (!alive) return;
+        const s = res && res.submission;
+        if (s) {
+          setSub(s);
+          if (s.status !== "grading") {
+            clearInterval(iv);
+            if (typeof onDone === "function") onDone(s);
+          }
+        }
+      } catch (e) { /* transient — server busy or restarting; keep polling */ }
+    }, 5000);
+    return () => { alive = false; clearInterval(iv); };
+  }, [sub && sub.id, sub && sub.status, stale]);
+
+  async function regrade() {
+    setResuming(true);
+    try {
+      const res = await window.Api.regradeSubmission(sub.id);
+      setStale(false);
+      if (res && res.submission) setSub(res.submission);
+    } catch (e) {
+      window.Toast.show((e && e.message) || "Re-grade couldn't start", "error");
+    } finally {
+      setResuming(false);
+    }
+  }
+
+  const files = sub.files || [];
+  const scored = files.filter((f) => typeof f.score === "number");
+  const readable = files.length || seed.readableCount || 0;
+  const skippedCount = (sub.skippedCount || 0) || (seed.skipped || []).length;
+  const etaMin = Math.max(1, Math.round((sub.estSeconds || seed.estSeconds || 0) / 60));
+  const done = sub.status === "graded";
+  const pending = sub.status === "grading" && !stale;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, filter: "blur(8px)", y: 10 }}
+      animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="mt-4 rounded-xl border border-white/15 bg-black/30 p-4"
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <span className={"inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-body text-[11px] font-semibold " +
+          (done ? "bg-white text-black" : "bg-white/10 text-white/80 ring-1 ring-white/20")}>
+          <Icons.UploadCloud className="h-3 w-3" />
+          {done ? "Graded " + readable + " files"
+            : sub.status === "failed" ? "Grading interrupted"
+            : stale ? "Still grading — past 10 min" : "Zip review"}
+        </span>
+        {pending && (
+          <span className="font-body text-[11px] text-white/60">
+            {readable ? "Reading file " + Math.min(scored.length + 1, readable) + " of " + readable : "Estimating…"}
+            {" · come back in ~" + etaMin + " min"}
+          </span>
+        )}
+      </div>
+      {readable > 0 && (
+        <div className="mt-3 space-y-1.5">
+          {files.map((f, i) => (
+            <div key={f.name || i} className="flex items-center gap-2 font-body text-[13px] font-light">
+              <span className={typeof f.score === "number" ? "text-emerald-300" : "text-white/35"}>
+                {typeof f.score === "number" ? "✓" : "◌"}
+              </span>
+              <span className="truncate text-white/85">{f.name}</span>
+              <span className="ml-auto font-mono text-[12px] text-white/70">
+                {f.note && f.note.toLowerCase().includes("failed")
+                  ? f.note.replace(" — retry with Re-grade", "")
+                  : typeof f.score === "number" ? "score " + f.score : "queued"}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+      {skippedCount > 0 && (
+        <p className="mt-2 font-body text-[11px] text-white/45">
+          • {skippedCount} other entr{skippedCount === 1 ? "y" : "ies"} skipped — not machine-readable
+        </p>
+      )}
+      {done && sub.verdict && (
+        <p className="mt-3 font-body text-sm font-light text-white/85">{sub.verdict.verdict}</p>
+      )}
+      {(sub.status === "failed" || stale) && (
+        <div className="mt-3 flex items-center gap-3">
+          <p className="font-body text-[12px] text-white/55">
+            {scored.length}/{readable} graded — Re-grade resumes from file {scored.length + 1}.
+          </p>
+          <button
+            type="button"
+            onClick={regrade}
+            disabled={resuming}
+            className="rounded-full bg-white px-4 py-1.5 font-body text-[12px] font-medium text-black disabled:opacity-60"
+          >
+            {resuming ? "Resuming…" : "Re-grade"}
+          </button>
+        </div>
+      )}
+    </motion.div>
   );
 }
 

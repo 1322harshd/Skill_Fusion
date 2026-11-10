@@ -195,3 +195,175 @@ class SubmitWorkTests(TestCase):
         verdict = response.json()["submission"]["verdict"]
         self.assertIsNone(verdict["matchScore"])
         self.assertIn("couldn't run", verdict["verdict"].lower())
+
+
+# ---- async zip review (projects/zip_grader.py) -----------------------------
+
+def _zip_bytes(entries):
+    """entries: {name: bytes|str} — name without extension => binary-ish junk."""
+    import io, zipfile
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        for name, content in entries.items():
+            z.writestr(name, content if isinstance(content, bytes) else content.encode())
+    return buf.getvalue()
+
+
+class ZipPlanTests(TestCase):
+    def test_plan_filters_junk_and_caps_readable_files(self):
+        from projects.zip_grader import MAX_READABLE_FILES, plan_zip_review
+        entries = {f"src/file{i}.py": f"# module {i}" * 40 for i in range(20)}
+        entries["__MACOSX/src/._file0.py"] = b"junk"
+        entries[".DS_Store"] = b"junk"
+        entries["logo.png"] = b"\x89PNG pretend"
+        entries["notes.pdf"] = b"%PDF not read in zip review"
+        plan = plan_zip_review(_zip_bytes(entries))
+        self.assertEqual(plan["readable_count"], MAX_READABLE_FILES)
+        self.assertEqual(len(plan["files"][0]["text"]), 400)
+
+    def test_plan_skips_traversal_and_absolute_paths(self):
+        from projects.zip_grader import plan_zip_review
+        plan = plan_zip_review(_zip_bytes({
+            "../escape.txt": "nope", "/etc/passwd.txt": "nope", "ok.md": "fine",
+        }))
+        skipped_names = [s["name"] for s in plan["skipped"]]
+        self.assertIn("../escape.txt", skipped_names)
+        self.assertIn("/etc/passwd.txt", skipped_names)
+        plan_names = [f["name"] for f in plan["files"]]
+        self.assertEqual(plan_names, ["ok.md"])
+
+    def test_plan_estimate_scales_with_file_count(self):
+        from projects.zip_grader import estimate_seconds, plan_zip_review, SECONDS_PER_FILE
+        plan = plan_zip_review(_zip_bytes({f"a{i}.md": "x" for i in range(4)}))
+        self.assertEqual(plan["base_seconds"], 4 * SECONDS_PER_FILE)
+        self.assertEqual(estimate_seconds(1), SECONDS_PER_FILE)
+
+    def test_too_many_entries_rejected_with_message(self):
+        from projects.zip_grader import plan_zip_review, MAX_ENTRIES
+        blob = _zip_bytes({f"e{i}.txt": "x" for i in range(MAX_ENTRIES + 1)})
+        with self.assertRaises(ValueError) as ctx:
+            plan_zip_review(blob)
+        self.assertIn("60", str(ctx.exception))
+
+
+class ZipSubmitAndWorkerTests(TestCase):
+    def setUp(self):
+        from rest_framework.test import APIClient
+        self.client = APIClient()
+
+    def _post_zip(self, blob, name="kit.zip"):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        return self.client.post("/api/projects/submit", {
+            "fusion_id": "f-demo",
+            "explanation": "Whole kit, graded file by file please.",
+            "brief": '{"title": "Apex"}',
+            "file": SimpleUploadedFile(name, blob, content_type="application/zip"),
+        }, format="multipart")
+
+    def test_zip_submit_answers_immediately_with_eta(self):
+        from projects.models import ProjectSubmission
+        with patch("projects.views.start_zip_review") as noop, \
+             patch("projects.zip_grader.assess_submission", side_effect=AssertionError("no sync grading")):
+            response = self._post_zip(_zip_bytes({
+                "README.md": "The kit ships emblems and signage.",
+                "guide/style.md": "Foundry palette: RAL 2004.",
+                "notes.log": "run 1 ok",
+                "logo.png": b"\x89PNG",
+            }))
+        self.assertEqual(response.status_code, 201)
+        sub = response.json()["submission"]
+        self.assertTrue(sub["async"])
+        self.assertEqual(sub["status"], "grading")
+        self.assertEqual(sub["readableCount"], 3)
+        self.assertEqual(sub["estSeconds"], 3 * 12)
+        row = ProjectSubmission.objects.latest("id")
+        self.assertEqual(row.status, "grading")
+        self.assertEqual(len(row.file_digests), 3)
+        noop.assert_called_once()
+
+    def test_zip_submit_without_readable_files_falls_back_to_visual_proof(self):
+        with patch("projects.views.start_zip_review") as noop:
+            response = self._post_zip(_zip_bytes({"logo.png": b"\x89PNG", "only.bin": b"\x00\x01"}))
+        self.assertEqual(response.status_code, 201)
+        sub = response.json()["submission"]
+        self.assertNotIn("async", sub)
+        self.assertIn("no machine-readable", sub["attachmentNote"])
+        noop.assert_not_called()
+
+    def test_worker_grades_per_file_and_persists_aggregate(self):
+        from projects.models import ProjectSubmission
+        from projects.zip_grader import _grade_files
+        with patch("projects.views.start_zip_review"):
+            self._post_zip(_zip_bytes({"a.md": "alpha text", "b/csv.csv": "num,one", "c.py": "print(1)"}))
+        row = ProjectSubmission.objects.latest("id")
+        per_file = [{"matchScore": 90, "closeness": "strong", "strengths": ["a ok"], "gaps": ["x"], "verdict": "A"},
+                    {"matchScore": 50, "closeness": "partial", "strengths": ["b ok"], "gaps": ["y"], "verdict": "B"},
+                    {"matchScore": 10, "closeness": "weak", "strengths": [], "gaps": ["z"], "verdict": "C"}]
+        with patch("projects.zip_grader.assess_submission", side_effect=per_file):
+            _grade_files(row.id)
+        row.refresh_from_db()
+        self.assertEqual(row.status, "graded")
+        self.assertEqual(row.match_score, 53)  # chars-weighted aggregate of 90/50/10 by size
+        self.assertEqual(row.verdict["closeness"], "partial")
+        self.assertIn("Aggregate of 3 files", row.verdict["verdict"])
+        scores = [d["score"] for d in row.file_digests]
+        self.assertEqual(scores, [90, 50, 10])
+        self.assertNotIn("text", row.file_digests[0])  # staged text dropped once graded
+
+    def test_failed_grades_kept_resumable_then_regrade_finishes(self):
+        from projects.models import ProjectSubmission
+        from projects.zip_grader import _grade_files
+        with patch("projects.views.start_zip_review"):
+            self._post_zip(_zip_bytes({"a.md": "alpha text", "b.py": "print(2)"}))
+        row = ProjectSubmission.objects.latest("id")
+        with patch("projects.zip_grader.assess_submission", side_effect=RuntimeError("SF down")):
+            _grade_files(row.id)
+        row.refresh_from_db()
+        self.assertEqual(row.status, "failed")
+        self.assertIn("text", row.file_digests[0])  # text kept for resume
+        self.assertIn("Re-grade", row.file_digests[0]["note"])
+        with patch("projects.zip_grader.assess_submission", return_value={
+                "matchScore": 66, "closeness": "partial", "strengths": ["s"], "gaps": ["g"], "verdict": "ok"}):
+            _grade_files(row.id)
+        row.refresh_from_db()
+        self.assertEqual(row.status, "graded")
+        self.assertEqual(row.match_score, 66)
+
+    def test_status_endpoint_returns_digests_without_text(self):
+        from projects.models import ProjectSubmission
+        from projects.zip_grader import _grade_files
+        with patch("projects.views.start_zip_review"):
+            self._post_zip(_zip_bytes({"a.md": "alpha text", "b.md": "beta text"}))
+        row = ProjectSubmission.objects.latest("id")
+        with patch("projects.zip_grader.assess_submission", return_value={
+                "matchScore": 80, "closeness": "strong", "strengths": [], "gaps": [], "verdict": "fine"}):
+            _grade_files(row.id)
+        response = self.client.get(f"/api/projects/submission?id={row.id}")
+        self.assertEqual(response.status_code, 200)
+        sub = response.json()["submission"]
+        self.assertEqual(sub["status"], "graded")
+        for digest in sub["files"]:
+            self.assertNotIn("text", digest)
+            self.assertIn("name", digest)
+
+    def test_regrade_endpoint_resumes(self):
+        from projects.models import ProjectSubmission
+        from projects.zip_grader import _grade_files
+        with patch("projects.views.start_zip_review"):
+            self._post_zip(_zip_bytes({"a.md": "alpha text"}))
+        row = ProjectSubmission.objects.latest("id")
+        with patch("projects.zip_grader.assess_submission", side_effect=RuntimeError("down")):
+            _grade_files(row.id)
+        self.assertEqual(ProjectSubmission.objects.latest("id").status, "failed")
+        with patch("projects.views.start_zip_review"), \
+             patch("projects.zip_grader.assess_submission", return_value={
+                "matchScore": 74, "closeness": "partial", "strengths": [], "gaps": [], "verdict": "resumed"}):
+            response = self.client.post("/api/projects/regrade", {"id": row.id}, format="json")
+        self.assertEqual(response.status_code, 200)
+        from projects.zip_grader import _grade_files
+        with patch("projects.zip_grader.assess_submission", return_value={
+                "matchScore": 74, "closeness": "partial", "strengths": [], "gaps": [], "verdict": "resumed"}):
+            _grade_files(row.id)
+        row.refresh_from_db()
+        self.assertEqual(row.status, "graded")
+        self.assertEqual(row.match_score, 74)

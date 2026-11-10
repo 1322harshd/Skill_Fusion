@@ -47,6 +47,7 @@ module "backend_service" {
   email_secret_arn          = data.terraform_remote_state.email.outputs.smtp_secret_arn
   email_smtp_endpoint       = data.terraform_remote_state.email.outputs.smtp_endpoint
   email_from_address        = "noreply@${var.domain_name}"
+  llm_api_url               = var.llm_api_url
 }
 
 # CloudFront's hosted zone id is the same fixed value for every

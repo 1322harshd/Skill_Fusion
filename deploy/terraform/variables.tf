@@ -25,3 +25,9 @@ variable "backend_image" {
   type        = string
   default     = "public.ecr.aws/docker/library/nginx:latest"
 }
+
+variable "llm_api_url" {
+  description = "The AI model's Tailscale address, e.g. http://friends-laptop.tailxxxx.ts.net:8081. Empty default so apply doesn't fail before this is known — AI features just won't work until it's set."
+  type        = string
+  default     = ""
+}

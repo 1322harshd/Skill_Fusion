@@ -156,6 +156,11 @@ GITHUB_API_TOKEN = config('GITHUB_API_TOKEN', default='')
 LLM_API_URL = config('LLM_API_URL', default='http://localhost:8081')
 LLM_MODEL = config('LLM_MODEL', default='models/gemma4-12b-it-4bit')
 
+# Set only in ECS, where the model lives on a Tailscale-only machine reachable
+# through the Tailscale sidecar's local proxy — empty locally, where LLM_API_URL
+# is directly reachable with no proxy needed.
+TAILSCALE_PROXY_URL = config('TAILSCALE_PROXY_URL', default='')
+
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases

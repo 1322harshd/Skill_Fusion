@@ -34,9 +34,9 @@ variable "task_cpu" {
 }
 
 variable "task_memory" {
-  description = "512MB, the smallest size Fargate allows paired with 256 CPU units."
+  description = "1024MB — bumped from Fargate's 512MB floor to leave room for the Tailscale sidecar alongside gunicorn's workers."
   type        = string
-  default     = "512"
+  default     = "1024"
 }
 
 variable "desired_count" {
@@ -83,5 +83,10 @@ variable "email_smtp_endpoint" {
 
 variable "email_from_address" {
   description = "Value for DEFAULT_FROM_EMAIL — must be on the SES-verified domain."
+  type        = string
+}
+
+variable "llm_api_url" {
+  description = "The AI model's Tailscale address, e.g. http://friends-laptop.tailxxxx.ts.net:8081 — reached through the Tailscale sidecar's proxy, not directly."
   type        = string
 }

@@ -10,6 +10,11 @@ from django.conf import settings
 # always miss .env and silently fall back to localhost.
 SF_URL = getattr(settings, "LLM_API_URL", None) or os.getenv("SF_URL", "http://localhost:8081")
 SF_MODEL = getattr(settings, "LLM_MODEL", None) or "models/gemma4-12b-it-4bit"
+# Only this one call goes through the Tailscale sidecar's proxy — never set
+# as a container-wide HTTP_PROXY, which would also silently reroute SES,
+# GitHub OAuth, etc. through it.
+_TAILSCALE_PROXY_URL = getattr(settings, "TAILSCALE_PROXY_URL", None) or os.getenv("TAILSCALE_PROXY_URL", "")
+SF_PROXIES = {"http": _TAILSCALE_PROXY_URL, "https": _TAILSCALE_PROXY_URL} if _TAILSCALE_PROXY_URL else None
 def parse_sf_json(text):
     """Lenient SF-JSON parse: strict, then first-object extraction, then
     control-character-tolerant. Raises JSONDecodeError only if all fail."""
@@ -50,7 +55,7 @@ async def call_sf14b(adapter, prompt, retries=2, max_tokens=3000):
     for attempt in range(retries+1):
         try:
             # sync requests in async wrapper for scaffold
-            r=requests.post(f"{SF_URL}/v1/chat/completions", json=body, timeout=300)
+            r=requests.post(f"{SF_URL}/v1/chat/completions", json=body, timeout=300, proxies=SF_PROXIES)
             if r.status_code >= 500:
                 # mlx is single-threaded and restarts/queues under load — a 5xx
                 # (e.g. transient 502/503) is retryable, not fatal.

@@ -1,4 +1,6 @@
 import asyncio
+import random
+
 from prompt_engineering.llm_client import call_sf14b_json
 
 # UI contract (frontend/src/app/Project.js): every key the project page reads.
@@ -95,5 +97,43 @@ def assess_submission(brief, explanation, artifact_text, source_link=""):
         "closeness": closeness,
         "strengths": [str(s) for s in (raw.get("strengths") or [])[:3]],
         "gaps": [str(s) for s in (raw.get("gaps") or [])[:3]],
-        "verdict": str(raw.get("verdict", "")).strip() or "Assessed against the project brief.",
+        "verdict": _verdict_sentence(
+            closeness, [str(s) for s in (raw.get("strengths") or [])[:3]],
+            [str(g) for g in (raw.get("gaps") or [])[:3]]),
     }
+
+
+# ---- verdict sentence: fixed template pools (same idea as the Dashboard
+# greeting sets) instead of the model's freeform sentence. The model kept
+# emitting awkward half-thoughts ("how what you did in …") for the verdict
+# field, so it no longer writes the sentence: it still picks score, closeness,
+# strengths and gaps; the wording is ours, with {slots} filled from its
+# strengths/gaps when they exist and sensible fallbacks when they don't.
+def _fill(lst, fallback):
+    s = (lst[0] if lst else "").strip().rstrip(".")
+    return s or fallback
+
+def _verdict_sentence(closeness, strengths, gaps):
+    s1 = _fill(strengths, "the core work")
+    g1 = _fill(gaps, "the main deliverable")
+    pool = {
+        "strong": [
+            f"This is the briefed work, delivered — {s1} holds up on its own.",
+            "Strong match: the artifact shows the brief's deliverables, real and complete.",
+            f"Close to the full brief — {s1} is the strongest part of the delivery.",
+            f"The brief's core is all here, led by {s1}.",
+        ],
+        "partial": [
+            f"Part of the brief is real ({s1}), but {g1} is still missing.",
+            f"Halfway there: {s1} shows real work, while {g1} remains unproven.",
+            f"The artifact covers some of the brief — {g1} is the clearest gap.",
+            f"A partial delivery: {s1} lands, but the brief asks for more ({g1}).",
+        ],
+        "weak": [
+            f"This doesn't yet show the briefed work — {g1} is the first thing to fix.",
+            f"Very little of the brief is visible here; start with {g1}.",
+            "The artifact and the brief barely overlap so far.",
+            f"Too little of the brief is present to count yet — {g1} needs to exist first.",
+        ],
+    }
+    return random.choice(pool.get(closeness, pool["weak"]))

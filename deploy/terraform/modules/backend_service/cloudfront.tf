@@ -16,6 +16,13 @@ resource "aws_cloudfront_distribution" "backend" {
       https_port             = 443
       origin_protocol_policy = "http-only"
       origin_ssl_protocols   = ["TLSv1.2"]
+      # 60s is the max allowed without an AWS support quota increase — the
+      # 30s/5s defaults were cutting off AI generation calls (roadmap
+      # previews, resume generation) that routinely take longer than that.
+      # Some of those (resume: ~85s+ per resume/llm.py) can still exceed
+      # even this; revisit with a quota increase if that keeps happening.
+      origin_read_timeout      = 60
+      origin_keepalive_timeout = 60
     }
   }
 

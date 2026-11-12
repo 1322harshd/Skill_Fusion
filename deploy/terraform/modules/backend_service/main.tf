@@ -221,6 +221,10 @@ resource "aws_lb" "backend" {
   load_balancer_type = "application"
   security_groups    = [var.alb_security_group_id]
   subnets            = var.public_subnet_ids
+
+  # Comfortably above CloudFront's 60s origin_read_timeout (cloudfront.tf) —
+  # this just needs to not be the bottleneck, not match it exactly.
+  idle_timeout = 120
 }
 
 resource "aws_lb_target_group" "backend" {

@@ -29,4 +29,6 @@ EXPOSE 8000
 # running task (desired_count=1); with more than one replica, migrations
 # should move to a separate one-off ECS task run before rolling out new
 # containers, so two tasks never race on the same migration.
-CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn SkillFusion.wsgi:application --bind 0.0.0.0:8000 --workers 3"]
+# --timeout 120: default 30s was killing AI-generation requests (roadmap
+# previews, resume generation) mid-flight — matches the ALB's idle_timeout.
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn SkillFusion.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"]

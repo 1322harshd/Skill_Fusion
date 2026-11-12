@@ -90,3 +90,9 @@ variable "llm_api_url" {
   description = "The AI model's Tailscale address, e.g. http://friends-laptop.tailxxxx.ts.net:8081 — reached through the Tailscale sidecar's proxy, not directly."
   type        = string
 }
+
+variable "github_oauth_client_id" {
+  description = "From a GitHub OAuth App (github.com/settings/developers) — not secret, the server hands it to the frontend on request."
+  type        = string
+  default     = ""
+}

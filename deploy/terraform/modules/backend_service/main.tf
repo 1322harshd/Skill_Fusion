@@ -52,6 +52,13 @@ resource "aws_secretsmanager_secret" "tailscale" {
   recovery_window_in_days = 0
 }
 
+# Same reasoning as the Tailscale key above — set out of band, never in
+# Terraform or git.
+resource "aws_secretsmanager_secret" "github_oauth" {
+  name                    = "${var.name_prefix}-github-oauth-client-secret"
+  recovery_window_in_days = 0
+}
+
 # ---- IAM ----
 
 data "aws_iam_policy_document" "ecs_assume" {
@@ -80,7 +87,7 @@ resource "aws_iam_role_policy_attachment" "ecs_execution_managed" {
 data "aws_iam_policy_document" "ecs_execution_secrets" {
   statement {
     actions   = ["secretsmanager:GetSecretValue"]
-    resources = [var.db_secret_arn, aws_secretsmanager_secret.django.arn, var.email_secret_arn, aws_secretsmanager_secret.tailscale.arn]
+    resources = [var.db_secret_arn, aws_secretsmanager_secret.django.arn, var.email_secret_arn, aws_secretsmanager_secret.tailscale.arn, aws_secretsmanager_secret.github_oauth.arn]
   }
 }
 
@@ -143,6 +150,9 @@ resource "aws_ecs_task_definition" "backend" {
         # so this reaches the tailscale container's own loopback-bound
         # proxy directly — no service discovery needed.
         { name = "TAILSCALE_PROXY_URL", value = "http://localhost:1055" },
+        # Not secret — GithubOAuthConfigView already hands this to the
+        # frontend on request, so there's nothing gained by hiding it here.
+        { name = "GITHUB_OAUTH_CLIENT_ID", value = var.github_oauth_client_id },
       ]
       secrets = [
         { name = "SECRET_KEY", valueFrom = aws_secretsmanager_secret.django.arn },
@@ -153,6 +163,7 @@ resource "aws_ecs_task_definition" "backend" {
         { name = "DB_PASSWORD", valueFrom = "${var.db_secret_arn}:DB_PASSWORD::" },
         { name = "EMAIL_HOST_USER", valueFrom = "${var.email_secret_arn}:USER::" },
         { name = "EMAIL_HOST_PASSWORD", valueFrom = "${var.email_secret_arn}:PASSWORD::" },
+        { name = "GITHUB_OAUTH_CLIENT_SECRET", valueFrom = aws_secretsmanager_secret.github_oauth.arn },
       ]
       logConfiguration = {
         logDriver = "awslogs"

@@ -31,3 +31,9 @@ variable "llm_api_url" {
   type        = string
   default     = "http://100.95.8.56:8081"
 }
+
+variable "github_oauth_client_id" {
+  description = "From a GitHub OAuth App (github.com/settings/developers) — not secret."
+  type        = string
+  default     = ""
+}

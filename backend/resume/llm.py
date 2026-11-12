@@ -8,6 +8,15 @@ class LlmError(Exception):
     """Raised when the LLM endpoint can't be reached or returns something unusable."""
 
 
+# In ECS, the model lives on a Tailscale-only machine, reachable only through
+# the Tailscale sidecar's local proxy (empty locally, where LLM_API_URL is
+# directly reachable) — same as prompt_engineering/llm_client.py's SF_PROXIES.
+# Without this, the connection just hangs against the tailnet-only address
+# until gunicorn's worker timeout kills it.
+_TAILSCALE_PROXY_URL = getattr(settings, "TAILSCALE_PROXY_URL", "") or ""
+LLM_PROXIES = {"http": _TAILSCALE_PROXY_URL, "https": _TAILSCALE_PROXY_URL} if _TAILSCALE_PROXY_URL else None
+
+
 SYSTEM_PROMPT = """You are a resume and cover letter writer for SkillFusion, a platform where \
 learners log verified evidence of their work (projects, credentials, GitHub repos).
 
@@ -74,6 +83,7 @@ def generate_resume_content(user_prompt: str) -> dict:
             },
             # A trivial empty-evidence prompt alone took ~85s. Real evidence takes longer.
             timeout=240,
+            proxies=LLM_PROXIES,
         )
     except requests.RequestException as e:
         raise LlmError(f"Could not reach the LLM service: {e}") from e

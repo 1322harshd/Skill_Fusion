@@ -1,5 +1,6 @@
-import os, json, asyncio, requests
+import os, json, asyncio, time, requests
 from django.conf import settings
+from .model_log import log_call, trim_feature
 # SF serving (mlx_lm.server, OpenAI-compatible). Replaces the old Ollama
 # "mada-sf-14b" path — the adapter now lives server-side, so `adapter` below
 # is accepted-but-unused to keep every caller unchanged.
@@ -33,8 +34,9 @@ def parse_sf_json(text):
         return json.loads(t), t
     except json.JSONDecodeError:
         return json.loads(t, strict=False), t
-async def call_sf14b(adapter, prompt, retries=2, max_tokens=3000):
+async def call_sf14b(adapter, prompt, retries=2, max_tokens=3000, feature=None):
     import re
+    label = trim_feature(adapter, feature)
     body = {"model": SF_MODEL,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.1, "max_tokens": max_tokens,
@@ -48,6 +50,7 @@ async def call_sf14b(adapter, prompt, retries=2, max_tokens=3000):
             # it on = ~9s, zero reasoning tokens, clean JSON.
             "chat_template_kwargs": {"enable_thinking": False}}
     for attempt in range(retries+1):
+        t0 = time.perf_counter()
         try:
             # sync requests in async wrapper for scaffold
             r=requests.post(f"{SF_URL}/v1/chat/completions", json=body, timeout=300)
@@ -88,11 +91,16 @@ async def call_sf14b(adapter, prompt, retries=2, max_tokens=3000):
                     # literal control characters inside strings (model-emitted
                     # raw newlines) — allow them rather than failing.
                     json.loads(text, strict=False)
+            log_call(label, True, time.perf_counter() - t0,
+                     f"attempt {attempt+1}/{retries+1} · {len(text)} chars")
             return text
         except (requests.exceptions.ConnectionError,
                 requests.exceptions.Timeout,
                 requests.exceptions.RequestException, ValueError,
-                KeyError, IndexError, json.JSONDecodeError):
+                KeyError, IndexError, json.JSONDecodeError) as e:
+            log_call(label, False, time.perf_counter() - t0,
+                     f"attempt {attempt+1}/{retries+1} — "
+                     f"{type(e).__name__}: {str(e)[:120]}")
             # Only transient/parse failures retry; backoff grows so a busy
             # single-threaded mlx server (or a model reload) settles first.
             if attempt == retries:
@@ -101,8 +109,8 @@ async def call_sf14b(adapter, prompt, retries=2, max_tokens=3000):
             backoff = min(0.6 * (3 ** attempt), 20.0) + uniform(0, 0.4)
             await asyncio.sleep(backoff)
 
-async def call_sf14b_json(adapter, prompt, retries=4, max_tokens=3000):
+async def call_sf14b_json(adapter, prompt, retries=4, max_tokens=3000, feature=None):
     """Same as call_sf14b but returns the parsed object (lenient parse)."""
-    text = await call_sf14b(adapter, prompt, retries=retries, max_tokens=max_tokens)
+    text = await call_sf14b(adapter, prompt, retries=retries, max_tokens=max_tokens, feature=feature)
     obj, _ = parse_sf_json(text)
     return obj

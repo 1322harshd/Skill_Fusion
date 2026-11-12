@@ -74,12 +74,14 @@ def generate_resume_content(user_prompt: str) -> dict:
                     {"role": "user", "content": user_prompt},
                 ],
                 "temperature": 0.3,
-                # Observed: despite enable_thinking=false, this model still burns ~2000
-                # tokens on an internal reasoning pass before writing the real JSON answer.
-                # 2000 wasn't enough headroom and got cut off before any answer appeared.
                 "max_tokens": 4096,
                 "stream": False,
-                "enable_thinking": False,
+                # Must be nested under chat_template_kwargs — a top-level
+                # enable_thinking key is silently ignored by mlx_lm.server,
+                # which is why this was still burning ~2000 reasoning tokens
+                # despite "setting" it (see prompt_engineering/llm_client.py's
+                # matching comment, which caught this the first time).
+                "chat_template_kwargs": {"enable_thinking": False},
             },
             # A trivial empty-evidence prompt alone took ~85s. Real evidence takes longer.
             timeout=240,

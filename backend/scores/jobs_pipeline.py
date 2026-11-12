@@ -1,7 +1,11 @@
-"""Phase 6 vertical slice: Adzuna jobs fetch -> nomic embeddings -> pgvector store.
+"""Phase 6 vertical slice: job fetch -> nomic embeddings -> pgvector store.
 
-Requires ADZUNA_ID / ADZUNA_KEY env (https://developer.adzuna.com).
-Embeddings via Ollama nomic-embed-text (:11434) — embeddings never needed LoRA.
+Two free sources:
+  - arbeitnow: completely free, no key, remote-tech board (default)
+  - adzuna: needs ADZUNA_ID / ADZUNA_KEY env (https://developer.adzuna.com),
+    but supports per-country listings (NZ by default)
+Embeddings via Ollama nomic-embed-text (:11434) — best-effort at ingest;
+without them the demand side of the score still works (see services.py).
 """
 import os, requests
 
@@ -65,15 +69,28 @@ def _normalize(job, source, query):
 
 
 def ingest_query(query, max_results=50, source="arbeitnow"):
-    """Fetch + embed + store jobs for a query. Returns count stored."""
+    """Fetch + embed + store jobs for a query. Returns count stored.
+
+    Embedding is best-effort: if Ollama (:11434) is down, listings are still
+    stored (embedding=None) — the listing count/demand side of the score
+    works without vectors. Re-running a query skips URLs already stored,
+    so repeated ingests never duplicate rows."""
     from .models import JobListing
     if source == "arbeitnow":
         jobs = fetch_arbeitnow(query, max_results)
     else:
         jobs = fetch_jobs(query, max_results)
-    norm = [_normalize(j, source, query) for j in jobs]
+    seen_urls = set(JobListing.objects.filter(query=query).exclude(url="")
+                    .values_list("url", flat=True))
+    norm = [n for n in (_normalize(j, source, query) for j in jobs)
+            if n["url"] not in seen_urls][:max_results]
+    if not norm:
+        return 0
     texts = [f"{n['title']} {n['description'][:500]}" for n in norm]
-    vecs = embed_texts(texts)
+    try:
+        vecs = embed_texts(texts)
+    except Exception:
+        vecs = [None] * len(norm)
     objs = [JobListing(title=n["title"][:300],
                        company=n["company"][:200],
                        description=n["description"][:2000],

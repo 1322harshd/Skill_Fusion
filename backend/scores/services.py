@@ -150,14 +150,37 @@ def make_score_sync_real(a, b):
                     [a.lower(), b.lower()])
         n = cur.fetchone()[0]
     if n >= 10:
-        [pair_vec] = embed_texts([f"{a} {b}"])
-        with connection.cursor() as cur:
-            cur.execute(
-                "SELECT AVG(embedding <=> %s::vector) FROM scores_joblisting "
-                "WHERE embedding IS NOT NULL AND LOWER(query) IN (%s, %s)",
-                [pair_vec, a.lower(), b.lower()])
-            avg_dist = cur.fetchone()[0] or 1.0
-        rarity = round(max(0.0, min(1.0, avg_dist)), 3)
+        # Embedding is best-effort: with Ollama up, rarity = average vector
+        # distance (semantic "how unlike anything a single-skill job asks
+        # for"). Without it — e.g. on ECS, where there is no Ollama — fall
+        # back to keyword rarity so the jobdata path still works everywhere.
+        try:
+            [pair_vec] = embed_texts([f"{a} {b}"])
+        except Exception:
+            pair_vec = None
+        rarity = None
+        if pair_vec is not None:
+            with connection.cursor() as cur:
+                cur.execute(
+                    "SELECT AVG(embedding <=> %s::vector) FROM scores_joblisting "
+                    "WHERE embedding IS NOT NULL AND LOWER(query) IN (%s, %s)",
+                    [pair_vec, a.lower(), b.lower()])
+                avg_dist = cur.fetchone()[0]
+            if avg_dist is not None:
+                rarity = round(max(0.0, min(1.0, avg_dist)), 3)
+        if rarity is None:
+            # keyword rarity: the share of stored listings that mention BOTH
+            # skills — the fewer jobs ask for the full blend, the rarer it is.
+            la, lb = a.lower(), b.lower()
+            both = 0
+            with connection.cursor() as cur:
+                cur.execute("SELECT title, description FROM scores_joblisting "
+                            "WHERE LOWER(query) IN (%s, %s)", [la, lb])
+                for title, desc in cur.fetchall():
+                    blob = f"{title} {desc}".lower()
+                    if la in blob and lb in blob:
+                        both += 1
+            rarity = round(max(0.0, min(1.0, 1.0 - both / n)), 3)
         demand = round(max(0.0, min(1.0, min(n, 200) / 200)), 3)
         value = round((rarity * 0.45 + demand * 0.55) * 100)
         out = make_score_sync(a, b)

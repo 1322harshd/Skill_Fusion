@@ -171,7 +171,7 @@ function Resume() {
                 <div className="border-b border-white/10 px-6 py-6 text-center">
                   <p className="font-heading text-2xl italic text-white">Drafting your document</p>
                 </div>
-                <AiSteps steps={RESUME_LOADING_STEPS} speed={1400} loop />
+                <AiSteps steps={RESUME_LOADING_STEPS} speed={1400} hold={true} />
                 <div className="flex items-center justify-center gap-2 border-t border-white/10 px-6 py-5">
                   <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-white" />
                   <p className="font-body text-xs font-light text-white/50">

@@ -36,12 +36,30 @@ class PreviewPersistenceTests(TestCase):
             category_a="creative", category_b="tech")
         self.body = {"fusion": {"id": "fc-own", "a": "Design", "b": "Code"}, "salt": 0}
 
+    def _run_previews_job(self, body, user=None):
+        """previews_view is now async: it returns a job id and spawns a
+        background thread. A real thread's own DB connection can't see this
+        test's not-yet-committed fixture rows, so — same as
+        projects/tests.py's zip-review tests — patch the thread-spawn to a
+        no-op and call the worker function directly instead."""
+        from roadmaps.views import _generate_previews
+        with patch("roadmaps.views.start_previews_job"):
+            response = self.client.post("/api/roadmap/previews/", body, format="json")
+        if response.status_code != 202:
+            return response, None
+        job_id = response.json()["job_id"]
+        _generate_previews(job_id, body["fusion"], body.get("salt", 0), user.pk if user else None)
+        from roadmaps.models import PreviewJob
+        job = PreviewJob.objects.get(id=job_id)
+        return response, job
+
     def test_previews_persist_one_row_each_with_ids(self):
         self.client.force_authenticate(user=self.user)
         with patch("roadmaps.views.get_previews", return_value=_previews()):
-            response = self.client.post("/api/roadmap/previews/", self.body, format="json")
-        self.assertEqual(response.status_code, 200)
-        previews = response.json()["previews"]
+            response, job = self._run_previews_job(self.body, user=self.user)
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(job.status, "ready")
+        previews = job.result["previews"]
         self.assertEqual(len(previews), 3)
         roadmap_ids = [p["roadmap_id"] for p in previews]
         self.assertTrue(all(roadmap_ids))
@@ -57,17 +75,18 @@ class PreviewPersistenceTests(TestCase):
     def test_same_titles_relinked_not_duplicated(self):
         self.client.force_authenticate(user=self.user)
         with patch("roadmaps.views.get_previews", return_value=_previews()):
-            self.client.post("/api/roadmap/previews/", self.body, format="json")
+            self._run_previews_job(self.body, user=self.user)
             # same salt, same three titles reaching the backend again
-            self.client.post("/api/roadmap/previews/", self.body, format="json")
+            self._run_previews_job(self.body, user=self.user)
         self.assertEqual(Roadmap.objects.count(), 3)
 
     def test_anon_undicated_fusion_persists_nothing(self):
         body = {"fusion": {"id": "fc-nonexistent", "a": "Design", "b": "Code"}, "salt": 0}
         with patch("roadmaps.views.get_previews", return_value=_previews()):
-            response = self.client.post("/api/roadmap/previews/", body, format="json")
-        self.assertEqual(response.status_code, 200)
-        for p in response.json()["previews"]:
+            response, job = self._run_previews_job(body)
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(job.status, "ready")
+        for p in job.result["previews"]:
             self.assertNotIn("roadmap_id", p)
         self.assertEqual(Roadmap.objects.count(), 0)
 

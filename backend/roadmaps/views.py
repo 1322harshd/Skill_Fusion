@@ -1,33 +1,37 @@
+import threading
+
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from .services import get_previews, tweak_roadmap
-from .models import Roadmap
+from .models import Roadmap, PreviewJob
 
-def _is_owner(fid, request):
+def _is_owner(fid, user):
     """True when fusion is anon-owned (landing demo) or belongs to caller."""
     from fusion_engine.models import Fusion
     if not fid: return True
     fusion = Fusion.objects.filter(id=fid).select_related("user").first()
     if fusion is None or fusion.user is None: return True
-    return request.user.is_authenticated and fusion.user == request.user
+    return bool(user) and user.is_authenticated and fusion.user == user
 
-def _fusion_for(fusion_payload, request):
+def _fusion_for(fusion_payload, user):
     """Fetch the Fusion row for a payload like {a,b,...}, enforcing ownership
-    when the fusion belongs to a logged-in user (anon-demo fusions stay open)."""
+    when the fusion belongs to a logged-in user (anon-demo fusions stay open).
+    Takes a user object (not the request) so the background thread in
+    previews_view can call this with no live request to hang onto."""
     from fusion_engine.models import Fusion
     fid = (fusion_payload or {}).get("id") or (fusion_payload or {}).get("fusion_id")
-    if not _is_owner(fid, request):
+    if not _is_owner(fid, user):
         raise PermissionDenied("not your fusion")
     if not fid: return None
     return Fusion.objects.filter(id=fid).first()
 
-def _persist_previews(fusion_payload, previews, request):
+def _persist_previews(fusion_payload, previews, user):
     """Each preview becomes a Roadmap row (unlocked, unchosen). Re-running the
     same salt re-links the existing row for a title instead of duplicating it.
     Un-persisted fusions (anon landing demo, local-mock ids) get nothing."""
-    fusion = _fusion_for(fusion_payload, request)
+    fusion = _fusion_for(fusion_payload, user)
     fid = (fusion_payload or {}).get("id") or ""
     existing = set(Roadmap.objects.filter(fusion_id=fid).values_list("title", flat=True)) if fusion else set()
     ids = []
@@ -51,19 +55,65 @@ def _persist_previews(fusion_payload, previews, request):
         out.append(p)
     return out
 
+def _generate_previews(job_id, fusion, salt, user_id):
+    """Background worker: get_previews() is the slow part (up to 4 sequential
+    SF calls), so this runs off the request/response cycle entirely — the
+    view already returned 202 with a job id before this starts."""
+    from django.contrib.auth import get_user_model
+    job = PreviewJob.objects.filter(id=job_id).first()
+    if job is None:
+        return
+    try:
+        user = get_user_model().objects.filter(pk=user_id).first() if user_id else None
+        previews = get_previews(fusion, salt)
+        job.result = {"previews": _persist_previews(fusion, previews, user)}
+        job.status = "ready"
+    except PermissionDenied:
+        job.status = "failed"
+        job.error = "not your fusion"
+    except Exception as e:
+        job.status = "failed"
+        job.error = f"SF unreachable: {str(e)[:120]}"
+    job.save(update_fields=["status", "result", "error"])
+
+def start_previews_job(job_id, fusion, salt, user_id):
+    """Separated out so tests can patch this (no-op) and call
+    _generate_previews directly instead — a real thread's separate DB
+    connection can't see this test's not-yet-committed fixture rows,
+    same reasoning as projects/zip_grader.py's start_zip_review."""
+    threading.Thread(target=_generate_previews, args=(job_id, fusion, salt, user_id), daemon=True).start()
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def previews_view(request):
     fusion = request.data.get("fusion")
     salt = request.data.get("salt",0)
     if not fusion: return Response({"error":"fusion required"}, status=400)
+    # Ownership check happens here, synchronously, so a 403 comes back
+    # immediately — once backgrounded there's no request left to attach it to.
     try:
-        previews = get_previews(fusion, salt)
+        _fusion_for(fusion, request.user)
     except PermissionDenied:
         raise
-    except Exception as e:
-        return Response({"error": f"SF unreachable: {str(e)[:120]}"}, status=502)
-    return Response({"previews": _persist_previews(fusion, previews, request)})
+    job = PreviewJob.objects.create()
+    user_id = request.user.pk if request.user.is_authenticated else None
+    start_previews_job(job.id, fusion, salt, user_id)
+    return Response({"job_id": job.id, "status": job.status}, status=202)
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def previews_status_view(request):
+    """Poll an async previews generation — mirrors projects/views.py's
+    submission_status_view for the same reason."""
+    job_id = request.GET.get("job_id")
+    job = PreviewJob.objects.filter(id=job_id).first() if job_id and str(job_id).isdigit() else None
+    if job is None:
+        return Response({"error": "Job not found."}, status=404)
+    return Response({
+        "job_id": job.id, "status": job.status,
+        "previews": (job.result or {}).get("previews"),
+        "error": job.error or None,
+    })
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -71,7 +121,7 @@ def choose_view(request):
     rid = request.data.get("roadmap_id")
     if rid:
         rm = Roadmap.objects.filter(id=rid).first()
-        if rm and not _is_owner(rm.fusion_id, request):
+        if rm and not _is_owner(rm.fusion_id, request.user):
             raise PermissionDenied("not your fusion")
         if rm:
             rm.chosen = True
@@ -89,7 +139,7 @@ def progress_view(request):
     rm = Roadmap.objects.filter(id=request.data.get("roadmap_id")).first()
     if not rm:
         return Response({"error": "roadmap_id required"}, status=400)
-    if not _is_owner(rm.fusion_id, request):
+    if not _is_owner(rm.fusion_id, request.user):
         raise PermissionDenied("not your fusion")
     try:
         target = int(request.data.get("progress_weeks", rm.progress_weeks))
@@ -110,7 +160,7 @@ def chosen_view(request):
            .order_by("-progress_weeks", "-created_at").first())
     if not row:
         return Response({"roadmap": None})
-    if not _is_owner(fid, request):
+    if not _is_owner(fid, request.user):
         raise PermissionDenied("not your fusion")
     return Response({"roadmap": {
         "roadmap_id": row.id,
@@ -129,7 +179,7 @@ def chosen_view(request):
 def tweak_view(request):
     """Pre-commit tweak: locked roadmaps reject; else skill-presence test + diff."""
     rm = Roadmap.objects.filter(id=request.data.get("roadmap_id")).first()
-    if rm and not _is_owner(rm.fusion_id, request):
+    if rm and not _is_owner(rm.fusion_id, request.user):
         raise PermissionDenied("not your fusion")
     if rm and rm.locked:
         return Response({"error": "roadmap locked — regenerate for a fresh set"}, status=423)
@@ -182,4 +232,4 @@ def regenerate_view(request):
         raise
     except Exception as e:
         return Response({"error": f"SF unreachable: {str(e)[:120]}"}, status=502)
-    return Response({"salt": next_salt, "previews": _persist_previews(fusion, previews, request)})
+    return Response({"salt": next_salt, "previews": _persist_previews(fusion, previews, request.user)})

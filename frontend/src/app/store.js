@@ -534,9 +534,21 @@ window.Store = (function () {
     };
   }
 
-  // POST /api/roadmap/previews/ -> normalize previews + roadmaps to UI shape.
+  // POST /api/roadmap/previews/ starts an async job (generation runs 4
+  // sequential SF calls server-side, 60-120s+) — poll its status until
+  // ready/failed, same pattern as ExplainPanel's zip-review poller, then
+  // normalize previews + roadmaps to UI shape.
   async function getPreviewsRemote(fusion, salt = 0) {
-    const data = await window.Api.roadmapPreviews(fusion, salt);
+    const { job_id } = await window.Api.roadmapPreviews(fusion, salt);
+    const deadline = Date.now() + 3 * 60 * 1000;
+    let data;
+    while (true) {
+      await new Promise((r) => setTimeout(r, 3000));
+      const res = await window.Api.roadmapPreviewsStatus(job_id);
+      if (res.status === "ready") { data = res; break; }
+      if (res.status === "failed") throw new Error(res.error || "SF unreachable");
+      if (Date.now() > deadline) throw new Error("Timed out waiting for roadmap previews");
+    }
     return (data.previews || []).map((p) => ({
       id: p.id,
       title: p.title,

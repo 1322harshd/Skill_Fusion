@@ -282,19 +282,17 @@ function Roadmaps() {
     let live = true;
     setBusy(true);
     setLoadError(null);
-    // Auto-retry with backoff so a busy/offline-spike SF never dead-ends the
-    // user: attempts at ~3s and ~7s before surfacing the error card.
+    // getPreviewsRemote already waits out the full async generation job
+    // (polls for up to 3 minutes) before resolving or throwing, so there's
+    // no cheap-retry case left here — a throw means it genuinely failed or
+    // timed out, not a transient blip worth immediately retrying.
     (async () => {
-      const delays = [0, 3000, 7000];
-      for (let i = 0; i < delays.length; i++) {
-        if (delays[i]) await new Promise((r) => setTimeout(r, delays[i]));
-        try {
-          const pvs = await Store.getPreviewsRemote(fusion, salt);
-          if (live) { setPreviews(pvs); setBusy(false); setIsRegen(false); }
-          return;
-        } catch { /* keep trying */ }
+      try {
+        const pvs = await Store.getPreviewsRemote(fusion, salt);
+        if (live) { setPreviews(pvs); setBusy(false); setIsRegen(false); }
+      } catch {
+        if (live) { setLoadError("Couldn't load roadmaps — is the backend (:8000) and SF (:8081) running?"); setBusy(false); setIsRegen(false); }
       }
-      if (live) { setLoadError("Couldn't load roadmaps — is the backend (:8000) and SF (:8081) running?"); setBusy(false); setIsRegen(false); }
     })();
     return () => { live = false; };
   }, [fusionId, salt]);

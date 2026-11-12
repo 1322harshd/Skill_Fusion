@@ -451,11 +451,16 @@ window.Api = (function () {
     // Creates a NEW fusion row server-side; the old pair is never touched.
     addFusionSkill: (fusionId, skill) =>
       request("/fusion/add-skill/", { method: "POST", body: { fusion_id: fusionId, skill } }),
+    // Starts an async job (generation takes up to ~4 sequential SF calls,
+    // 60-120s+) and returns {job_id, status:"generating"} immediately —
+    // roadmapPreviewsStatus polls it.
     roadmapPreviews: (fusion, salt = 0) =>
       request("/roadmap/previews/", { method: "POST", body: { fusion: {
         id: fusion.id, a: fusion.a, b: fusion.b,
         third: (fusion.addedSkills && fusion.addedSkills[0]) || undefined,
       }, salt } }),
+    roadmapPreviewsStatus: (jobId) =>
+      request("/roadmap/previews/status/?job_id=" + encodeURIComponent(jobId)),
     roadmapChoose: (roadmapId) =>
       request("/roadmap/choose/", { method: "POST", body: { roadmap_id: roadmapId } }),
     roadmapTweak: (payload) =>

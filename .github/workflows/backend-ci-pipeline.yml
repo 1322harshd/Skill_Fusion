@@ -12,6 +12,9 @@ on:
       - "backend/**"
       - ".github/workflows/backend-ci-pipeline.yml"
   workflow_dispatch:
+  # Lets cd-pipeline.yml call this as a gate before deploying, instead of
+  # deploying in parallel with CI.
+  workflow_call:
 
 defaults:
   run:

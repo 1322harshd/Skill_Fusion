@@ -4,6 +4,12 @@ name: CD Pipeline (AWS)
 # `terraform apply` (which updates the ECS task definition to that image and
 # reconciles any other infra drift), then syncs the frontend to S3 and
 # invalidates CloudFront. Can also be run by hand from the Actions tab.
+#
+# Runs backend/frontend CI first and only deploys if both pass — these used
+# to run as separate, parallel workflows with no relationship to this one,
+# meaning a broken build could deploy before (or while) CI was still failing
+# it. Calling them as reusable workflows (workflow_call) and gating `deploy`
+# on them via `needs` makes this a real sequential gate instead.
 on:
   push:
     branches: [main]
@@ -23,7 +29,14 @@ permissions:
   contents: read
 
 jobs:
+  backend-ci:
+    uses: ./.github/workflows/backend-ci-pipeline.yml
+
+  frontend-ci:
+    uses: ./.github/workflows/frontend-ci-pipeline.yml
+
   deploy:
+    needs: [backend-ci, frontend-ci]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

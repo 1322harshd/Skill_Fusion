@@ -1,7 +1,10 @@
 import json
+import time
 
 import requests
 from django.conf import settings
+
+from prompt_engineering.model_log import log_call
 
 
 class LlmError(Exception):
@@ -79,6 +82,18 @@ def _extract_json_object(text: str) -> dict:
 def generate_resume_content(user_prompt: str) -> dict:
     """Calls the chat completions endpoint and returns the parsed
     {resumeSummary, resumeBullets, coverLetter} dict."""
+    t0 = time.perf_counter()
+    try:
+        data = _generate_resume_content(user_prompt)
+    except LlmError as e:
+        log_call("resume", False, time.perf_counter() - t0, f"attempt 1/1 — {str(e)[:140]}")
+        raise
+    log_call("resume", True, time.perf_counter() - t0,
+             f"attempt 1/1 · {len(data.get('coverLetter') or '')} chars cover letter")
+    return data
+
+
+def _generate_resume_content(user_prompt: str) -> dict:
     try:
         response = requests.post(
             f"{settings.LLM_API_URL}/v1/chat/completions",

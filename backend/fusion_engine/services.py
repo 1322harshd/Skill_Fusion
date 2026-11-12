@@ -32,7 +32,7 @@ def fallback_brief(skills, score):
 async def make_brief(skills, score):
     skills = [str(s) for s in skills]
     try:
-        raw = await call_sf14b(adapter="sf-fusion", prompt=fusion_brief(skills, score))
+        raw = await call_sf14b(adapter="sf-fusion", prompt=fusion_brief(skills, score), feature="fusion")
         return BriefSchema.model_validate_json(raw).model_dump()
     except Exception:
         return fallback_brief(skills, score)
@@ -98,7 +98,7 @@ def fallback_oracle(a, b):
 
 async def make_oracle(a, b):
     try:
-        raw = await call_sf14b(adapter="sf-fusion", prompt=fusion_oracle(a, b))
+        raw = await call_sf14b(adapter="sf-fusion", prompt=fusion_oracle(a, b), feature="fusion-score")
         return OracleSchema.model_validate_json(raw).model_dump()
     except Exception:
         return fallback_oracle(a, b)

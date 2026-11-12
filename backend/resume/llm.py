@@ -6,6 +6,8 @@ from django.conf import settings
 
 from prompt_engineering.model_log import log_call
 
+_RESUME_HOST = settings.LLM_API_URL.split("//")[-1].split("/")[0]
+
 
 class LlmError(Exception):
     """Raised when the LLM endpoint can't be reached or returns something unusable."""
@@ -86,10 +88,10 @@ def generate_resume_content(user_prompt: str) -> dict:
     try:
         data = _generate_resume_content(user_prompt)
     except LlmError as e:
-        log_call("resume", False, time.perf_counter() - t0, f"attempt 1/1 — {str(e)[:140]}")
+        log_call("resume", False, time.perf_counter() - t0, f"→{_RESUME_HOST} · attempt 1/1 — {str(e)[:140]}")
         raise
     log_call("resume", True, time.perf_counter() - t0,
-             f"attempt 1/1 · {len(data.get('coverLetter') or '')} chars cover letter")
+             f"→{_RESUME_HOST} · attempt 1/1 · {len(data.get('coverLetter') or '')} chars cover letter")
     return data
 
 

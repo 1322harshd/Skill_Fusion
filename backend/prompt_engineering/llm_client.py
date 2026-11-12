@@ -10,6 +10,9 @@ from .model_log import log_call, trim_feature
 # exports them into the real OS environment — os.getenv("LLM_API_URL") would
 # always miss .env and silently fall back to localhost.
 SF_URL = getattr(settings, "LLM_API_URL", None) or os.getenv("SF_URL", "http://localhost:8081")
+# host shown in the model-call log so the line proves WHICH route the call
+# took (e.g. "→100.95.8.56:8081" = via Tailscale, "→localhost:8081" = local).
+_SF_HOST = SF_URL.split("//")[-1].split("/")[0]
 SF_MODEL = getattr(settings, "LLM_MODEL", None) or "models/gemma4-12b-it-4bit"
 def parse_sf_json(text):
     """Lenient SF-JSON parse: strict, then first-object extraction, then
@@ -92,14 +95,14 @@ async def call_sf14b(adapter, prompt, retries=2, max_tokens=3000, feature=None):
                     # raw newlines) — allow them rather than failing.
                     json.loads(text, strict=False)
             log_call(label, True, time.perf_counter() - t0,
-                     f"attempt {attempt+1}/{retries+1} · {len(text)} chars")
+                     f"→{_SF_HOST} · attempt {attempt+1}/{retries+1} · {len(text)} chars")
             return text
         except (requests.exceptions.ConnectionError,
                 requests.exceptions.Timeout,
                 requests.exceptions.RequestException, ValueError,
                 KeyError, IndexError, json.JSONDecodeError) as e:
             log_call(label, False, time.perf_counter() - t0,
-                     f"attempt {attempt+1}/{retries+1} — "
+                     f"→{_SF_HOST} · attempt {attempt+1}/{retries+1} — "
                      f"{type(e).__name__}: {str(e)[:120]}")
             # Only transient/parse failures retry; backoff grows so a busy
             # single-threaded mlx server (or a model reload) settles first.

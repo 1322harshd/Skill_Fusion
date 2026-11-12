@@ -35,6 +35,10 @@ def log_call(feature, ok, seconds, detail=""):
                 f.write(line + "\n")
     except OSError:
         pass
+    # also emit to stdout: on the local dev server this shows in the runserver
+    # console; on ECS it lands in the backend's CloudWatch log stream, so the
+    # same lines are readable both locally and in the cloud.
+    print(line, flush=True)
 
 
 def trim_feature(adapter, feature):

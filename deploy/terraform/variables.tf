@@ -35,5 +35,5 @@ variable "llm_api_url" {
 variable "github_oauth_client_id" {
   description = "From a GitHub OAuth App (github.com/settings/developers) — not secret."
   type        = string
-  default     = ""
+  default     = "Ov23ctb4jiZMilR0AOJC"
 }

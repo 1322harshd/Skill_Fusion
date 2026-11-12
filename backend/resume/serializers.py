@@ -29,6 +29,7 @@ class ResumeDocumentSerializer(serializers.ModelSerializer):
             "resumeSummary",
             "resumeBullets",
             "coverLetter",
+            "layout",
             "createdAt",
         ]
         read_only_fields = fields
@@ -38,3 +39,15 @@ class GenerateResumeSerializer(serializers.Serializer):
     """Input for the generate endpoint: an optional job listing to tailor the resume to."""
 
     jobListing = serializers.CharField(required=False, allow_blank=True, default="")
+
+
+class ResumeLayoutSerializer(serializers.Serializer):
+    """Input for saving canvas-editor state — a light shape check only, not
+    full per-block validation (that's the frontend's problem)."""
+
+    layout = serializers.JSONField()
+
+    def validate_layout(self, value):
+        if not isinstance(value, dict) or not isinstance(value.get("blocks"), list):
+            raise serializers.ValidationError('Must be an object with a "blocks" list.')
+        return value

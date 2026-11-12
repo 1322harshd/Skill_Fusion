@@ -178,6 +178,60 @@ class ResumeExportViewTests(TestCase):
         response = other_client.get(f"/api/resume/{self.document.documentId}/export")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_exports_a_custom_layout_as_pdf(self):
+        """A document with saved canvas-editor blocks uses the layout-driven
+        render path instead of the plain paragraph flow."""
+        self.document.layout = {"blocks": [
+            {"id": "b1", "x": 40, "y": 40, "width": 400, "height": 60,
+             "fontSize": 20, "fontWeight": "bold", "align": "left", "content": "Ada Lovelace"},
+        ]}
+        self.document.save(update_fields=["layout"])
+        response = self.client.get(f"/api/resume/{self.document.documentId}/export?doc=resume")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertTrue(response.content.startswith(b"%PDF-"))
+
+
+class ResumeLayoutViewTests(TestCase):
+    """Saving canvas-editor state: persistence, ownership, and shape validation."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada", isEmailVerified=True)
+        self.other = User.objects.create_user(email="other@example.com", password="CorrectHorse1!", fullName="Other", isEmailVerified=True)
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+        self.document = ResumeDocument.objects.create(
+            user=self.user, resumeSummary="Summary", resumeBullets=["One"], coverLetter="Dear team...",
+        )
+        self.layout = {"blocks": [{"id": "b1", "x": 10, "y": 10, "width": 200, "height": 40,
+                                    "fontSize": 12, "fontWeight": "normal", "align": "left", "content": "hi"}]}
+
+    def test_saves_and_returns_the_layout(self):
+        response = self.client.patch(f"/api/resume/{self.document.documentId}/layout", {"layout": self.layout}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["layout"], self.layout)
+        self.document.refresh_from_db()
+        self.assertEqual(self.document.layout, self.layout)
+
+    def test_cannot_save_to_someone_elses_document(self):
+        other_client = APIClient()
+        other_client.force_authenticate(user=self.other)
+        response = other_client.patch(f"/api/resume/{self.document.documentId}/layout", {"layout": self.layout}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_rejects_a_layout_missing_blocks(self):
+        response = self.client.patch(f"/api/resume/{self.document.documentId}/layout", {"layout": {"notBlocks": []}}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_rejects_blocks_that_is_not_a_list(self):
+        response = self.client.patch(f"/api/resume/{self.document.documentId}/layout", {"layout": {"blocks": "nope"}}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_list_reflects_the_saved_layout(self):
+        self.client.patch(f"/api/resume/{self.document.documentId}/layout", {"layout": self.layout}, format="json")
+        response = self.client.get("/api/resume/")
+        self.assertEqual(response.json()[0]["layout"], self.layout)
+
 
 class ResumeUploadViewTests(TestCase):
     """Upload endpoint: accepted/rejected file types, one-upload-per-user replacement, and delete."""

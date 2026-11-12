@@ -8,11 +8,12 @@ from rest_framework.views import APIView
 from .extract import ExtractionError, extract_text
 from .llm import LlmError, generate_resume_content
 from .models import ResumeDocument, ResumeUpload
-from .pdf import render_pdf
+from .pdf import render_pdf, render_pdf_from_layout
 from .prompts import build_user_prompt
 from .serializers import (
     GenerateResumeSerializer,
     ResumeDocumentSerializer,
+    ResumeLayoutSerializer,
     ResumeUploadSerializer,
     UploadResumeSerializer,
 )
@@ -85,6 +86,19 @@ class ResumeDocumentListView(APIView):
         return Response(ResumeDocumentSerializer(documents, many=True).data)
 
 
+class ResumeLayoutView(APIView):
+    """Save canvas-editor state (block positions/sizes/content) for a
+    generated document."""
+
+    def patch(self, request, document_id):
+        document = get_object_or_404(ResumeDocument, documentId=document_id, user=request.user)
+        serializer = ResumeLayoutSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        document.layout = serializer.validated_data["layout"]
+        document.save(update_fields=["layout"])
+        return Response(ResumeDocumentSerializer(document).data)
+
+
 class ResumeExportView(APIView):
     """Render a generated document to a downloadable PDF — either the resume or the cover
     letter, chosen via the `doc` query param."""
@@ -97,8 +111,15 @@ class ResumeExportView(APIView):
             pdf_bytes = render_pdf(f"Cover Letter — {request.user.fullName}", [document.coverLetter])
             filename = "cover-letter.pdf"
         else:
-            paragraphs = [document.resumeSummary] + [f"• {b}" for b in document.resumeBullets]
-            pdf_bytes = render_pdf(f"Resume — {request.user.fullName}", paragraphs)
+            # A custom layout (from the canvas editor) renders at its own
+            # positions; otherwise fall back to the plain paragraph flow —
+            # this keeps old documents (and anything with no layout set)
+            # exporting exactly as they did before this feature existed.
+            if document.layout and document.layout.get("blocks"):
+                pdf_bytes = render_pdf_from_layout(document.layout)
+            else:
+                paragraphs = [document.resumeSummary] + [f"• {b}" for b in document.resumeBullets]
+                pdf_bytes = render_pdf(f"Resume — {request.user.fullName}", paragraphs)
             filename = "resume.pdf"
 
         response = HttpResponse(pdf_bytes, content_type="application/pdf")

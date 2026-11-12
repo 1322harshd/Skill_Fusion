@@ -236,6 +236,10 @@ window.Api = (function () {
     return request("/resume/upload", { method: "DELETE" });
   }
 
+  function saveResumeLayout(documentId, layout) {
+    return request("/resume/" + encodeURIComponent(documentId) + "/layout", { method: "PATCH", body: { layout } });
+  }
+
   // ---- Posts ----
 
   function generatePost(entryId, tone, salt) {
@@ -417,6 +421,7 @@ window.Api = (function () {
     getResumeUpload,
     uploadResume,
     deleteResumeUpload,
+    saveResumeLayout,
     generatePost,
     listPosts,
     updatePost,

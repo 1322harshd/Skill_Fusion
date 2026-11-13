@@ -36,6 +36,25 @@ test("can generate a general-purpose resume with no job listing", async ({ page 
   await expect(page.getByText("A builder who ships real, verified work.")).toBeVisible();
 });
 
+test("can regenerate the resume against a new job listing", async ({ page }) => {
+  await mockApi(page, {
+    signedIn: true,
+    resumeHistory: [resumeDoc({ jobListing: "Backend engineer role" })],
+  });
+  await page.goto("/index.html#/resume");
+
+  await expect(page.getByText("A builder who ships real, verified work.")).toBeVisible();
+
+  // Pre-fills the textarea with the current listing rather than starting blank.
+  await page.getByRole("button", { name: "New job description" }).click();
+  await expect(page.locator("textarea")).toHaveValue("Backend engineer role");
+
+  // Cancel backs out to the existing result without generating anything new.
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.locator("textarea")).toHaveCount(0);
+  await expect(page.getByText("A builder who ships real, verified work.")).toBeVisible();
+});
+
 test("a legacy document with only flat bullets still renders via the fallback", async ({ page }) => {
   await mockApi(page, {
     signedIn: true,

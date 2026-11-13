@@ -103,6 +103,15 @@ function Resume() {
     }
   }
 
+  // Sends the user back to the input step to regenerate against a different
+  // job listing — pre-filled with the current one so they can tweak it
+  // rather than retype it from scratch. Generating creates a new document
+  // (the backend never overwrites one), so the old version stays in history.
+  function regenerate() {
+    setListing((res && res.jobListing) || "");
+    setPhase("input");
+  }
+
   // Downloads the currently viewed tab (resume or cover letter) as a PDF.
   async function download() {
     setDownloading(true);
@@ -169,13 +178,24 @@ function Resume() {
                 className="mt-4 w-full rounded-xl bg-black/40 px-4 py-3 font-body text-sm text-white outline-none ring-1 ring-white/15 focus:ring-white/40"
               />
               <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
-                <button
-                  type="button"
-                  onClick={() => setListing(SAMPLE_LISTING)}
-                  className="tappable font-body text-sm text-white/60 transition-colors hover:text-white"
-                >
-                  Use sample listing
-                </button>
+                <div className="flex items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setListing(SAMPLE_LISTING)}
+                    className="tappable font-body text-sm text-white/60 transition-colors hover:text-white"
+                  >
+                    Use sample listing
+                  </button>
+                  {res && (
+                    <button
+                      type="button"
+                      onClick={() => setPhase("done")}
+                      className="tappable font-body text-sm text-white/40 transition-colors hover:text-white"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
                 <motion.button
                   type="button"
                   onClick={generate}
@@ -243,6 +263,14 @@ function Resume() {
                       Edit layout
                     </button>
                   )}
+                  <button
+                    type="button"
+                    onClick={regenerate}
+                    className="tappable liquid-glass-strong flex items-center gap-2 rounded-full px-5 py-2.5 font-body text-sm font-medium text-white"
+                  >
+                    <Icons.Refresh className="h-4 w-4" />
+                    New job description
+                  </button>
                   <button
                     type="button"
                     onClick={copy}

@@ -84,14 +84,17 @@ test("dragging a selected block's grip handle moves it", async ({ page }) => {
   await expect(grip).toBeVisible();
   const before = await nameBlock.boundingBox();
 
+  // Downward only — the classic preset's name block already spans the full
+  // printable width margin-to-margin, so it has no room left to move
+  // horizontally under the new margin clamp; vertically it has plenty.
   const gripBox = await grip.boundingBox();
   await page.mouse.move(gripBox.x + gripBox.width / 2, gripBox.y + gripBox.height / 2);
   await page.mouse.down();
-  await page.mouse.move(gripBox.x + 80, gripBox.y + 60, { steps: 5 });
+  await page.mouse.move(gripBox.x, gripBox.y + 60, { steps: 5 });
   await page.mouse.up();
 
   const after = await nameBlock.boundingBox();
-  expect(after.x).not.toBeCloseTo(before.x, 0);
+  expect(after.y).not.toBeCloseTo(before.y, 0);
 });
 
 test("resizing a selected block's corner handle changes its size", async ({ page }) => {
@@ -113,12 +116,57 @@ test("resizing a selected block's corner handle changes its size", async ({ page
   const seX = before.x + before.width;
   const seY = before.y + before.height;
 
+  // Height only — the classic preset's name block already spans the full
+  // printable width margin-to-margin, so its width is already at the new
+  // margin clamp's maximum and can't grow further; height has plenty of room.
   await page.mouse.move(seX, seY);
   await page.mouse.down();
-  await page.mouse.move(seX + 60, seY + 40, { steps: 5 });
+  await page.mouse.move(seX, seY + 40, { steps: 5 });
   await page.mouse.up();
 
   const after = await nameBlock.boundingBox();
-  expect(after.width).toBeGreaterThan(before.width + 30);
   expect(after.height).toBeGreaterThan(before.height + 20);
+});
+
+test("dragging or resizing a block can't push it past the printable margin", async ({ page }) => {
+  await mockApi(page, { signedIn: true, user: { skills: [] }, resumeHistory: [resumeDoc()] });
+  await page.goto("/index.html#/resume");
+  await page.getByRole("button", { name: "Edit layout" }).click();
+  await expect(page.getByRole("heading", { name: "Layout Editor" })).toBeVisible();
+
+  const main = page.locator("#main-content");
+  const nameBlock = main.getByText("Ada Lovelace");
+  await nameBlock.click();
+
+  // The classic preset's name block starts at local (48, 48) — the margin
+  // itself — so its on-screen position pins down where the page's own
+  // origin is, letting the clamp be checked without a dedicated selector
+  // for the page container.
+  const before = await nameBlock.boundingBox();
+  const pageOriginX = before.x - 48;
+  const pageOriginY = before.y - 48;
+
+  // Drag it far past the page's own right/bottom edge.
+  const grip = page.locator(".cursor-grab");
+  const gripBox = await grip.boundingBox();
+  await page.mouse.move(gripBox.x + gripBox.width / 2, gripBox.y + gripBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(gripBox.x + 2000, gripBox.y + 2000, { steps: 5 });
+  await page.mouse.up();
+
+  const afterDrag = await nameBlock.boundingBox();
+  expect(afterDrag.x + afterDrag.width).toBeLessThanOrEqual(pageOriginX + 816 - 48 + 1);
+  expect(afterDrag.y + afterDrag.height).toBeLessThanOrEqual(pageOriginY + 1056 - 48 + 1);
+
+  // Resizing from the SE handle past the page edge is clamped the same way.
+  const seX = afterDrag.x + afterDrag.width;
+  const seY = afterDrag.y + afterDrag.height;
+  await page.mouse.move(seX, seY);
+  await page.mouse.down();
+  await page.mouse.move(seX + 2000, seY + 2000, { steps: 5 });
+  await page.mouse.up();
+
+  const afterResize = await nameBlock.boundingBox();
+  expect(afterResize.x + afterResize.width).toBeLessThanOrEqual(pageOriginX + 816 - 48 + 1);
+  expect(afterResize.y + afterResize.height).toBeLessThanOrEqual(pageOriginY + 1056 - 48 + 1);
 });

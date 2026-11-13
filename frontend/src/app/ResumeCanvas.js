@@ -10,6 +10,14 @@ const PAGE_HEIGHT = 1056;
 const MIN_WIDTH = 60;
 const MIN_HEIGHT = 24;
 const AUTOSAVE_MS = 800;
+// The printable area blocks are constrained to — matches the x:48/y:48 start
+// every preset already uses, so a freshly-seeded layout starts flush with
+// the boundary rather than visibly inside it. Content dragged or resized
+// past this line would print outside the page in the PDF export (which
+// uses this exact page size), so it's a hard clamp, not just a guide.
+const MARGIN_SIDE = 48;
+const MARGIN_HEADER = 48;
+const MARGIN_FOOTER = 48;
 
 const enter = window.MotionKit.enter;
 
@@ -108,8 +116,15 @@ function ResumeCanvas({ id }) {
     const target = e.currentTarget;
     target.setPointerCapture(e.pointerId);
 
+    // Clamped against the block's own (unchanged-during-drag) size, so it
+    // can be slid right up to the margin but never past it.
+    const maxX = Math.max(MARGIN_SIDE, PAGE_WIDTH - MARGIN_SIDE - block.width);
+    const maxY = Math.max(MARGIN_HEADER, PAGE_HEIGHT - MARGIN_FOOTER - block.height);
+
     function onMove(ev) {
-      updateBlock(block.id, { x: start.blockX + (ev.clientX - start.x), y: start.blockY + (ev.clientY - start.y) }, { skipSave: true });
+      const x = Math.min(Math.max(start.blockX + (ev.clientX - start.x), MARGIN_SIDE), maxX);
+      const y = Math.min(Math.max(start.blockY + (ev.clientY - start.y), MARGIN_HEADER), maxY);
+      updateBlock(block.id, { x, y }, { skipSave: true });
     }
     function onUp() {
       target.removeEventListener("pointermove", onMove);
@@ -128,11 +143,20 @@ function ResumeCanvas({ id }) {
     const target = e.currentTarget;
     target.setPointerCapture(e.pointerId);
 
+    // Which corner is anchored (fixed) determines how far the opposite edge
+    // can grow before it crosses the margin on that side.
+    const maxWidth = Math.max(MIN_WIDTH, moveX
+      ? start.blockX + start.width - MARGIN_SIDE
+      : PAGE_WIDTH - MARGIN_SIDE - start.blockX);
+    const maxHeight = Math.max(MIN_HEIGHT, moveY
+      ? start.blockY + start.height - MARGIN_HEADER
+      : PAGE_HEIGHT - MARGIN_FOOTER - start.blockY);
+
     function onMove(ev) {
       const dx = (ev.clientX - start.x) * dw;
       const dy = (ev.clientY - start.y) * dh;
-      const width = Math.max(MIN_WIDTH, start.width + dx);
-      const height = Math.max(MIN_HEIGHT, start.height + dy);
+      const width = Math.min(Math.max(MIN_WIDTH, start.width + dx), maxWidth);
+      const height = Math.min(Math.max(MIN_HEIGHT, start.height + dy), maxHeight);
       const patch = { width, height };
       if (moveX) patch.x = start.blockX + (start.width - width);
       if (moveY) patch.y = start.blockY + (start.height - height);
@@ -212,6 +236,19 @@ function ResumeCanvas({ id }) {
           style={{ width: PAGE_WIDTH, height: PAGE_HEIGHT, position: "relative" }}
           className="shrink-0 rounded-sm bg-[var(--color-paper)] shadow-[var(--shadow-paper)]"
         >
+          {/* Printable-area guide — purely visual (pointer-events: none),
+              the actual boundary is enforced in startDrag/startResize. */}
+          <div
+            style={{
+              position: "absolute",
+              left: MARGIN_SIDE,
+              top: MARGIN_HEADER,
+              right: MARGIN_SIDE,
+              bottom: MARGIN_FOOTER,
+              border: "1px dashed rgba(0,0,0,0.15)",
+              pointerEvents: "none",
+            }}
+          />
           {blocks.map((block) => (
             <ResumeBlock
               key={block.id}

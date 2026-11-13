@@ -11,6 +11,10 @@ test("opens the layout editor with a preset seeded from the generated resume", a
 
   await page.getByRole("button", { name: "Edit layout" }).click();
   await expect(page).toHaveURL(/#\/resume\/r1\/edit/);
+  // The URL updates on route change before React actually unmounts the old
+  // Resume preview and mounts the canvas, so the URL alone isn't proof the
+  // real page has landed — wait for canvas-only markup too.
+  await expect(page.getByRole("heading", { name: "Layout Editor" })).toBeVisible();
 
   const main = page.locator("#main-content");
   await expect(main.getByText("Ada Lovelace")).toBeVisible();
@@ -30,6 +34,11 @@ test("selecting then clicking a block enters edit mode, and the edit autosaves",
   });
   await page.goto("/index.html#/resume");
   await page.getByRole("button", { name: "Edit layout" }).click();
+  // The old Resume preview (still visible mid-navigation) shows the same
+  // "Ada Lovelace" text as the canvas's name block. The URL updates before
+  // React actually swaps the DOM, so wait for canvas-only markup — or this
+  // can click/measure the stale static preview instead of the real block.
+  await expect(page.getByRole("heading", { name: "Layout Editor" })).toBeVisible();
 
   const main = page.locator("#main-content");
   const nameBlock = main.getByText("Ada Lovelace");
@@ -61,6 +70,9 @@ test("dragging a selected block's grip handle moves it", async ({ page }) => {
   await mockApi(page, { signedIn: true, user: { skills: [] }, resumeHistory: [resumeDoc()] });
   await page.goto("/index.html#/resume");
   await page.getByRole("button", { name: "Edit layout" }).click();
+  // See the comment in the test above — wait for canvas-only markup before
+  // touching "Ada Lovelace", which also matches the stale preview.
+  await expect(page.getByRole("heading", { name: "Layout Editor" })).toBeVisible();
 
   const main = page.locator("#main-content");
   const nameBlock = main.getByText("Ada Lovelace");
@@ -84,6 +96,10 @@ test("resizing a selected block's corner handle changes its size", async ({ page
   await mockApi(page, { signedIn: true, user: { skills: [] }, resumeHistory: [resumeDoc()] });
   await page.goto("/index.html#/resume");
   await page.getByRole("button", { name: "Edit layout" }).click();
+  // See the comment in the first edit-mode test above — wait for canvas-only
+  // markup before touching "Ada Lovelace", which also matches the stale
+  // preview.
+  await expect(page.getByRole("heading", { name: "Layout Editor" })).toBeVisible();
 
   const main = page.locator("#main-content");
   const nameBlock = main.getByText("Ada Lovelace");

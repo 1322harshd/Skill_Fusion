@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from .extract import ExtractionError, extract_text
 from .llm import LlmError, generate_resume_content
 from .models import ResumeDocument, ResumeUpload
-from .pdf import render_pdf, render_pdf_from_layout
+from .pdf import render_pdf, render_pdf_from_layout, render_resume_sections_pdf
 from .prompts import build_user_prompt
 from .serializers import (
     GenerateResumeSerializer,
@@ -41,7 +41,8 @@ class GenerateResumeView(APIView):
             user=request.user,
             jobListing=job_listing,
             resumeSummary=content["resumeSummary"],
-            resumeBullets=content["resumeBullets"],
+            resumeSkillGroups=content["resumeSkillGroups"],
+            resumeProjects=content["resumeProjects"],
             coverLetter=content["coverLetter"],
         )
         return Response(ResumeDocumentSerializer(document).data, status=status.HTTP_201_CREATED)
@@ -117,7 +118,16 @@ class ResumeExportView(APIView):
             # exporting exactly as they did before this feature existed.
             if document.layout and document.layout.get("blocks"):
                 pdf_bytes = render_pdf_from_layout(document.layout)
+            elif document.resumeProjects:
+                pdf_bytes = render_resume_sections_pdf(
+                    f"Resume — {request.user.fullName}",
+                    document.resumeSummary,
+                    document.resumeSkillGroups,
+                    document.resumeProjects,
+                )
             else:
+                # Legacy documents generated before resumeProjects existed —
+                # same flat rendering this always used.
                 paragraphs = [document.resumeSummary] + [f"• {b}" for b in document.resumeBullets]
                 pdf_bytes = render_pdf(f"Resume — {request.user.fullName}", paragraphs)
             filename = "resume.pdf"

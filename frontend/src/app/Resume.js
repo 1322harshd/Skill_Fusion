@@ -272,25 +272,62 @@ function Resume() {
                       <p className="mt-2 text-sm font-light leading-relaxed">{res.resumeSummary}</p>
                     </div>
 
-                    {s.user.skills && s.user.skills.length > 0 && (
+                    {res.resumeSkillGroups && res.resumeSkillGroups.length > 0 ? (
                       <div className="mt-8">
-                        <p className="text-[11px] uppercase tracking-[0.2em] text-black/50">Skills</p>
-                        <p className="mt-2 text-sm leading-relaxed">
-                          {s.user.skills.map((sk) => sk.label || sk).join(" · ")}
-                        </p>
+                        <p className="text-[11px] uppercase tracking-[0.2em] text-black/50">Technical Skills</p>
+                        <div className="mt-2 flex flex-col gap-1">
+                          {res.resumeSkillGroups.map((g, i) => (
+                            <p key={i} className="text-sm leading-relaxed">
+                              <span className="font-medium">{g.category}:</span> {g.skills.join(" · ")}
+                            </p>
+                          ))}
+                        </div>
                       </div>
+                    ) : (
+                      s.user.skills &&
+                      s.user.skills.length > 0 && (
+                        <div className="mt-8">
+                          <p className="text-[11px] uppercase tracking-[0.2em] text-black/50">Skills</p>
+                          <p className="mt-2 text-sm leading-relaxed">
+                            {s.user.skills.map((sk) => sk.label || sk).join(" · ")}
+                          </p>
+                        </div>
+                      )
                     )}
 
-                    <div className="mt-8">
-                      <p className="text-[11px] uppercase tracking-[0.2em] text-black/50">Highlights</p>
-                      <div className="mt-3 flex flex-col gap-2">
-                        {res.resumeBullets.map((b, i) => (
-                          <p key={i} className="text-sm font-light leading-relaxed">
-                            • {b}
-                          </p>
-                        ))}
+                    {res.resumeProjects && res.resumeProjects.length > 0 ? (
+                      <div className="mt-8">
+                        <p className="text-[11px] uppercase tracking-[0.2em] text-black/50">Projects</p>
+                        <div className="mt-3 flex flex-col gap-5">
+                          {res.resumeProjects.map((p, i) => (
+                            <div key={i}>
+                              <p className="text-sm font-medium">
+                                {p.title}
+                                {p.techStack && <span className="font-light text-black/60"> — {p.techStack}</span>}
+                              </p>
+                              <div className="mt-1 flex flex-col gap-1">
+                                {p.bullets.map((b, j) => (
+                                  <p key={j} className="text-sm font-light leading-relaxed">
+                                    • {b}
+                                  </p>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="mt-8">
+                        <p className="text-[11px] uppercase tracking-[0.2em] text-black/50">Highlights</p>
+                        <div className="mt-3 flex flex-col gap-2">
+                          {res.resumeBullets.map((b, i) => (
+                            <p key={i} className="text-sm font-light leading-relaxed">
+                              • {b}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="font-body whitespace-pre-line text-sm font-light leading-relaxed">

@@ -31,8 +31,23 @@ claims.
 
 Respond with ONLY a single JSON object, no other text, in exactly this shape:
 {"resumeSummary": "2-3 sentence professional summary", \
-"resumeBullets": ["bullet grounded in one piece of evidence", "..."], \
+"resumeSkillGroups": [{"category": "a short category name", "skills": ["skill", "..."]}, "..."], \
+"resumeProjects": [{"title": "short project title", "techStack": "comma-separated tools/skills used, or empty string", \
+"bullets": ["resume-style bullet grounded in this project's evidence", "..."]}, "..."], \
 "coverLetter": "a complete cover letter, 3-4 short paragraphs"}
+
+For resumeSkillGroups: group the learner's declared skills into roughly 3-6 natural categories \
+you infer from the skills themselves — do NOT force a fixed software-engineering taxonomy like \
+"Languages" or "Cloud & DevOps", since the learner's skills may not be technical at all. Order \
+the groups by relevance to the job listing when one is given.
+
+For resumeProjects: produce exactly one entry per distinct Growth Log entry given to you — never \
+merge two entries together and never invent an entry that wasn't given. Each project's title \
+should lightly tighten that entry's own title (don't rename it into something unrelated), \
+techStack should be built from that entry's own tags (empty string if it has none), and its \
+1-3 bullets must be grounded only in that entry's own description — the same "don't invent, \
+write it thin and honest if the evidence is thin" rule applies per project now, not just \
+globally.
 
 If a job listing was provided, tailor the summary and cover letter to it. If not, write a \
 general-purpose version."""
@@ -110,7 +125,7 @@ def generate_resume_content(user_prompt: str) -> dict:
     content = (message.get("content") or "") + (message.get("reasoning") or "")
     data = _extract_json_object(content)
 
-    for field in ("resumeSummary", "resumeBullets", "coverLetter"):
+    for field in ("resumeSummary", "resumeSkillGroups", "resumeProjects", "coverLetter"):
         if field not in data:
             raise LlmError(f"Model response was missing '{field}'.")
     return data

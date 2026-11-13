@@ -233,7 +233,14 @@ function resumeDoc(overrides = {}) {
     documentId: "r1",
     jobListing: "",
     resumeSummary: "A builder who ships real, verified work.",
+    // Legacy flat shape — kept populated too so fixtures built on this
+    // factory still exercise documents generated before the grouped shape.
     resumeBullets: ["Shipped the Growth Log feature", "Connected GitHub OAuth"],
+    resumeSkillGroups: [{ category: "Backend", skills: ["Python", "Django"] }],
+    resumeProjects: [
+      { title: "Growth Log", techStack: "Python, Django", bullets: ["Shipped the Growth Log feature"] },
+      { title: "GitHub OAuth", techStack: "OAuth 2.0", bullets: ["Connected GitHub OAuth"] },
+    ],
     coverLetter: "Dear hiring team, ...",
     createdAt: new Date().toISOString(),
     ...overrides,

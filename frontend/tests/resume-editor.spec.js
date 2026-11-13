@@ -21,7 +21,9 @@ test("opens the layout editor with a preset seeded from the generated resume", a
   await expect(main.getByText(/SUMMARY/)).toBeVisible();
   await expect(main.getByText(/A builder who ships real, verified work\./)).toBeVisible();
   await expect(main.getByText(/Shipped the Growth Log feature/)).toBeVisible();
-  await expect(main.getByText(/Python · React/)).toBeVisible();
+  // Grouped skills from the document take priority over the flat
+  // user.skills fallback once the document has resumeSkillGroups.
+  await expect(main.getByText(/Backend: Python · Django/)).toBeVisible();
 });
 
 test("selecting then clicking a block enters edit mode, and the edit autosaves", async ({ page }) => {

@@ -30,7 +30,10 @@ def _blank_pdf_bytes():
 
 VALID_CONTENT = {
     "resumeSummary": "A builder who ships.",
-    "resumeBullets": ["Shipped the Growth Log", "Connected GitHub OAuth"],
+    "resumeSkillGroups": [{"category": "Backend", "skills": ["Python", "Django"]}],
+    "resumeProjects": [
+        {"title": "Growth Log", "techStack": "Python, Django", "bullets": ["Shipped the Growth Log"]},
+    ],
     "coverLetter": "Dear hiring team, ...",
 }
 
@@ -177,6 +180,19 @@ class ResumeExportViewTests(TestCase):
         other_client.force_authenticate(user=self.other)
         response = other_client.get(f"/api/resume/{self.document.documentId}/export")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_exports_resume_with_grouped_sections_as_pdf(self):
+        """A document with the grouped shape (resumeSkillGroups/resumeProjects)
+        uses the sections renderer instead of the legacy flat-bullets fallback."""
+        self.document.resumeSkillGroups = [{"category": "Backend", "skills": ["Python", "Django"]}]
+        self.document.resumeProjects = [
+            {"title": "Growth Log", "techStack": "Python, Django", "bullets": ["Shipped the Growth Log"]},
+        ]
+        self.document.save(update_fields=["resumeSkillGroups", "resumeProjects"])
+        response = self.client.get(f"/api/resume/{self.document.documentId}/export?doc=resume")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertTrue(response.content.startswith(b"%PDF-"))
 
     def test_exports_a_custom_layout_as_pdf(self):
         """A document with saved canvas-editor blocks uses the layout-driven

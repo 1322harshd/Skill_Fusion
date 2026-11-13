@@ -48,6 +48,50 @@ def render_pdf(title: str, paragraphs: list[str]) -> bytes:
     return buffer.getvalue()
 
 
+def render_resume_sections_pdf(title: str, summary: str, skill_groups: list, projects: list) -> bytes:
+    """Renders the grouped-skills/grouped-projects resume shape. Separate from
+    render_pdf() above because this one needs real <b>/<br/> markup in the
+    output (section headings, project titles) — render_pdf()'s _escape()
+    strips any markup callers pass in, by design, so it can't take raw HTML
+    from the caller. Here, every piece of actual user/model text is escaped
+    individually before being wrapped in hand-written (never escaped) tags."""
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=LETTER,
+        leftMargin=0.9 * inch,
+        rightMargin=0.9 * inch,
+        topMargin=0.9 * inch,
+        bottomMargin=0.9 * inch,
+    )
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle("DocTitle", parent=styles["Heading1"], spaceAfter=18)
+    heading_style = ParagraphStyle("SectionHeading", parent=styles["Heading3"], spaceBefore=6, spaceAfter=6)
+    body_style = ParagraphStyle("Body", parent=styles["BodyText"], spaceAfter=12, leading=16)
+
+    story = [Paragraph(_escape(title), title_style)]
+    if summary:
+        story.append(Paragraph(_escape(summary), body_style))
+
+    if skill_groups:
+        story.append(Paragraph("TECHNICAL SKILLS", heading_style))
+        for g in skill_groups:
+            line = f"<b>{_escape(g['category'])}:</b> {_escape(', '.join(g['skills']))}"
+            story.append(Paragraph(line, body_style))
+
+    if projects:
+        story.append(Paragraph("PROJECTS", heading_style))
+        for p in projects:
+            header = f"<b>{_escape(p['title'])}</b>"
+            if p.get("techStack"):
+                header += f" — {_escape(p['techStack'])}"
+            bullets = "<br/>".join(f"• {_escape(b)}" for b in p["bullets"])
+            story.append(Paragraph(header + "<br/>" + bullets, body_style))
+
+    doc.build(story)
+    return buffer.getvalue()
+
+
 def render_pdf_from_layout(layout: dict) -> bytes:
     """Renders the canvas editor's freeform blocks to PDF at their exact
     positions — unlike render_pdf() above (Platypus/SimpleDocTemplate, which

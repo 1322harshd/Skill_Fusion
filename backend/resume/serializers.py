@@ -28,6 +28,8 @@ class ResumeDocumentSerializer(serializers.ModelSerializer):
             "jobListing",
             "resumeSummary",
             "resumeBullets",
+            "resumeSkillGroups",
+            "resumeProjects",
             "coverLetter",
             "layout",
             "createdAt",

@@ -27,7 +27,17 @@ class ResumeDocument(models.Model):
     )
     jobListing = models.TextField(blank=True, default="")
     resumeSummary = models.TextField(blank=True, default="")
+    # Legacy flat shape — no longer written by new generations, kept so
+    # documents created before resumeProjects/resumeSkillGroups existed
+    # still read back and render/export correctly.
     resumeBullets = models.JSONField(default=list, blank=True)
+    # [{"category": str, "skills": [str, ...]}, ...] — categories are
+    # inferred per-user by the LLM, not a fixed taxonomy (Skill Fusion
+    # pairs any two skills, not just software ones).
+    resumeSkillGroups = models.JSONField(default=list, blank=True)
+    # [{"title": str, "techStack": str, "bullets": [str, ...]}, ...] — one
+    # entry per distinct piece of Growth Log evidence used.
+    resumeProjects = models.JSONField(default=list, blank=True)
     coverLetter = models.TextField(blank=True, default="")
     # Canvas-editor state: {"blocks": [{id, x, y, width, height, zIndex,
     # fontSize, fontWeight, align, content}, ...]}. Empty dict means "no

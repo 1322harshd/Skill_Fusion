@@ -36,6 +36,22 @@ test("can generate a general-purpose resume with no job listing", async ({ page 
   await expect(page.getByText("A builder who ships real, verified work.")).toBeVisible();
 });
 
+test("a legacy document with only flat bullets still renders via the fallback", async ({ page }) => {
+  await mockApi(page, {
+    signedIn: true,
+    user: { skills: [{ label: "Python" }, { label: "React" }] },
+    resumeHistory: [resumeDoc({ resumeSkillGroups: [], resumeProjects: [] })],
+  });
+  await page.goto("/index.html#/resume");
+
+  await expect(page.getByText("A builder who ships real, verified work.")).toBeVisible();
+  // Falls back to the flat user.skills line, not grouped categories.
+  await expect(page.getByText("Python · React")).toBeVisible();
+  // Falls back to "Highlights" with the flat bullet list, not "Projects".
+  await expect(page.getByText("Highlights")).toBeVisible();
+  await expect(page.getByText("Shipped the Growth Log feature")).toBeVisible();
+});
+
 test("reloading the page shows the most recently generated resume", async ({ page }) => {
   await mockApi(page, {
     signedIn: true,

@@ -22,7 +22,7 @@ Notes:
       without them, so demand data works even when Ollama is down.
     - Re-running a query is safe: URLs already stored are skipped.
 """
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 from scores.jobs_pipeline import ingest_query
 

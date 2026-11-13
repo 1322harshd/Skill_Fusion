@@ -29,6 +29,7 @@ async function mockApi(
     conversations = [],
     conversationMessages = {},
     conversationExchanges = {},
+    onLayoutSaved = null,
   } = {}
 ) {
   const baseUser = {
@@ -140,6 +141,13 @@ async function mockApi(
       }
       if (method === "DELETE") return json(204, {});
       return json(200, resumeUpload || { filename: null, uploadedAt: null });
+    }
+    if (url.includes("/api/resume/") && url.includes("/layout")) {
+      const body = route.request().postDataJSON();
+      if (onLayoutSaved) onLayoutSaved(body.layout);
+      const match = url.match(/\/api\/resume\/([^/]+)\/layout/);
+      const existing = (resumeHistory.find((d) => d.documentId === (match && match[1])) || resumeDocument || {});
+      return json(200, { ...existing, layout: body.layout });
     }
     if (url.includes("/api/resume/") && !url.includes("/export")) {
       return json(200, resumeHistory);

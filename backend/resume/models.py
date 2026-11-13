@@ -29,6 +29,10 @@ class ResumeDocument(models.Model):
     resumeSummary = models.TextField(blank=True, default="")
     resumeBullets = models.JSONField(default=list, blank=True)
     coverLetter = models.TextField(blank=True, default="")
+    # Canvas-editor state: {"blocks": [{id, x, y, width, height, zIndex,
+    # fontSize, fontWeight, align, content}, ...]}. Empty dict means "no
+    # custom layout yet" — export falls back to the plain paragraph render.
+    layout = models.JSONField(default=dict, blank=True)
     createdAt = models.DateTimeField(auto_now_add=True)
 
     class Meta:

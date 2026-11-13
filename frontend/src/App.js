@@ -65,6 +65,7 @@ const ROUTES = [
   { pattern: "/score/:fusionId", render: (p) => <window.ScoreScreen fusionId={p.fusionId} /> },
   { pattern: "/log", render: () => <window.GrowthLog /> },
   { pattern: "/resume", render: () => <window.Resume /> },
+  { pattern: "/resume/:id/edit", render: (p) => <window.ResumeCanvas id={p.id} /> },
   { pattern: "/posts", render: () => <window.Posts /> },
   { pattern: "/posts/:entryId", render: (p) => <window.Posts entryId={p.entryId} /> },
   { pattern: "/connect", render: () => <window.Connect /> },

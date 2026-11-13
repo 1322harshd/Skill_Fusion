@@ -8,4 +8,5 @@ resume_urlpatterns = [
     path("upload", views.ResumeUploadView.as_view()),
     path("", views.ResumeDocumentListView.as_view()),
     path("<uuid:document_id>/export", views.ResumeExportView.as_view()),
+    path("<uuid:document_id>/layout", views.ResumeLayoutView.as_view()),
 ]

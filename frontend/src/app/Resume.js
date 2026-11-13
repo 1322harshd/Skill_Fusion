@@ -213,6 +213,16 @@ function Resume() {
                   ))}
                 </div>
                 <div className="flex gap-3">
+                  {tab === "resume" && (
+                    <button
+                      type="button"
+                      onClick={() => window.Router.go("/resume/" + res.documentId + "/edit")}
+                      className="tappable liquid-glass-strong flex items-center gap-2 rounded-full px-5 py-2.5 font-body text-sm font-medium text-white"
+                    >
+                      <Icons.Palette className="h-4 w-4" />
+                      Edit layout
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={copy}

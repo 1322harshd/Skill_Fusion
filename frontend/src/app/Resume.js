@@ -27,6 +27,15 @@ function Resume() {
   const [resumeFilename, setResumeFilename] = useState(null);
   const [resumeUploading, setResumeUploading] = useState(false);
   const fileInputRef = useRef(null);
+  // Loader/data hand-off: true until the real document lands. AiSteps holds
+  // its final step open (instead of looping back to step one) while we wait,
+  // so the last step finishing and the result appearing are one instant.
+  const [stepsHeld, setStepsHeld] = useState(true);
+  const resultRef = useRef(null);
+  const animDoneRef = useRef(false);
+  function maybeShowResult() {
+    if (resultRef.current && animDoneRef.current) setPhase("done");
+  }
 
   useEffect(() => {
     const f = Store.getSnapshot().fusions[0];
@@ -76,11 +85,18 @@ function Resume() {
   // Growth Log, falling back to the input step if it fails.
   async function generate() {
     setTab("resume");
+    resultRef.current = null;
+    animDoneRef.current = false;
+    setStepsHeld(true);
     setPhase("loading");
     try {
       const document = await window.Api.generateResume(listing);
       setRes(document);
-      setPhase("done");
+      resultRef.current = document;
+      // Data's in while the steps are still animating: release the hold —
+      // the remaining steps fast-forward, then the result shows immediately.
+      setStepsHeld(false);
+      maybeShowResult();
     } catch (e) {
       window.Toast.show(e.message || "Couldn't generate that — try again", "error");
       setPhase("input");
@@ -179,8 +195,12 @@ function Resume() {
                 <div className="border-b border-white/10 px-6 py-6 text-center">
                   <p className="font-heading text-2xl italic text-white">Drafting your document</p>
                 </div>
-                {/* Looping step indicator since generation time is unpredictable */}
-                <AiSteps steps={RESUME_LOADING_STEPS} speed={1400} loop />
+                <AiSteps
+                  steps={RESUME_LOADING_STEPS}
+                  speed={1400}
+                  hold={stepsHeld}
+                  onDone={() => { animDoneRef.current = true; maybeShowResult(); }}
+                />
                 <div className="flex items-center justify-center gap-2 border-t border-white/10 px-6 py-5">
                   <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-white" />
                   <p className="font-body text-xs font-light text-white/50">

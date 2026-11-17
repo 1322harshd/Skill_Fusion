@@ -56,8 +56,11 @@ VERDICT_PAYLOAD = {
 
 class SubmitWorkTests(TestCase):
     def setUp(self):
+        from authentication.models import User
         from rest_framework.test import APIClient
         self.client = APIClient()
+        self.client.force_authenticate(
+            user=User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada"))
 
     def _txt_file(self, name="work.txt", content="Built the interactive engine."):
         from django.core.files.uploadedfile import SimpleUploadedFile
@@ -248,8 +251,11 @@ class ZipPlanTests(TestCase):
 
 class ZipSubmitAndWorkerTests(TestCase):
     def setUp(self):
+        from authentication.models import User
         from rest_framework.test import APIClient
         self.client = APIClient()
+        self.client.force_authenticate(
+            user=User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada"))
 
     def _post_zip(self, blob, name="kit.zip"):
         from django.core.files.uploadedfile import SimpleUploadedFile

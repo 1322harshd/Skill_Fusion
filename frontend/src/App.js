@@ -5,7 +5,7 @@ console.error = (...args) => {
   _consoleError(...args);
 };
 
-const { useEffect } = React;
+const { useEffect, useState } = React;
 const { AnimatePresence, motion, MotionConfig } = window.Motion;
 const { useRoute } = window;
 const { AppShell, ScreenPlaceholder } = window;
@@ -34,6 +34,11 @@ const LANDING = new Set([
   "/faq",
   "/cta",
 ]);
+
+// Reachable with no session at all — sign-up/login itself (Onboarding.js
+// handles both), and the two emailed-link flows that work purely off a
+// ?token= in the URL, not a logged-in session.
+const PUBLIC_ROUTES = new Set(["/onboarding", "/verify-email", "/reset-password"]);
 
 function Landing() {
   return (
@@ -84,6 +89,11 @@ function ScreenFor() {
 function App() {
   const route = useRoute();
   const isLanding = LANDING.has(route);
+  // True once the initial bootstrap() session-restore has settled (found a
+  // user or not) — the redirect guard below must wait for this, or a
+  // logged-in user refreshing the page on e.g. /dashboard would get bounced
+  // to /onboarding during the brief window before their session is restored.
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     // Landing page anchor routes (e.g. "/pricing") should scroll to that
@@ -151,8 +161,21 @@ function App() {
         window.Router.go("/dashboard");
       }
       window.Store.loadGrowthLog().catch(() => {});
-    });
+    }).finally(() => setAuthChecked(true));
   }, []);
+
+  // Every app feature requires a signed-in session now — only the landing
+  // page and the sign-up/emailed-link flows above are reachable as a guest.
+  // Guards against navigating straight to a URL like #/fuse or #/dashboard
+  // without logging in first; each endpoint's own IsAuthenticated check is
+  // the real enforcement, this just avoids rendering a screen that's only
+  // going to fail its first API call.
+  useEffect(() => {
+    if (!authChecked || isLanding || PUBLIC_ROUTES.has(route)) return;
+    if (!window.Store.getSnapshot().user.userId) {
+      window.Router.go("/onboarding");
+    }
+  }, [authChecked, route, isLanding]);
 
   const content = isLanding ? (
     <Landing />

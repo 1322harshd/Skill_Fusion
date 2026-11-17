@@ -1,14 +1,14 @@
 from rest_framework import status
 from rest_framework.decorators import api_view, parser_classes, permission_classes
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .services import make_project, assess_submission
 from .zip_grader import _serialize, estimate_seconds, plan_zip_review, start_zip_review, take_slot
 
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def project_view(request):
     a=request.data.get("a"); b=request.data.get("b")
     if not a or not b: return Response({"error":"a,b required"}, status=400)
@@ -129,7 +129,7 @@ def _roadmap_context(fusion_id):
 
 @api_view(["POST"])
 @parser_classes([MultiPartParser, FormParser])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def submit_view(request):
     """Submit work for a fused project: an attachment (any document — readable
     or kept as visual proof) and/or a source link (website, Drive, repo...).
@@ -194,7 +194,7 @@ def submit_view(request):
                 try:
                     from .models import ProjectSubmission
                     sub = ProjectSubmission.objects.create(
-                        user=getattr(request, "user", None) if request.user.is_authenticated else None,
+                        user=request.user,
                         fusion_ref=fusion_id,
                         filename=filename, file_text="", source_link=source_link,
                         attachment_note=note, status="grading",
@@ -232,7 +232,7 @@ def submit_view(request):
     try:
         from .models import ProjectSubmission
         sub = ProjectSubmission.objects.create(
-            user=getattr(request, "user", None) if request.user.is_authenticated else None,
+            user=request.user,
             fusion_ref=fusion_id,
             filename=filename, file_text=file_text, source_link=source_link,
             attachment_note=attachment_note,
@@ -247,7 +247,7 @@ def submit_view(request):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def submission_status_view(request):
     """Poll an (async) zip review: ?id=N → per-file digests (text stripped),
     aggregate verdict, status. The ExplainPanel poller lives on this."""
@@ -262,7 +262,7 @@ def submission_status_view(request):
 
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def regrade_view(request):
     """Resume a dead/failed zip review: re-runs the worker for every digest
     still missing a score (text persists on failed files for exactly this)."""

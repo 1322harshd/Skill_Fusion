@@ -54,7 +54,7 @@ test("resume covers both skills — quiz skipped entirely", async ({ page }) => 
   await expect(page.getByText("Continue to roadmaps")).toBeVisible();
 });
 
-test("no sign-in — both skills get the quiz as before", async ({ page }) => {
+test("no sign-in — redirected to sign up instead of reaching the quiz", async ({ page }) => {
   await mockApi(page, {
     signedIn: false,
     entries: [],
@@ -62,6 +62,8 @@ test("no sign-in — both skills get the quiz as before", async ({ page }) => {
   });
   await page.goto("/index.html#/quiz?skills=Engineering,Growth");
 
-  await page.getByText("Engineering · easy · Q1").waitFor({ timeout: 15000 });
-  await expect(page.getByText("Baseline quiz")).toBeVisible();
+  // Every feature now requires an account — App.js's route guard bounces a
+  // signed-out visitor to /onboarding instead of rendering the quiz.
+  await expect(page).toHaveURL(/#\/onboarding/);
+  await expect(page.getByText("Engineering · easy · Q1")).toHaveCount(0);
 });

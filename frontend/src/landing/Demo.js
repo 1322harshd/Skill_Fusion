@@ -55,31 +55,15 @@ function Demo() {
   const [a, setA] = useState(null);
   const [b, setB] = useState(null);
   const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   const ready = a && b;
 
-  async function fuse() {
-    if (!ready || loading) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await window.Api.fuse(a, b);
-      const f = data.fusion;
-      const apps = (f.brief && f.brief.applications) || [];
-      const steps = apps.slice(0, 4).map((body, i) => ({
-        num: `0${i + 1}`,
-        title: ["Foundations", "First artifact", "The project", "Verified badge"][i] || `Step ${i + 1}`,
-        body,
-        dur: DURATIONS[(f.score.value + i * 3) % DURATIONS.length],
-      }));
-      setResult({ rarity: f.score.value, steps, lede: (f.brief && f.brief.lede) || "", mock: !!f.score.source });
-    } catch (e) {
-      setError("Couldn't reach the fusion engine — is the backend running?");
-    } finally {
-      setLoading(false);
-    }
+  // Every app feature (including the real fuse) now requires an account —
+  // this stays a fully client-side preview (no backend call, no login) so
+  // visitors still get something to play with before signing up.
+  function fuse() {
+    if (!ready) return;
+    setResult(fuseResult(a, b));
   }
 
   function pickA(s) {
@@ -107,21 +91,18 @@ function Demo() {
               <motion.button
                 type="button"
                 onClick={fuse}
-                disabled={!ready || loading}
+                disabled={!ready}
                 whileTap={{ scale: 0.97 }}
                 className={
                   (ready ? "liquid-glass-strong text-white" : "text-white/50") +
                   " flex items-center gap-2 rounded-full px-6 py-3 font-body text-sm font-medium disabled:cursor-not-allowed"
                 }
               >
-                Fuse {loading ? "…" : a && b ? `${a} × ${b}` : "two skills"}
+                Fuse {a && b ? `${a} × ${b}` : "two skills"}
                 <Icons.Hub className="h-4 w-4" />
               </motion.button>
             </div>
 
-            {error ? (
-              <p className="mt-6 text-center font-body text-xs font-light text-red-300/80">{error}</p>
-            ) : null}
             <AnimatePresence mode="wait">
               {result ? (
                 <motion.div
@@ -167,9 +148,7 @@ function Demo() {
                   </div>
 
                     <p className="mt-6 text-center font-body text-[11px] font-light text-white/50">
-                      {result.mock
-                        ? "Live brief · score is heuristic until Phase 6 wires job-market data."
-                        : "Live fusion — built by SF from job-market data when you sign up."}
+                      A preview, not the real thing — sign up for SF's live brief, a verified project, and your real rarity score.
                     </p>
                 </motion.div>
               ) : null}

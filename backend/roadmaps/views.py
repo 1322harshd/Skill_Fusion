@@ -1,7 +1,7 @@
 import threading
 
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from .services import get_previews, tweak_roadmap
@@ -84,7 +84,7 @@ def start_previews_job(job_id, fusion, salt, user_id):
     threading.Thread(target=_generate_previews, args=(job_id, fusion, salt, user_id), daemon=True).start()
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def previews_view(request):
     fusion = request.data.get("fusion")
     salt = request.data.get("salt",0)
@@ -96,12 +96,11 @@ def previews_view(request):
     except PermissionDenied:
         raise
     job = PreviewJob.objects.create()
-    user_id = request.user.pk if request.user.is_authenticated else None
-    start_previews_job(job.id, fusion, salt, user_id)
+    start_previews_job(job.id, fusion, salt, request.user.pk)
     return Response({"job_id": job.id, "status": job.status}, status=202)
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def previews_status_view(request):
     """Poll an async previews generation — mirrors projects/views.py's
     submission_status_view for the same reason."""
@@ -116,7 +115,7 @@ def previews_status_view(request):
     })
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def choose_view(request):
     rid = request.data.get("roadmap_id")
     if rid:
@@ -132,7 +131,7 @@ def choose_view(request):
 
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def progress_view(request):
     """Persist check-off progress on a persisted roadmap row. Only ever moves
     forward (the sweep clamps to the row's own week count)."""
@@ -151,7 +150,7 @@ def progress_view(request):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def chosen_view(request):
     """The persisted+chosen roadmap for a fusion, so a signed-in user's
     chosen path (and its progress) survive a page reload."""
@@ -175,7 +174,7 @@ def chosen_view(request):
 
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def tweak_view(request):
     """Pre-commit tweak: locked roadmaps reject; else skill-presence test + diff."""
     rm = Roadmap.objects.filter(id=request.data.get("roadmap_id")).first()
@@ -221,7 +220,7 @@ def tweak_view(request):
     return Response({**result, "updated_constraints": constraints})
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def regenerate_view(request):
     fusion = request.data.get("fusion")
     salt = request.data.get("salt",0)

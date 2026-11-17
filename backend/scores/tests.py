@@ -60,7 +60,10 @@ class JobDataScoreTests(TransactionTestCase):
     directly, so make sure parallel-transaction mode stays off."""
 
     def setUp(self):
+        from authentication.models import User
         self.client = APIClient()
+        self.client.force_authenticate(
+            user=User.objects.create_user(email="ada@example.com", password="CorrectHorse1!", fullName="Ada"))
 
     def _seed_listings(self, query, count=25, embed=True):
         for i in range(count):

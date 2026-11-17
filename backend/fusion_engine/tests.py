@@ -75,13 +75,12 @@ class FuseTests(TestCase):
         self.user = User.objects.create_user(email=USER, password=PASSWORD, fullName="Ada")
         self.payload = {"a": "Design", "b": "Code"}
 
-    def test_anon_fuse_returns_fusion_without_persisting(self):
+    def test_anon_fuse_is_rejected(self):
+        # Every feature now requires an account — fusing is no longer usable
+        # as a guest (it used to be, for the landing page's live demo).
         with _mock_sf():
             response = self.client.post("/api/fusion/", self.payload, format="json")
-        self.assertEqual(response.status_code, 200)
-        body = response.json()["fusion"]
-        for key in ("id", "a", "b", "score", "brief", "project"):
-            self.assertIn(key, body)
+        self.assertEqual(response.status_code, 401)
         self.assertFalse(Fusion.objects.exists())
 
     def test_authed_fuse_persists_row_with_categories(self):
@@ -119,6 +118,7 @@ class FuseTests(TestCase):
         self.assertEqual(Fusion.objects.count(), 2)
 
     def test_missing_args_is_400(self):
+        self.client.force_authenticate(user=self.user)
         response = self.client.post("/api/fusion/", {"a": "Design"}, format="json")
         self.assertEqual(response.status_code, 400)
 
@@ -128,6 +128,8 @@ class OracleTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
+        self.user = User.objects.create_user(email=USER, password=PASSWORD, fullName="Ada")
+        self.client.force_authenticate(user=self.user)
 
     @staticmethod
     def _sf_oracle():
@@ -235,7 +237,7 @@ class QuizSessionTests(TestCase):
         self.client = APIClient()
         self.user = User.objects.create_user(email=USER, password=PASSWORD, fullName="Ada")
 
-    def _generate(self, skills=None, auth=False):
+    def _generate(self, skills=None, auth=True):
         if auth:
             self.client.force_authenticate(user=self.user)
         with patch("prompt_engineering.llm_client.call_sf14b_json",
@@ -247,6 +249,12 @@ class QuizSessionTests(TestCase):
         return [{"id": q["id"],
                  "choice": q["answer"] if correct else (q["answer"] + 1) % 4}
                 for q in session.questions]
+
+    def test_anon_generate_is_rejected(self):
+        # Every feature now requires an account — the quiz used to be
+        # generatable anonymously (landing demo), no longer.
+        response = self._generate(auth=False)
+        self.assertEqual(response.status_code, 401)
 
     def test_generate_strips_answers_stores_keys_server_side(self):
         response = self._generate()

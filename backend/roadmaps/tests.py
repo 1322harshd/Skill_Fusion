@@ -80,14 +80,12 @@ class PreviewPersistenceTests(TestCase):
             self._run_previews_job(self.body, user=self.user)
         self.assertEqual(Roadmap.objects.count(), 3)
 
-    def test_anon_undicated_fusion_persists_nothing(self):
+    def test_anon_previews_is_rejected(self):
+        # Every feature now requires an account — this used to be usable
+        # anonymously (landing demo), no longer.
         body = {"fusion": {"id": "fc-nonexistent", "a": "Design", "b": "Code"}, "salt": 0}
-        with patch("roadmaps.views.get_previews", return_value=_previews()):
-            response, job = self._run_previews_job(body)
-        self.assertEqual(response.status_code, 202)
-        self.assertEqual(job.status, "ready")
-        for p in job.result["previews"]:
-            self.assertNotIn("roadmap_id", p)
+        response, job = self._run_previews_job(body)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(Roadmap.objects.count(), 0)
 
     def test_previews_rejected_for_other_users_fusion(self):
@@ -169,6 +167,7 @@ class ChooseAndTweakTests(TestCase):
     def test_tweak_without_request_is_400(self):
         # no roadmap_id at all (an "" id breaks int conversion) skips ownership
         # and fails on the missing new_request
+        self.client.force_authenticate(user=self.user)
         response = self.client.post("/api/roadmap/tweak/",
                                     {"skill_a": "A", "skill_b": "B"},
                                     format="json")
@@ -343,6 +342,7 @@ class ProgressAndRestoreTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_progress_without_id_is_400(self):
+        self.client.force_authenticate(user=self.user)
         response = self.client.post("/api/roadmap/progress/", {"progress_weeks": 1}, format="json")
         self.assertEqual(response.status_code, 400)
 
@@ -359,6 +359,7 @@ class ProgressAndRestoreTests(TestCase):
         self.assertTrue(body["locked"])
 
     def test_chosen_returns_null_when_none_chosen(self):
+        self.client.force_authenticate(user=self.user)
         Roadmap.objects.filter(id=self.rm.id).update(chosen=False)
         response = self.client.get("/api/roadmap/chosen/", {"fusion_id": "fc-own"})
         self.assertEqual(response.status_code, 200)

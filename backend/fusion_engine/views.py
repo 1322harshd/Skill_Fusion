@@ -1,5 +1,5 @@
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .services import make_brief, make_oracle, fallback_oracle
 from .quiz import generate_quiz, score_quiz
@@ -13,7 +13,7 @@ def hash(s):
     return abs(h)
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def fuse_view(request):
     a=request.data.get("a","").strip()
     b=request.data.get("b","").strip()
@@ -31,23 +31,19 @@ def fuse_view(request):
     # NOTE: roadmap comes from /api/roadmap/previews/ (SF-wired), NOT bundled
     # here — the old hash-template make_roadmap was removed rather than shipped.
     project = __import__("projects.services", fromlist=["make_project"]).make_project([a, b])
-    fid = f"f{hash(a+'×'+b)}"
-    # Persist when the caller is authenticated (landing demo keeps working
-    # anonymously). ids are namespaced per user: Fusion.id is the primary key
-    # and pair-derived, so two users fusing the same pair must not collide on
-    # it — same ancestor pair id as the roadmap rows key off.
-    user = request.user if request.user.is_authenticated else None
-    if user is not None:
-        fid = f"{fid}-u{user.pk}"
-        try:
-            from .models import Fusion
-            Fusion.objects.update_or_create(
-                id=fid,
-                defaults={"user": user, "a": a, "b": b,
-                          "category_a": category_of(a), "category_b": category_of(b),
-                          "score": score, "brief": brief, "project": project})
-        except Exception:
-            pass  # persistence is best-effort: never block the fuse response on it
+    # ids are namespaced per user: Fusion.id is the primary key and
+    # pair-derived, so two users fusing the same pair must not collide on it
+    # — same ancestor pair id as the roadmap rows key off.
+    fid = f"f{hash(a+'×'+b)}-u{request.user.pk}"
+    try:
+        from .models import Fusion
+        Fusion.objects.update_or_create(
+            id=fid,
+            defaults={"user": request.user, "a": a, "b": b,
+                      "category_a": category_of(a), "category_b": category_of(b),
+                      "score": score, "brief": brief, "project": project})
+    except Exception:
+        pass  # persistence is best-effort: never block the fuse response on it
     return Response({"fusion": {"id":fid, "a":a,"b":b,"score":score,"brief":brief,"project":project}})
 
 @api_view(["GET"])
@@ -135,7 +131,7 @@ def add_skill_view(request):
         }})
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def oracle_view(request):
     """The Fusion Oracle: a skeptic/oracle self-debate on a candidate pair,
     shown BEFORE the learner commits to fusing. One SF call; deterministic
@@ -156,13 +152,10 @@ def oracle_view(request):
     return Response({"oracle": oracle, "source": source})
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def quiz_generate(request):
     skills=request.data.get("skills", ["Design","Code"])
-    # Anon (landing demo) allowed; logged-in sessions get owner-tagged.
-    if request.user.is_authenticated:
-        return Response(generate_quiz(skills, user=request.user))
-    return Response(generate_quiz(skills))
+    return Response(generate_quiz(skills, user=request.user))
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
@@ -175,7 +168,7 @@ def skills_known_view(request):
     return Response({"verdicts": judge_skills_from_resume(request.user, skills)})
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def quiz_submit(request):
     answers=request.data.get("answers", [])
     session_id=request.data.get("session_id")

@@ -41,11 +41,21 @@ class ExplainFeedbackTests(TestCase):
         self.assertTrue(result["suggestion"])
 
     def test_view_returns_200_with_fallback_when_sf_unreachable(self):
+        from authentication.models import User
+        client = self._client
+        client.force_authenticate(user=User.objects.create_user(
+            email="ada@example.com", password="CorrectHorse1!", fullName="Ada"))
         with patch("explain.services.call_sf14b", side_effect=RuntimeError("SF down")):
-            response = self._client.post("/api/explain/",
-                                         {"a": "A", "b": "B", "text": "text"}, format="json")
+            response = client.post("/api/explain/",
+                                    {"a": "A", "b": "B", "text": "text"}, format="json")
         self.assertEqual(response.status_code, 200)
         body = response.json()
         self.assertEqual(set(body), {"clarity", "note", "suggestion"})
         self.assertTrue(body["note"])
         self.assertTrue(body["suggestion"])
+
+    def test_anon_explain_is_rejected(self):
+        # Every feature now requires an account.
+        response = self._client.post("/api/explain/",
+                                     {"a": "A", "b": "B", "text": "text"}, format="json")
+        self.assertEqual(response.status_code, 401)

@@ -23,6 +23,10 @@ async function mockApi(
     quizLevels = [],
     fusionHistory = [],
     roadmapChosenByFusionId = {},
+    // null = the previews job never finishes (status stays "pending" forever,
+    // good for testing the loading/cancel state); set to an array to have it
+    // resolve to "ready" with those previews on the very next status poll.
+    previewsResult = null,
     moderationReports = [],
     moderationForbidden = false,
     myMatch = { status: "none" },
@@ -100,6 +104,16 @@ async function mockApi(
       const fusionId = new URL(url).searchParams.get("fusion_id");
       const roadmap = roadmapChosenByFusionId[fusionId];
       return json(200, roadmap ? { roadmap } : {});
+    }
+    if (url.includes("/api/roadmap/previews/status")) {
+      // Mirrors the real job-and-poll shape: "pending" until a result is
+      // configured, then "ready" with it on every poll after.
+      return previewsResult
+        ? json(200, { job_id: "job1", status: "ready", previews: previewsResult })
+        : json(200, { job_id: "job1", status: "pending" });
+    }
+    if (url.includes("/api/roadmap/previews")) {
+      return json(202, { job_id: "job1", status: "pending" });
     }
     if (url.includes("/api/growth-log/entries")) {
       // POST creates a new manual entry from the request body; GET just

@@ -1,4 +1,4 @@
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
 const { AnimatePresence, motion } = window.Motion;
 const { Icons, BlurText } = window;
 const F = window.Fusion;
@@ -264,6 +264,8 @@ function Roadmaps() {
   const [loadError, setLoadError] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
+  const [cancelled, setCancelled] = useState(false);
+  const cancelRef = useRef(null);
 
   const fusion = s.fusions.find((f) => f.id === fusionId) || s.fusions[0] || null;
   const selected = previews.find((p) => p.id === selectedId) || null;
@@ -279,7 +281,10 @@ function Roadmaps() {
   useEffect(() => {
     if (!fusion) return;
     if (fusion.roadmap) return; // chosen path — redirecting, no preview regen
+    if (cancelled) return; // user cancelled this attempt — wait for an explicit retry, don't auto-rerun
     let live = true;
+    const cancelToken = { cancelled: false };
+    cancelRef.current = cancelToken;
     setBusy(true);
     setLoadError(null);
     // getPreviewsRemote already waits out the full async generation job
@@ -288,14 +293,32 @@ function Roadmaps() {
     // timed out, not a transient blip worth immediately retrying.
     (async () => {
       try {
-        const pvs = await Store.getPreviewsRemote(fusion, salt);
+        const pvs = await Store.getPreviewsRemote(fusion, salt, cancelToken);
         if (live) { setPreviews(pvs); setBusy(false); setIsRegen(false); }
-      } catch {
-        if (live) { setLoadError("Couldn't load roadmaps — is the backend (:8000) and SF (:8081) running?"); setBusy(false); setIsRegen(false); }
+      } catch (e) {
+        if (!live) return;
+        if (e && e.cancelled) { setBusy(false); setIsRegen(false); return; } // cancelGeneration already set state
+        setLoadError("Couldn't load roadmaps — is the backend (:8000) and SF (:8081) running?");
+        setBusy(false);
+        setIsRegen(false);
       }
     })();
     return () => { live = false; };
-  }, [fusionId, salt]);
+  }, [fusionId, salt, cancelled]);
+
+  // Stops polling for this attempt immediately — the backend job keeps
+  // running unseen in the background (there's no way to cancel it there),
+  // this just stops the user from staring at a spinner with no way out.
+  function cancelGeneration() {
+    if (cancelRef.current) cancelRef.current.cancelled = true;
+    setCancelled(true);
+    setBusy(false);
+    setIsRegen(false);
+  }
+
+  function retryAfterCancel() {
+    setCancelled(false);
+  }
 
   useEffect(() => {
     function onKey(e){ if(e.key==="Escape") setExpandedId(null); }
@@ -359,6 +382,7 @@ function Roadmaps() {
     if (busy) return;
     setIsRegen(true);
     setBusy(true);
+    setCancelled(false);
     setTimeout(() => { setSalt((x) => x + 1); setSelectedId(null); setExpandedId(null); }, 900);
   }
 
@@ -370,7 +394,7 @@ function Roadmaps() {
         {s.fusions.length > 1 && (
           <div className="mt-6 flex flex-wrap gap-2">
             {s.fusions.map((f) => (
-              <button key={f.id} type="button" onClick={() => { setFusionId(f.id); setSelectedId(null); setExpandedId(null); }} className={(f.id === fusion.id ? "bg-white text-black" : "liquid-glass text-white/85 hover:text-white") + " rounded-full px-4 py-2 font-body text-sm font-medium transition-colors"}>{f.a} × {f.b}</button>
+              <button key={f.id} type="button" onClick={() => { setFusionId(f.id); setSelectedId(null); setExpandedId(null); setCancelled(false); }} className={(f.id === fusion.id ? "bg-white text-black" : "liquid-glass text-white/85 hover:text-white") + " rounded-full px-4 py-2 font-body text-sm font-medium transition-colors"}>{f.a} × {f.b}</button>
             ))}
           </div>
         )}
@@ -381,6 +405,26 @@ function Roadmaps() {
           <motion.div key="busy" {...enter()} className="liquid-glass flex min-h-[240px] flex-col items-center justify-center gap-4 rounded-[1.5rem]">
             <motion.span animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.1, ease: "linear" }} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20"><Icons.Refresh className="h-4 w-4 text-white/80" /></motion.span>
             <p className="font-heading text-2xl italic text-white">{isRegen ? "Re-thinking…" : "Finding your path…"}</p>
+            <p className="font-body text-xs font-light text-white/50">Can take up to a few minutes — one shared model, no shortcuts.</p>
+            <button
+              type="button"
+              onClick={cancelGeneration}
+              className="tappable mt-1 rounded-full px-5 py-2 font-body text-xs font-medium text-white/60 ring-1 ring-white/15 transition-colors hover:text-white"
+            >
+              Cancel
+            </button>
+          </motion.div>
+        ) : cancelled ? (
+          <motion.div key="cancelled" {...enter()} className="liquid-glass rounded-[1.5rem] px-8 py-10 text-center">
+            <p className="font-heading text-2xl italic text-white">Cancelled</p>
+            <p className="mt-2 font-body text-sm text-white/70">Stopped waiting on those roadmap options — nothing was chosen.</p>
+            <button
+              type="button"
+              onClick={retryAfterCancel}
+              className="tappable mt-5 rounded-full bg-white px-6 py-2.5 font-body text-sm font-medium text-black"
+            >
+              Try again
+            </button>
           </motion.div>
         ) : loadError ? (
           <motion.div key="loaderr" {...enter()} className="liquid-glass rounded-[1.5rem] px-8 py-10 text-center">

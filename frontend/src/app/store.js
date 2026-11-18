@@ -538,12 +538,21 @@ window.Store = (function () {
   // sequential SF calls server-side, 60-120s+) — poll its status until
   // ready/failed, same pattern as ExplainPanel's zip-review poller, then
   // normalize previews + roadmaps to UI shape.
-  async function getPreviewsRemote(fusion, salt = 0) {
+  // cancelToken: an optional { cancelled: false } the caller can flip to true
+  // (e.g. from a Cancel button) to stop polling early. The backend job keeps
+  // running in the background regardless — there's no server-side cancel —
+  // this just stops the client from waiting on and reacting to its result.
+  async function getPreviewsRemote(fusion, salt = 0, cancelToken = null) {
     const { job_id } = await window.Api.roadmapPreviews(fusion, salt);
     const deadline = Date.now() + 3 * 60 * 1000;
     let data;
     while (true) {
       await new Promise((r) => setTimeout(r, 3000));
+      if (cancelToken && cancelToken.cancelled) {
+        const err = new Error("Cancelled");
+        err.cancelled = true;
+        throw err;
+      }
       const res = await window.Api.roadmapPreviewsStatus(job_id);
       if (res.status === "ready") { data = res; break; }
       if (res.status === "failed") throw new Error(res.error || "SF unreachable");
